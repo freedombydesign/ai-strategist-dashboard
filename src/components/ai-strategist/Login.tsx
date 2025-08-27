@@ -1,11 +1,11 @@
 'use client'
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { supabase } from '../../lib/supabase-client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function Login() {
-  const supabase = createClientComponentClient()
+  // Using centralized supabase client
   const router = useRouter()
   const [email, setEmail] = useState('')
 

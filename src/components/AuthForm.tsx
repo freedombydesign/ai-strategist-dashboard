@@ -1,6 +1,6 @@
 'use client'
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { supabase } from '../lib/supabase-client'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { Mail, LogIn, UserPlus, Chrome, Eye, EyeOff } from 'lucide-react'
@@ -11,7 +11,7 @@ interface AuthFormProps {
 }
 
 export default function AuthForm({ mode = 'login', redirectTo = '/dashboard' }: AuthFormProps) {
-  const supabase = createClientComponentClient()
+  // Using centralized supabase client
   const router = useRouter()
   
   const [email, setEmail] = useState('')
