@@ -1,15 +1,27 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+// Function to get Supabase URL with fallback
+const getSupabaseUrl = (): string => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url && typeof window !== 'undefined') {
+    console.warn('NEXT_PUBLIC_SUPABASE_URL is missing');
+    return 'https://placeholder.supabase.co';
+  }
+  return url || 'https://placeholder.supabase.co';
+};
 
-// Only throw error in runtime, not during build
-if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
-  console.error('Missing Supabase environment variables')
-}
+// Function to get Supabase anon key with fallback
+const getSupabaseAnonKey = (): string => {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!key && typeof window !== 'undefined') {
+    console.warn('NEXT_PUBLIC_SUPABASE_ANON_KEY is missing');
+    return 'placeholder-key-for-build';
+  }
+  return key || 'placeholder-key-for-build';
+};
 
-// Create client with fallback values for build time
+// Create client with proper environment variable handling
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key'
+  getSupabaseUrl(),
+  getSupabaseAnonKey()
 )
