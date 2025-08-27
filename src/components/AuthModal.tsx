@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { X, Mail, Lock, User, Building } from 'lucide-react';
 
 interface AuthModalProps {
