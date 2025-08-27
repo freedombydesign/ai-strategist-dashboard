@@ -27,19 +27,24 @@ interface SavedResponse {
 }
 
 export const diagnosticService = {
-  // Fetch the 12 diagnostic questions from freedom_diagnostic_questions table
+  // Fetch the 12 diagnostic questions from API route (which handles seeding)
   async getDiagnosticQuestions(): Promise<FreedomDiagnosticQuestion[]> {
     try {
-      const { data, error } = await supabase
-        .from('freedom_diagnostic_questions')
-        .select('*')
-        .order('order_index')
-        .limit(12)  // Ensure we get exactly 12 questions
+      const response = await fetch('/api/diagnostic-questions')
       
-      if (error) throw error
-      return data || []
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch questions')
+      }
+      
+      return result.questions || []
     } catch (error) {
-      console.error('Error fetching freedom diagnostic questions:', error)
+      console.error('Error fetching diagnostic questions:', error)
       throw error
     }
   },
