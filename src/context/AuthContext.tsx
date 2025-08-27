@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '../lib/supabase-client'
 import { User, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -20,11 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isClient, setIsClient] = useState(false)
   
-  // Create Supabase client with environment variable handling
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key-for-build'
-  )
+  // Using centralized supabase client
 
   // Ensure we're on the client side
   useEffect(() => {
