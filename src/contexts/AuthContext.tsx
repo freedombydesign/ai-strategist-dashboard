@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import { SupabaseClient, User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase-client';
 
 interface Profile {
   id: string;
@@ -26,10 +27,7 @@ interface AuthContextType {
   supabase: SupabaseClient;
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Using centralized supabase client
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
