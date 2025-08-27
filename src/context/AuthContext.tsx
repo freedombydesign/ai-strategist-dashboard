@@ -83,6 +83,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signOut()
     if (error) {
       console.error('[AUTH-CONTEXT] Sign out error:', error)
+    } else {
+      console.log('[AUTH-CONTEXT] Sign out successful, redirecting to home')
+      // Clear any local storage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('lastFreedomScore')
+        localStorage.removeItem('scoreCompletedAt')
+        // Redirect to home page
+        window.location.href = '/'
+      }
     }
   }
 

@@ -21,8 +21,12 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
-    if (!isHydrated || !user?.id) return
+    if (!isHydrated || !user?.id) {
+      console.log('[DASHBOARD] Waiting for hydration or user:', { isHydrated, hasUser: !!user?.id })
+      return
+    }
     
+    console.log('[DASHBOARD] Ready to load data for user:', user.id)
     loadUserDiagnosticData()
   }, [isHydrated, user])
 
@@ -80,6 +84,18 @@ export default function Dashboard() {
       setLoading(false)
     }
   }
+
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.log('[DASHBOARD] Loading timeout - forcing load completion')
+        setLoading(false)
+      }
+    }, 10000) // 10 second timeout
+
+    return () => clearTimeout(timeout)
+  }, [loading])
 
   if (loading) {
     return (
