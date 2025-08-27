@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { supabase } from '../../lib/supabase-client'
 
 export default function SimpleLogin() {
   const [email, setEmail] = useState('')
@@ -14,13 +15,7 @@ export default function SimpleLogin() {
       setLoading(true)
       setMessage('')
       
-      // Create Supabase client directly with hardcoded values
-      const { createClient } = await import('@supabase/supabase-js')
-      
-      const supabase = createClient(
-        'https://kmpdmofcqdfqwcsvrwvv.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImttcGRtb2ZjcWRmcXdjc3Zyd3Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MTkzMTksImV4cCI6MjA3MTI5NTMxOX0.tXuEepbVcmF3zMnayfYAHJ12o24auRosK02s-p6RnBs'
-      )
+      // Use centralized supabase client
       
       console.log('[SIMPLE-LOGIN] Attempting login with:', email)
       
