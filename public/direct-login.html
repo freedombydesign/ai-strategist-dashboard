@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Login - AI Strategist</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(to bottom right, #e6f3ff, #f3e8ff);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        button {
+            width: 100%;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .success {
+            background: #dcfce7;
+            color: #16a34a;
+            border: 1px solid #86efac;
+        }
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .back-link a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Direct Login</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            Pure HTML login - no framework conflicts
+        </p>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" required placeholder="Enter your email">
+            </div>
+            
+            <button type="submit" id="submitBtn">
+                ✨ Send Magic Link
+            </button>
+        </form>
+        
+        <div id="message"></div>
+        
+        <div class="back-link">
+            <a href="/">← Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        console.log('[DIRECT-LOGIN] Initializing direct login page');
+        
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(
+            'https://kmpdmofcqdfqwcsvrwvv.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImttcGRtb2ZjcWRmcXdjc3Zyd3Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MTkzMTksImV4cCI6MjA3MTI5NTMxOX0.tXuEepbVcmF3zMnayfYAHJ12o24auRosK02s-p6RnBs'
+        );
+        
+        console.log('[DIRECT-LOGIN] Supabase client created:', !!supabase);
+        
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('message');
+            
+            console.log('[DIRECT-LOGIN] Attempting login for:', email);
+            
+            // Update UI to loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span>Sending Magic Link...';
+            messageDiv.innerHTML = '';
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithOtp({
+                    email: email,
+                    options: {
+                        emailRedirectTo: `${window.location.origin}/dashboard`
+                    }
+                });
+                
+                console.log('[DIRECT-LOGIN] Login result:', { data, error });
+                
+                if (error) {
+                    console.error('[DIRECT-LOGIN] Auth error:', error);
+                    messageDiv.innerHTML = `<div class="message error">❌ Error: ${error.message}</div>`;
+                } else {
+                    console.log('[DIRECT-LOGIN] Magic link sent successfully');
+                    messageDiv.innerHTML = `<div class="message success">✅ Magic link sent to ${email}!<br><br>Check your email and click the link to login.</div>`;
+                }
+            } catch (err) {
+                console.error('[DIRECT-LOGIN] Exception:', err);
+                messageDiv.innerHTML = `<div class="message error">❌ Exception: ${err.message}</div>`;
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '✨ Send Magic Link';
+            }
+        });
+        
+        console.log('[DIRECT-LOGIN] Event listeners attached');
+    </script>
+</body>
+</html>
