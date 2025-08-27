@@ -151,7 +151,6 @@ export default function FreedomScoreDiagnostic() {
   }
 
   return (
-    <ProtectedRoute>
       <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6">Freedom Score™ Diagnostic</h2>
       <p className="text-gray-600 mb-8">
@@ -298,7 +297,6 @@ export default function FreedomScoreDiagnostic() {
         />
       )}
       </div>
-    </ProtectedRoute>
   )
 }
 

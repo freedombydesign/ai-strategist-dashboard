@@ -1,6 +1,5 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '../../../lib/supabase-client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,8 +22,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${requestUrl.origin}/login?error=auth_error&message=${errorDescription || 'Authentication failed'}`)
     }
     
-    const cookieStore = await cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    // Using centralized supabase client
 
     if (code) {
       console.log('[AUTH-CALLBACK] Processing auth callback with code')
