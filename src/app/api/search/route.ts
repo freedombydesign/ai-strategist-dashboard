@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// OpenAI client will be initialized inside the POST function
 
 export async function POST(request: NextRequest) {
   try {
@@ -160,6 +158,24 @@ export async function POST(request: NextRequest) {
     const searchContext = hasSearchData 
       ? `Search Results from ${searchSource}:\n\n${searchResults.map(r => `Title: ${r.title}\nURL: ${r.url}\nDescription: ${r.description}\n`).join('\n')}`
       : 'No current search results available. Responding with general knowledge only.';
+
+    // Initialize OpenAI client
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OpenAI API key not configured');
+      return NextResponse.json({ 
+        success: true,
+        query,
+        aiResponse: "Search completed but AI analysis unavailable due to configuration.",
+        searchResults,
+        hasLiveData: hasSearchData,
+        searchSource: searchSource || 'none',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",

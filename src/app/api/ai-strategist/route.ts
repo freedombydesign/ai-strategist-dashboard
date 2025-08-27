@@ -4,9 +4,7 @@ import OpenAI from 'openai'
 import { supabase } from '../../../lib/supabase'
 import { getFrameworkContext } from '../../../lib/strategicFrameworks'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
+// OpenAI client will be initialized inside the POST function
 
 // Add type definitions
 interface ConversationHistory {
@@ -315,6 +313,11 @@ export async function POST(request: NextRequest) {
       console.error('[AI-STRATEGIST] OpenAI API key not found')
       return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
     }
+
+    // Initialize OpenAI client after confirming API key exists
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    })
 
     // Explicitly type the history array
     let history: ConversationHistory[] = []
