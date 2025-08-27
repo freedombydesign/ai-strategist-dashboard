@@ -3,7 +3,7 @@ import { OpenAI } from 'openai';
 import { writeFile, unlink } from 'fs/promises';
 import path from 'path';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// OpenAI client will be initialized inside the POST function
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,6 +21,13 @@ export async function POST(request: NextRequest) {
     // Save temporarily
     const tempPath = path.join('/tmp', `audio-${Date.now()}.webm`);
     await writeFile(tempPath, buffer);
+
+    // Initialize OpenAI client
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
+    }
+    
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     // Transcribe with OpenAI
     const transcription = await openai.audio.transcriptions.create({

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// OpenAI client will be initialized inside the POST function
 
 interface PersonalityConfig {
   prompt: string;
@@ -88,6 +88,13 @@ INSTRUCTIONS:
 - End with 1-2 practical next steps when appropriate
 
 Focus on helping them gain freedom from their business operations.`;
+
+    // Initialize OpenAI client
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
+    }
+    
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     // Call OpenAI
     const completion = await openai.chat.completions.create({
