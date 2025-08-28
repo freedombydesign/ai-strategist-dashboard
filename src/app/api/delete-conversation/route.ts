@@ -14,15 +14,35 @@ export async function DELETE(request: NextRequest) {
     console.log('[DELETE-CONVERSATION] Deleting conversation:', sessionId, 'for user:', userId)
 
     // Delete all conversation entries for this session
-    const { error } = await supabase
+    // Try multiple approaches since session storage may vary
+    const { data: conversations, error: fetchError } = await supabase
       .from('ai_conversations')
-      .delete()
-      .eq('user_id', sessionId) // sessionId is stored as user_id for conversation threads
-      .or(`user_id.eq.${userId}`) // Also delete any entries with the original user ID
+      .select('id, user_id, created_at')
+      .or(`user_id.eq.${sessionId},user_id.eq.${userId}`)
+      .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('[DELETE-CONVERSATION] Database error:', error)
-      return NextResponse.json({ error: 'Failed to delete conversation' }, { status: 500 })
+    console.log('[DELETE-CONVERSATION] Found conversations:', conversations?.length || 0)
+
+    if (fetchError) {
+      console.error('[DELETE-CONVERSATION] Fetch error:', fetchError)
+      return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 })
+    }
+
+    if (conversations && conversations.length > 0) {
+      const conversationIds = conversations.map(c => c.id)
+      console.log('[DELETE-CONVERSATION] Deleting conversation IDs:', conversationIds)
+      
+      const { error: deleteError } = await supabase
+        .from('ai_conversations')
+        .delete()
+        .in('id', conversationIds)
+
+      if (deleteError) {
+        console.error('[DELETE-CONVERSATION] Delete error:', deleteError)
+        return NextResponse.json({ error: 'Failed to delete conversations' }, { status: 500 })
+      }
+    } else {
+      console.log('[DELETE-CONVERSATION] No conversations found to delete')
     }
 
     console.log('[DELETE-CONVERSATION] Successfully deleted conversation')

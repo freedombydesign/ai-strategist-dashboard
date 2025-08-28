@@ -152,11 +152,34 @@ export default function FreedomScoreDiagnostic() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">Freedom Score™ Diagnostic</h2>
-      <p className="text-gray-600 mb-8">
-        Rate each statement from 1-10, where 1 = "not true at all" and 10 = "completely true/optimized"
-      </p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-4xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Freedom Score™ Diagnostic</h1>
+                <p className="text-sm text-gray-600">Rate each statement from 1-10</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  ← Return to Dashboard
+                </Link>
+                {user?.email && (
+                  <span className="text-sm text-gray-500">{user.email}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto p-6">
+          <p className="text-gray-600 mb-8">
+            Rate each statement from 1-10, where 1 = "not true at all" and 10 = "completely true/optimized"
+          </p>
 
       {/* Progress indicator */}
       <div className="mb-8">
@@ -297,6 +320,7 @@ export default function FreedomScoreDiagnostic() {
           userId={user.id}
         />
       )}
+        </div>
       </div>
     </ProtectedRoute>
   )

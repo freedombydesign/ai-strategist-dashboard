@@ -375,6 +375,11 @@ export default function Dashboard() {
               {freedomScore.recommendedOrder && (
                 <div className="bg-white rounded-lg shadow-sm border p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Sprint Sequence</h3>
+                  {console.log('[DASHBOARD] Rendering sprint sequence:', {
+                    has_recommended_order: !!freedomScore.recommendedOrder,
+                    order_length: freedomScore.recommendedOrder?.length,
+                    first_sprint: freedomScore.recommendedOrder?.[0]
+                  })}
                   <div className="space-y-3">
                     {freedomScore.recommendedOrder.slice(0, 3).map((sprint: any, index: number) => (
                       <div key={sprint.sprintKey} className="flex items-start">

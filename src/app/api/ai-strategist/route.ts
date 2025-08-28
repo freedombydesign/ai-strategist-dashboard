@@ -335,6 +335,11 @@ export async function POST(request: NextRequest) {
       user_id, 
       message: `"${message}"`, 
       freedom_score: !!freedom_score,
+      freedom_score_details: freedom_score ? {
+        percent: freedom_score.percent,
+        totalScore: freedom_score.totalScore,
+        hasRecommendedOrder: !!freedom_score.recommendedOrder
+      } : null,
       personality,
       detectedLanguage,
       is_fresh_start: is_fresh_start, 
@@ -531,7 +536,12 @@ export async function POST(request: NextRequest) {
         console.error('[AI-STRATEGIST] Error fetching business context:', contextError);
       } else if (contextData) {
         businessContext = contextData;
-        console.log('[AI-STRATEGIST] Business context loaded:', contextData.business_name);
+        console.log('[AI-STRATEGIST] Business context loaded:', {
+          business_name: contextData.business_name,
+          industry: contextData.industry,
+          revenue: contextData.current_revenue,
+          has_goals: !!contextData.primary_goal
+        });
       } else {
         console.log('[AI-STRATEGIST] No business context found for user');
       }

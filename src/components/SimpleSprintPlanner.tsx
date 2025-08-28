@@ -76,7 +76,19 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
   }
 
   const getRecommendedSprints = (): SimpleSprint[] => {
+    console.log('[SIMPLE-SPRINT] Getting recommended sprints:', {
+      has_freedom_score: !!freedomScore,
+      has_recommended_order: !!freedomScore?.recommendedOrder,
+      recommended_order_length: freedomScore?.recommendedOrder?.length || 0,
+      sprints_length: sprints.length,
+      freedom_score_details: freedomScore ? {
+        percent: freedomScore.percent,
+        recommended_order_sample: freedomScore.recommendedOrder?.slice(0, 1)
+      } : null
+    });
+    
     if (!freedomScore?.recommendedOrder || sprints.length === 0) {
+      console.log('[SIMPLE-SPRINT] Using fallback: first 3 sprints');
       // Return first 3 sprints as fallback
       return sprints.slice(0, 3)
     }
