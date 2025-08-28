@@ -15,13 +15,18 @@ export async function DELETE(request: NextRequest) {
 
     // Delete all conversation entries for this session
     // Try multiple approaches since session storage may vary
+    console.log('[DELETE-CONVERSATION] Searching for conversations with sessionId:', sessionId, 'or userId:', userId)
+    
     const { data: conversations, error: fetchError } = await supabase
       .from('ai_conversations')
-      .select('id, user_id, created_at')
+      .select('id, user_id, created_at, message, response')
       .or(`user_id.eq.${sessionId},user_id.eq.${userId}`)
       .order('created_at', { ascending: false })
 
     console.log('[DELETE-CONVERSATION] Found conversations:', conversations?.length || 0)
+    if (conversations && conversations.length > 0) {
+      console.log('[DELETE-CONVERSATION] Sample conversation user_ids:', conversations.slice(0, 3).map(c => c.user_id))
+    }
 
     if (fetchError) {
       console.error('[DELETE-CONVERSATION] Fetch error:', fetchError)

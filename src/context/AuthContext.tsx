@@ -78,43 +78,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [isClient])
 
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  
   const signOut = async () => {
+    // Prevent multiple simultaneous sign out attempts
+    if (isSigningOut) {
+      console.log('[AUTH-CONTEXT] Sign out already in progress, ignoring duplicate call')
+      return
+    }
+    
     try {
-      console.log('[AUTH-CONTEXT] Signing out user')
+      setIsSigningOut(true)
+      console.log('[AUTH-CONTEXT] Starting sign out process')
       
-      // Clear local storage first
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('lastFreedomScore')
-        localStorage.removeItem('scoreCompletedAt')
-        // Clear any other user-specific data
-        Object.keys(localStorage).forEach(key => {
-          if (key.includes('user_name_') || key.includes('chat_history_') || key.includes('started_sprints_')) {
-            localStorage.removeItem(key)
-          }
-        })
-        console.log('[AUTH-CONTEXT] Local storage cleared')
-      }
-
-      // Sign out from Supabase
+      // Sign out from Supabase first
+      console.log('[AUTH-CONTEXT] Calling Supabase signOut...')
       const { error } = await supabase.auth.signOut()
       if (error) {
-        console.error('[AUTH-CONTEXT] Sign out error:', error)
-        throw error
-      } 
+        console.error('[AUTH-CONTEXT] Supabase sign out error:', error)
+        // Continue with cleanup anyway
+      } else {
+        console.log('[AUTH-CONTEXT] Supabase sign out successful')
+      }
       
-      console.log('[AUTH-CONTEXT] Supabase sign out successful')
-      
-      // Force reload to clear all state
+      // Clear local storage
       if (typeof window !== 'undefined') {
-        console.log('[AUTH-CONTEXT] Forcing page reload and redirect')
-        window.location.replace('/')
+        console.log('[AUTH-CONTEXT] Clearing localStorage...')
+        try {
+          localStorage.removeItem('lastFreedomScore')
+          localStorage.removeItem('scoreCompletedAt')
+          localStorage.removeItem('chatSessions')
+          // Clear any other user-specific data
+          Object.keys(localStorage).forEach(key => {
+            if (key.includes('user_name_') || key.includes('chat_history_') || key.includes('started_sprints_') || key.includes('chat_session_')) {
+              localStorage.removeItem(key)
+            }
+          })
+          console.log('[AUTH-CONTEXT] Local storage cleared')
+        } catch (storageError) {
+          console.error('[AUTH-CONTEXT] Error clearing localStorage:', storageError)
+        }
+        
+        // Force redirect
+        console.log('[AUTH-CONTEXT] Redirecting to home page')
+        window.location.href = '/'
       }
     } catch (error) {
-      console.error('[AUTH-CONTEXT] Sign out failed:', error)
+      console.error('[AUTH-CONTEXT] Sign out process failed:', error)
       // Force redirect anyway
       if (typeof window !== 'undefined') {
-        window.location.replace('/')
+        window.location.href = '/'
       }
+    } finally {
+      setIsSigningOut(false)
     }
   }
 

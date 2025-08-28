@@ -116,6 +116,50 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     }, 100);
   };
 
+  const clearAllConversations = async () => {
+    if (!confirm('Are you sure you want to delete ALL conversation history? This cannot be undone.')) {
+      return;
+    }
+
+    console.log('[CHAT] Clearing all conversations for user:', userId);
+    
+    try {
+      // Clear from database
+      const response = await fetch(`/api/clear-all-conversations?userId=${encodeURIComponent(userId)}`, {
+        method: 'DELETE'
+      });
+      
+      const result = await response.json();
+      console.log('[CHAT] Clear all response:', result);
+      
+      if (response.ok) {
+        console.log('[CHAT] Successfully cleared all conversations from database');
+        
+        // Clear all local storage
+        setChatSessions([]);
+        setMessages([]);
+        setSessionId('default');
+        localStorage.removeItem('chatSessions');
+        localStorage.removeItem(`chat_history_${userId}`);
+        
+        // Clear any session-specific localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('chat_session_') || key.includes('chat_history_')) {
+            localStorage.removeItem(key);
+          }
+        });
+        
+        console.log('[CHAT] All conversations cleared successfully');
+      } else {
+        console.error('[CHAT] Failed to clear conversations:', result);
+        alert('Failed to clear all conversations. Please try again.');
+      }
+    } catch (error) {
+      console.error('[CHAT] Error clearing all conversations:', error);
+      alert('Error clearing conversations. Please try again.');
+    }
+  };
+
   const loadSession = (session: ChatSession) => {
     saveCurrentSession(); // Save current before switching
     setSessionId(session.id);
@@ -839,6 +883,15 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
             >
               <Plus size={16} />
               New Chat
+            </button>
+            
+            <button
+              onClick={clearAllConversations}
+              className="w-full flex items-center justify-center gap-2 p-2 mt-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
+              title="Clear all conversation history"
+            >
+              <Trash2 size={14} />
+              Clear All History
             </button>
           </div>
           
