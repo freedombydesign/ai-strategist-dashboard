@@ -232,9 +232,15 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       
       // Load user name from localStorage first for immediate display
       const localUserName = localStorage.getItem(`user_name_${userId}`);
-      if (localUserName) {
+      if (localUserName && localUserName !== 'drowning' && localUserName.length > 1) {
         console.log(`[CHAT] Found local user name: ${localUserName}`);
         setUserName(localUserName);
+      } else {
+        console.log(`[CHAT] Invalid or missing local user name, will fetch from server`);
+        // Clear bad name from localStorage
+        if (localUserName === 'drowning') {
+          localStorage.removeItem(`user_name_${userId}`);
+        }
       }
 
       // Load saved chat sessions

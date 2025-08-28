@@ -43,6 +43,7 @@ interface BusinessContextData {
 interface BusinessContextOnboardingProps {
   onComplete: (data: BusinessContextData) => void
   onSkip: () => void
+  existingData?: BusinessContextData
 }
 
 const BOTTLENECK_OPTIONS = [
@@ -58,11 +59,11 @@ const BOTTLENECK_OPTIONS = [
   'Strategic planning & direction'
 ]
 
-export default function BusinessContextOnboarding({ onComplete, onSkip }: BusinessContextOnboardingProps) {
+export default function BusinessContextOnboarding({ onComplete, onSkip, existingData }: BusinessContextOnboardingProps) {
   const { user } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState<BusinessContextData>({
+  const [formData, setFormData] = useState<BusinessContextData>(existingData || {
     businessName: '',
     businessModel: 'B2B',
     revenueModel: '',

@@ -87,6 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
     
+    console.log('[AUTH-CONTEXT] Starting sign out sequence')
+    
     try {
       setIsSigningOut(true)
       console.log('[AUTH-CONTEXT] Starting sign out process')

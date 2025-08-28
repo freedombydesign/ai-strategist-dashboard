@@ -84,6 +84,11 @@ export default function Dashboard() {
   const handleRetakeBusinessContext = () => {
     setShowBusinessOnboarding(true)
   }
+  
+  const handleUpdateBusinessContext = () => {
+    // Show onboarding with existing data pre-populated
+    setShowBusinessOnboarding(true)
+  }
 
   const fetchDebugInfo = async () => {
     try {
@@ -212,6 +217,7 @@ export default function Dashboard() {
           <BusinessContextOnboarding 
             onComplete={handleBusinessContextComplete}
             onSkip={handleSkipBusinessContext}
+            existingData={businessContext}
           />
         </div>
       </ProtectedRoute>

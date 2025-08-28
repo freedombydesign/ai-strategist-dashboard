@@ -721,6 +721,7 @@ export async function POST(request: NextRequest) {
       .replace(/^\[Lang:[^\]]+,Personality:[^\]]+\]\s*/, '') // Remove language/personality metadata
       .replace(/^\[Lang:[^\]]+\]\s*/, '') // Remove language-only metadata
       .replace(/^\[I responded in [^\]]+\]\s*/, '') // Remove translation memory tags
+      .replace(/^\[[^\]]+\]\s*/, '') // Remove any other bracket tags
       .trim();
     
     console.log('[AI-STRATEGIST] Raw bot reply:', rawBotReply?.substring(0, 100) + '...');

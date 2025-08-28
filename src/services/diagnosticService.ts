@@ -74,13 +74,19 @@ export const diagnosticService = {
       // Calculate the score using our new algorithm
       const scoreResult = scoreAndRecommend(answers);
 
-      // Save the raw responses to the database
+      // Save the raw responses to the database  
+      // Try the simple approach first - just store the essential data
       const { data: responseData, error: saveError } = await supabase
         .from('freedom_responses')
         .insert({
           user_id: userId,
-          responses: answers,  // Store answers as JSON
-          scoreResult: scoreResult  // Also store the calculated result
+          // Store answers as individual columns for now to avoid schema issues
+          M1_Q1: answers.M1_Q1, M1_Q2: answers.M1_Q2,
+          M2_Q1: answers.M2_Q1, M2_Q2: answers.M2_Q2,
+          M3_Q1: answers.M3_Q1, M3_Q2: answers.M3_Q2,
+          M4_Q1: answers.M4_Q1, M4_Q2: answers.M4_Q2,
+          M5_Q1: answers.M5_Q1, M5_Q2: answers.M5_Q2,
+          M6_Q1: answers.M6_Q1, M6_Q2: answers.M6_Q2
         })
         .select()
         .single();
@@ -114,12 +120,19 @@ export const diagnosticService = {
 
       if (error) throw error
       
-      // Transform the data - use stored scoreResult if available, otherwise recalculate
+      // Transform the data and recalculate scores
       return (data || []).map(row => ({
         id: row.id,
         user_id: row.user_id,
         created_at: row.created_at,
-        scoreResult: row.scoreResult || scoreAndRecommend(row.responses || {})
+        scoreResult: scoreAndRecommend({
+          M1_Q1: row.M1_Q1, M1_Q2: row.M1_Q2,
+          M2_Q1: row.M2_Q1, M2_Q2: row.M2_Q2,
+          M3_Q1: row.M3_Q1, M3_Q2: row.M3_Q2,
+          M4_Q1: row.M4_Q1, M4_Q2: row.M4_Q2,
+          M5_Q1: row.M5_Q1, M5_Q2: row.M5_Q2,
+          M6_Q1: row.M6_Q1, M6_Q2: row.M6_Q2
+        })
       }));
 
     } catch (error) {
