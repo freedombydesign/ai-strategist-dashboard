@@ -5,62 +5,62 @@ const DIAGNOSTIC_QUESTIONS = [
   {
     order_index: 1,
     category: 'M1',
-    question_text: 'How clear is your unique value proposition to potential customers?'
+    question_text: 'I have a clear process for generating consistent leads'
   },
   {
     order_index: 2,
     category: 'M1', 
-    question_text: 'How well does your pricing reflect the value you deliver?'
+    question_text: 'I can take time off without my business collapsing'
   },
   {
     order_index: 3,
     category: 'M3',
-    question_text: 'How systematized are your core business processes?'
+    question_text: 'I have systems that help me efficiently qualify potential clients'
   },
   {
     order_index: 4,
     category: 'M3',
-    question_text: 'How effectively do you track and measure business performance?'
+    question_text: 'My team can handle most client requests without my involvement'
   },
   {
     order_index: 5,
     category: 'M2',
-    question_text: 'How smooth is your customer journey from awareness to purchase?'
+    question_text: 'I have a clear pricing strategy that feels good to me and clients'
   },
   {
     order_index: 6,
     category: 'M2',
-    question_text: 'How effective is your lead generation and nurturing process?'
+    question_text: 'I consistently hit my revenue targets with ease'
   },
   {
     order_index: 7,
     category: 'M4',
-    question_text: 'How consistent and predictable is your sales process?'
+    question_text: 'I have a documented process for onboarding new clients'
   },
   {
     order_index: 8,
     category: 'M4',
-    question_text: 'How well do you convert qualified leads into paying customers?'
+    question_text: 'I have clear systems for managing client expectations'
   },
   {
     order_index: 9,
     category: 'M6',
-    question_text: 'How regularly do you review and optimize your business processes?'
+    question_text: 'I regularly review and improve my business processes'
   },
   {
     order_index: 10,
     category: 'M5',
-    question_text: 'How efficiently do you deliver your product/service to customers?'
+    question_text: 'I can deliver quality work without being personally involved in every detail'
   },
   {
     order_index: 11,
     category: 'M5',
-    question_text: 'How satisfied are your customers with their overall experience?'
+    question_text: 'My clients are consistently satisfied with the value they receive'
   },
   {
     order_index: 12,
     category: 'M6',
-    question_text: 'How quickly do you identify and resolve business bottlenecks?'
+    question_text: 'I have processes in place for continuous improvement and growth'
   }
 ]
 

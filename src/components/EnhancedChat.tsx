@@ -338,15 +338,41 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     setShowFileUpload(false);
 
     try {
-      // Get Freedom Score from localStorage
+      // Get Freedom Score from localStorage first, then database fallback
       const storedScore = typeof window !== 'undefined' ? localStorage.getItem('lastFreedomScore') : null;
       let freedomScore = null;
       
       if (storedScore) {
         try {
           freedomScore = JSON.parse(storedScore);
+          console.log('[CHAT] Found Freedom Score in localStorage');
         } catch (error) {
           console.error('Error parsing stored score:', error);
+        }
+      }
+      
+      // If no localStorage score, try to fetch from database
+      if (!freedomScore) {
+        try {
+          console.log('[CHAT] No localStorage score, fetching from database...');
+          const diagnosticService = await import('../services/diagnosticService');
+          const userResponses = await diagnosticService.diagnosticService.getUserResponses(userId);
+          
+          if (userResponses.length > 0) {
+            const mostRecent = userResponses[0];
+            freedomScore = mostRecent.scoreResult;
+            console.log('[CHAT] Found Freedom Score in database:', freedomScore.percent + '%');
+            
+            // Save to localStorage for future use
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lastFreedomScore', JSON.stringify(freedomScore));
+              localStorage.setItem('scoreCompletedAt', mostRecent.created_at);
+            }
+          } else {
+            console.log('[CHAT] No Freedom Score found in database or localStorage');
+          }
+        } catch (dbError) {
+          console.error('[CHAT] Error fetching Freedom Score from database:', dbError);
         }
       }
 
@@ -559,7 +585,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       setIsLoading(true);
       
       try {
-        // Get Freedom Score from localStorage
+        // Get Freedom Score from localStorage first, then database fallback
         const storedScore = typeof window !== 'undefined' ? localStorage.getItem('lastFreedomScore') : null;
         let freedomScore = null;
         
@@ -568,6 +594,27 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
             freedomScore = JSON.parse(storedScore);
           } catch (error) {
             console.error('Error parsing stored score:', error);
+          }
+        }
+        
+        // If no localStorage score, try to fetch from database
+        if (!freedomScore) {
+          try {
+            const diagnosticService = await import('../services/diagnosticService');
+            const userResponses = await diagnosticService.diagnosticService.getUserResponses(userId);
+            
+            if (userResponses.length > 0) {
+              const mostRecent = userResponses[0];
+              freedomScore = mostRecent.scoreResult;
+              
+              // Save to localStorage for future use
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('lastFreedomScore', JSON.stringify(freedomScore));
+                localStorage.setItem('scoreCompletedAt', mostRecent.created_at);
+              }
+            }
+          } catch (dbError) {
+            console.error('[EDIT] Error fetching Freedom Score from database:', dbError);
           }
         }
 
@@ -659,6 +706,27 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
           freedomScore = JSON.parse(storedScore);
         } catch (error) {
           console.error('Error parsing stored score:', error);
+        }
+      }
+      
+      // If no localStorage score, try to fetch from database
+      if (!freedomScore) {
+        try {
+          const diagnosticService = await import('../services/diagnosticService');
+          const userResponses = await diagnosticService.diagnosticService.getUserResponses(userId);
+          
+          if (userResponses.length > 0) {
+            const mostRecent = userResponses[0];
+            freedomScore = mostRecent.scoreResult;
+            
+            // Save to localStorage for future use
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lastFreedomScore', JSON.stringify(freedomScore));
+              localStorage.setItem('scoreCompletedAt', mostRecent.created_at);
+            }
+          }
+        } catch (dbError) {
+          console.error('[DOC-GEN] Error fetching Freedom Score from database:', dbError);
         }
       }
 
