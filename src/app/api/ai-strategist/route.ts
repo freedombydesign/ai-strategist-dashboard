@@ -132,6 +132,27 @@ ${topGuidance.title}: ${topGuidance.content.substring(0, 200)}...`;
 ${frameworkContext.contextualInsights.slice(0, 2).join('\n')}`;
     }
     
+    // Build business context for personalization
+    let businessContextStr = '';
+    if (businessContext) {
+      const ctx = businessContext;
+      businessContextStr = `\n\nBUSINESS CONTEXT - ${ctx.business_name || 'User\'s Business'}:
+INDUSTRY: ${ctx.industry}
+BUSINESS MODEL: ${ctx.business_model} 
+REVENUE: ${ctx.current_revenue}
+TEAM SIZE: ${ctx.team_size}
+GROWTH STAGE: ${ctx.growth_stage}
+TARGET MARKET: ${ctx.target_market}
+UNIQUE VALUE PROP: ${ctx.unique_value_proposition}
+TOP BOTTLENECKS: ${ctx.top_bottlenecks?.join(', ')}
+BIGGEST CHALLENGE: ${ctx.biggest_challenge}
+PRIMARY GOAL: ${ctx.primary_goal}
+TIMEFRAME: ${ctx.timeframe}
+WEBSITE: ${ctx.website_url}
+
+USE THIS CONTEXT: Reference their specific business situation, industry, and challenges in your responses. Don't ask basic questions you already know the answers to.`;
+    }
+    
     return `You're Ruth's AI strategist. ${nameUsage}
 
 CONVERSATION RULES:

@@ -125,8 +125,29 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     setShowFileUpload(false);
   };
 
-  const deleteSession = (sessionId: string, e: React.MouseEvent) => {
+  const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    console.log('[CHAT] Deleting session:', sessionId);
+    
+    try {
+      // Delete from database
+      const response = await fetch(`/api/delete-conversation?sessionId=${encodeURIComponent(sessionId)}&userId=${encodeURIComponent(userId)}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        console.error('[CHAT] Failed to delete conversation from database:', response.status);
+        // Continue with local deletion even if database deletion fails
+      } else {
+        console.log('[CHAT] Successfully deleted conversation from database');
+      }
+    } catch (error) {
+      console.error('[CHAT] Error deleting conversation from database:', error);
+      // Continue with local deletion even if database deletion fails
+    }
+    
+    // Delete from localStorage
     setChatSessions(prev => {
       const updated = prev.filter(s => s.id !== sessionId);
       localStorage.setItem('chatSessions', JSON.stringify(updated));

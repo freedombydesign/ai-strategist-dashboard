@@ -18,6 +18,8 @@ export default function Dashboard() {
   const [businessContext, setBusinessContext] = useState<any>(null)
   const [showBusinessOnboarding, setShowBusinessOnboarding] = useState(false)
   const [contextLoading, setContextLoading] = useState(true)
+  const [showDebugInfo, setShowDebugInfo] = useState(false)
+  const [debugData, setDebugData] = useState<any>(null)
 
   // Hydration effect
   useEffect(() => {
@@ -77,6 +79,27 @@ export default function Dashboard() {
   const handleSkipBusinessContext = () => {
     setShowBusinessOnboarding(false)
     setContextLoading(false)
+  }
+
+  const handleRetakeBusinessContext = () => {
+    setShowBusinessOnboarding(true)
+  }
+
+  const fetchDebugInfo = async () => {
+    try {
+      const response = await fetch(`/api/debug-user-data?userId=${user?.id}`)
+      const result = await response.json()
+      setDebugData(result)
+      setShowDebugInfo(true)
+      
+      // Also log localStorage for debugging
+      if (typeof window !== 'undefined') {
+        console.log('[DEBUG] localStorage lastFreedomScore:', localStorage.getItem('lastFreedomScore'))
+        console.log('[DEBUG] localStorage scoreCompletedAt:', localStorage.getItem('scoreCompletedAt'))
+      }
+    } catch (error) {
+      console.error('[DEBUG] Error fetching debug info:', error)
+    }
   }
 
   const loadUserDiagnosticData = async () => {
@@ -316,8 +339,17 @@ export default function Dashboard() {
                     <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    Retake Assessment
+                    Retake Freedom Score
                   </Link>
+                  <button
+                    onClick={handleRetakeBusinessContext}
+                    className="flex items-center text-gray-600 hover:text-gray-900 w-full text-left"
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Update Business Profile
+                  </button>
                   <Link
                     href="/ai-strategist"
                     className="flex items-center text-gray-600 hover:text-gray-900"
@@ -325,8 +357,17 @@ export default function Dashboard() {
                     <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Ask Questions
+                    Ask AI Strategist
                   </Link>
+                  <button
+                    onClick={fetchDebugInfo}
+                    className="flex items-center text-red-600 hover:text-red-900 w-full text-left text-sm"
+                  >
+                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Debug AI Data Access
+                  </button>
                 </div>
               </div>
 
@@ -378,6 +419,91 @@ export default function Dashboard() {
         )}
       </div>
       </div>
+
+      {/* Debug Info Modal */}
+      {showDebugInfo && debugData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Debug Information</h3>
+              <button
+                onClick={() => setShowDebugInfo(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">User ID</h4>
+                <p className="text-sm text-gray-600 font-mono">{debugData.userId}</p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Business Context</h4>
+                <div className="bg-gray-50 p-3 rounded text-sm">
+                  <p>Found: {debugData.data?.businessContext?.found ? '✅ Yes' : '❌ No'}</p>
+                  {debugData.data?.businessContext?.error && (
+                    <p className="text-red-600">Error: {debugData.data.businessContext.error}</p>
+                  )}
+                  {debugData.data?.businessContext?.data && (
+                    <div className="mt-2">
+                      <p>Business Name: {debugData.data.businessContext.data.business_name}</p>
+                      <p>Created: {new Date(debugData.data.businessContext.data.created_at).toLocaleString()}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Freedom Score Responses</h4>
+                <div className="bg-gray-50 p-3 rounded text-sm">
+                  <p>Found: {debugData.data?.freedomResponses?.found ? '✅ Yes' : '❌ No'}</p>
+                  <p>Count: {debugData.data?.freedomResponses?.count || 0}</p>
+                  {debugData.data?.freedomResponses?.latestScore && (
+                    <div className="mt-2">
+                      <p>Latest ID: {debugData.data.freedomResponses.latestScore.id}</p>
+                      <p>Created: {new Date(debugData.data.freedomResponses.latestScore.created_at).toLocaleString()}</p>
+                      <p>Has Score Result: {debugData.data.freedomResponses.latestScore.hasScoreResult ? '✅ Yes' : '❌ No'}</p>
+                    </div>
+                  )}
+                  {debugData.data?.freedomResponses?.error && (
+                    <p className="text-red-600">Error: {debugData.data.freedomResponses.error}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">AI Conversations</h4>
+                <div className="bg-gray-50 p-3 rounded text-sm">
+                  <p>Found: {debugData.data?.conversations?.found ? '✅ Yes' : '❌ No'}</p>
+                  <p>Count: {debugData.data?.conversations?.count || 0}</p>
+                  {debugData.data?.conversations?.latest && (
+                    <div className="mt-2">
+                      <p>Latest ID: {debugData.data.conversations.latest.id}</p>
+                      <p>Created: {new Date(debugData.data.conversations.latest.created_at).toLocaleString()}</p>
+                      <p>Preview: {debugData.data.conversations.latest.message_preview}...</p>
+                    </div>
+                  )}
+                  {debugData.data?.conversations?.error && (
+                    <p className="text-red-600">Error: {debugData.data.conversations.error}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">LocalStorage Check</h4>
+                <div className="bg-gray-50 p-3 rounded text-sm">
+                  <p>Keys to check: {debugData.data?.localStorage_check?.keys_to_check?.join(', ')}</p>
+                  <p className="text-orange-600 mt-1">{debugData.data?.localStorage_check?.note}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </ProtectedRoute>
   )
 }
