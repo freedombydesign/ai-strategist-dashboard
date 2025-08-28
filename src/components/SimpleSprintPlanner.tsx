@@ -106,10 +106,20 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
     
     for (const recommendation of freedomScore.recommendedOrder.slice(0, 3)) {
       const sprintName = sprintMapping[recommendation.sprintKey]
+      console.log('[SIMPLE-SPRINT] Looking for sprint:', {
+        sprintKey: recommendation.sprintKey,
+        mappedName: sprintName,
+        title: recommendation.title
+      });
+      
       const sprint = sprints.find(s => s.name === sprintName)
       
       if (sprint) {
+        console.log('[SIMPLE-SPRINT] Found matching sprint:', sprint.name);
         recommendedSprints.push(sprint)
+      } else {
+        console.log('[SIMPLE-SPRINT] No matching sprint found for', sprintName);
+        console.log('[SIMPLE-SPRINT] Available sprint names:', sprints.map(s => s.name));
       }
     }
 

@@ -6,6 +6,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const user_id = searchParams.get('user_id');
 
+    console.log('[USER-PROFILE] GET request for user_id:', user_id);
+
     if (!user_id) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
@@ -17,8 +19,10 @@ export async function GET(request: NextRequest) {
       .eq('id', user_id)
       .single();
 
+    console.log('[USER-PROFILE] Supabase query result:', { profile: !!profile, error: error?.code });
+
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-      console.error('Supabase error:', error);
+      console.error('[USER-PROFILE] Supabase error:', error);
       return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 });
     }
 
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('User profile API error:', error);
+    console.error('[USER-PROFILE] API error:', error);
     return NextResponse.json({
       error: 'Failed to fetch user profile',
       details: error instanceof Error ? error.message : 'Unknown error'

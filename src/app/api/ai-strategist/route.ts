@@ -496,13 +496,26 @@ export async function POST(request: NextRequest) {
     
     console.log('[AI-STRATEGIST] Looking for user name, frontend provided:', user_name);
     
-    // If no frontend name, check current message for name introduction
+    // If no frontend name, check current message for name introduction (but be more selective)
     if (!userName) {
-      const currentNameMatch = message.match(/(?:i'm|i am|my name is|call me|name's)\s+([a-zA-Z]+)/i)
-      if (currentNameMatch) {
-        userName = currentNameMatch[1]
-        console.log('[AI-STRATEGIST] Found name in current message:', userName);
-        // Note: userName is now stored in database via frontend
+      // Only look for explicit name introductions, not casual mentions
+      const nameIntroPatterns = [
+        /(?:my name is|i am|i'm|call me|name's)\s+([A-Z][a-zA-Z]+)(?:\s|$|\.|\!|\?)/i,
+        /(?:hi|hello),?\s*(?:i'm|i am)\s+([A-Z][a-zA-Z]+)(?:\s|$|\.|\!|\?)/i
+      ];
+      
+      for (const pattern of nameIntroPatterns) {
+        const currentNameMatch = message.match(pattern);
+        if (currentNameMatch && currentNameMatch[1] && currentNameMatch[1].length > 1) {
+          const potentialName = currentNameMatch[1];
+          // Avoid common words that might be mistaken for names
+          const avoidWords = ['drowning', 'struggling', 'busy', 'tired', 'working', 'help', 'lost', 'stuck', 'confused'];
+          if (!avoidWords.includes(potentialName.toLowerCase())) {
+            userName = potentialName;
+            console.log('[AI-STRATEGIST] Found name in current message:', userName);
+            break;
+          }
+        }
       }
     }
     

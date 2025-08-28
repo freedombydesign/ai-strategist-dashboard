@@ -438,10 +438,19 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
           const diagnosticService = await import('../services/diagnosticService');
           const userResponses = await diagnosticService.diagnosticService.getUserResponses(userId);
           
+          console.log('[CHAT] Database query returned', userResponses.length, 'responses');
+          if (userResponses.length > 0) {
+            console.log('[CHAT] Most recent response:', userResponses[0]);
+          }
+          
           if (userResponses.length > 0) {
             const mostRecent = userResponses[0];
             freedomScore = mostRecent.scoreResult;
-            console.log('[CHAT] Found Freedom Score in database:', freedomScore.percent + '%');
+            console.log('[CHAT] Found Freedom Score in database:', {
+              percent: freedomScore?.percent,
+              totalScore: freedomScore?.totalScore,
+              hasRecommendedOrder: !!freedomScore?.recommendedOrder
+            });
             
             // Save to localStorage for future use
             if (typeof window !== 'undefined') {
