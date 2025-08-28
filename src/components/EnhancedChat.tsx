@@ -132,12 +132,16 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     
     try {
       // Delete from database
+      console.log('[CHAT] Attempting to delete session from database:', sessionId);
       const response = await fetch(`/api/delete-conversation?sessionId=${encodeURIComponent(sessionId)}&userId=${encodeURIComponent(userId)}`, {
         method: 'DELETE'
       });
       
+      const result = await response.json();
+      console.log('[CHAT] Delete response:', result);
+      
       if (!response.ok) {
-        console.error('[CHAT] Failed to delete conversation from database:', response.status);
+        console.error('[CHAT] Failed to delete conversation from database:', response.status, result);
         // Continue with local deletion even if database deletion fails
       } else {
         console.log('[CHAT] Successfully deleted conversation from database');
@@ -145,6 +149,17 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     } catch (error) {
       console.error('[CHAT] Error deleting conversation from database:', error);
       // Continue with local deletion even if database deletion fails
+    }
+    
+    // Also clear any localStorage conversation data for this session
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(`chat_session_${sessionId}`);
+        localStorage.removeItem(`chat_history_${sessionId}`);
+        console.log('[CHAT] Cleared localStorage for session:', sessionId);
+      } catch (error) {
+        console.error('[CHAT] Error clearing localStorage:', error);
+      }
     }
     
     // Delete from localStorage

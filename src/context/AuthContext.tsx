@@ -79,18 +79,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isClient])
 
   const signOut = async () => {
-    console.log('[AUTH-CONTEXT] Signing out user')
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      console.error('[AUTH-CONTEXT] Sign out error:', error)
-    } else {
-      console.log('[AUTH-CONTEXT] Sign out successful, redirecting to home')
-      // Clear any local storage
+    try {
+      console.log('[AUTH-CONTEXT] Signing out user')
+      
+      // Clear local storage first
       if (typeof window !== 'undefined') {
         localStorage.removeItem('lastFreedomScore')
         localStorage.removeItem('scoreCompletedAt')
-        // Redirect to home page
-        window.location.href = '/'
+        // Clear any other user-specific data
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('user_name_') || key.includes('chat_history_') || key.includes('started_sprints_')) {
+            localStorage.removeItem(key)
+          }
+        })
+        console.log('[AUTH-CONTEXT] Local storage cleared')
+      }
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('[AUTH-CONTEXT] Sign out error:', error)
+        throw error
+      } 
+      
+      console.log('[AUTH-CONTEXT] Supabase sign out successful')
+      
+      // Force reload to clear all state
+      if (typeof window !== 'undefined') {
+        console.log('[AUTH-CONTEXT] Forcing page reload and redirect')
+        window.location.replace('/')
+      }
+    } catch (error) {
+      console.error('[AUTH-CONTEXT] Sign out failed:', error)
+      // Force redirect anyway
+      if (typeof window !== 'undefined') {
+        window.location.replace('/')
       }
     }
   }

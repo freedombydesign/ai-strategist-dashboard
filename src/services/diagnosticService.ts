@@ -79,7 +79,8 @@ export const diagnosticService = {
         .from('freedom_responses')
         .insert({
           user_id: userId,
-          ...answers  // This spreads all the M1_Q1, M1_Q2, etc. values
+          responses: answers,  // Store answers as JSON
+          scoreResult: scoreResult  // Also store the calculated result
         })
         .select()
         .single();
@@ -113,19 +114,12 @@ export const diagnosticService = {
 
       if (error) throw error
       
-      // Transform the data and recalculate scores
+      // Transform the data - use stored scoreResult if available, otherwise recalculate
       return (data || []).map(row => ({
         id: row.id,
         user_id: row.user_id,
         created_at: row.created_at,
-        scoreResult: scoreAndRecommend({
-          M1_Q1: row.M1_Q1, M1_Q2: row.M1_Q2,
-          M2_Q1: row.M2_Q1, M2_Q2: row.M2_Q2,
-          M3_Q1: row.M3_Q1, M3_Q2: row.M3_Q2,
-          M4_Q1: row.M4_Q1, M4_Q2: row.M4_Q2,
-          M5_Q1: row.M5_Q1, M5_Q2: row.M5_Q2,
-          M6_Q1: row.M6_Q1, M6_Q2: row.M6_Q2
-        })
+        scoreResult: row.scoreResult || scoreAndRecommend(row.responses || {})
       }));
 
     } catch (error) {
