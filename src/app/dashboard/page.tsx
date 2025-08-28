@@ -7,6 +7,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import SimpleSprintPlanner from '@/components/SimpleSprintPlanner'
 import { diagnosticService } from '@/services/diagnosticService'
 import { LogOut } from 'lucide-react'
+import BusinessContextOnboarding from '@/components/BusinessContextOnboarding'
 
 export default function Dashboard() {
   const { user, signOut } = useAuth()
@@ -14,6 +15,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [businessContext, setBusinessContext] = useState<any>(null)
+  const [showBusinessOnboarding, setShowBusinessOnboarding] = useState(false)
+  const [contextLoading, setContextLoading] = useState(true)
 
   // Hydration effect
   useEffect(() => {
@@ -35,6 +39,44 @@ export default function Dashboard() {
     console.log('[DASHBOARD] Ready to load data for user:', user.id)
     loadUserDiagnosticData()
   }, [isHydrated, user])
+
+  // Check for business context
+  useEffect(() => {
+    if (!isHydrated || !user?.id) return
+    
+    checkBusinessContext()
+  }, [isHydrated, user])
+
+  const checkBusinessContext = async () => {
+    try {
+      setContextLoading(true)
+      const response = await fetch(`/api/business-context?userId=${user?.id}`)
+      const result = await response.json()
+      
+      if (result.success && result.data) {
+        setBusinessContext(result.data)
+        setShowBusinessOnboarding(false)
+      } else {
+        // No business context found, show onboarding
+        setShowBusinessOnboarding(true)
+      }
+    } catch (error) {
+      console.error('[DASHBOARD] Error checking business context:', error)
+    } finally {
+      setContextLoading(false)
+    }
+  }
+
+  const handleBusinessContextComplete = (data: any) => {
+    setBusinessContext(data)
+    setShowBusinessOnboarding(false)
+    console.log('[DASHBOARD] Business context completed:', data.businessName)
+  }
+
+  const handleSkipBusinessContext = () => {
+    setShowBusinessOnboarding(false)
+    setContextLoading(false)
+  }
 
   const loadUserDiagnosticData = async () => {
     try {
@@ -106,7 +148,7 @@ export default function Dashboard() {
     return () => clearTimeout(timeout)
   }, [loading, isHydrated, user])
 
-  if (loading) {
+  if (loading || contextLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -134,6 +176,20 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+    )
+  }
+
+  // Show business context onboarding if needed
+  if (showBusinessOnboarding) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50 py-8">
+          <BusinessContextOnboarding 
+            onComplete={handleBusinessContextComplete}
+            onSkip={handleSkipBusinessContext}
+          />
+        </div>
+      </ProtectedRoute>
     )
   }
 

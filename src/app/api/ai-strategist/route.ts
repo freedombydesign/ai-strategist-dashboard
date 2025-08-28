@@ -28,7 +28,7 @@ interface FreedomScore {
 
 // Removed generic conversation starters - AI should respond naturally to user input
 
-function generateSystemPrompt(userName: string | null, freedom_score: FreedomScore | null, personality = 'strategic', detectedLanguage = 'en', isNewUser = false, isFirstMessage = false, hasFileContext = false, searchContext?: string, frameworkContext?: any) {
+function generateSystemPrompt(userName: string | null, freedom_score: FreedomScore | null, personality = 'strategic', detectedLanguage = 'en', isNewUser = false, isFirstMessage = false, hasFileContext = false, searchContext?: string, frameworkContext?: any, businessContext?: any) {
   // Current date context
   const currentDate = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -170,7 +170,11 @@ LANGUAGE: The user is communicating in ${detectedLanguage === 'en' ? 'English' :
 
 TRANSLATION MEMORY: You have access to conversation history. If you see language tags like "[I responded in es-ES]" or "[User spoke in fr-FR]", use this to remember what language you used previously. When asked to translate something back to English or another language, look at your conversation history to see what you said before and translate that specific content.
 
-CRITICAL BALANCE: If the user has shared enough context about their problem, GIVE THEM SOLUTIONS. Only ask additional questions if you truly need more information to provide the best advice. When they say "can we come up with a plan now" or express frustration, shift immediately to solution mode.`
+CRITICAL BALANCE: If the user has shared enough context about their problem, GIVE THEM SOLUTIONS. Only ask additional questions if you truly need more information to provide the best advice. When they say "can we come up with a plan now" or express frustration, shift immediately to solution mode.
+
+${businessContextStr}
+${strategicGuidance}
+${contextualInsights}`
   }
 
   // For returning users without fresh start - let conversation flow naturally
@@ -187,6 +191,27 @@ ${topGuidance.title}: ${topGuidance.content.substring(0, 200)}...`;
   if (frameworkContext?.contextualInsights?.length > 0) {
     contextualInsights = `\n\nCONTEXTUAL INSIGHTS:
 ${frameworkContext.contextualInsights.slice(0, 2).join('\n')}`;
+  }
+
+  // Build business context for personalization
+  let businessContextStr = '';
+  if (businessContext) {
+    const ctx = businessContext;
+    businessContextStr = `\n\nBUSINESS CONTEXT - ${ctx.business_name || 'User\'s Business'}:
+INDUSTRY: ${ctx.industry}
+BUSINESS MODEL: ${ctx.business_model} 
+REVENUE: ${ctx.current_revenue}
+TEAM SIZE: ${ctx.team_size}
+GROWTH STAGE: ${ctx.growth_stage}
+TARGET MARKET: ${ctx.target_market}
+UNIQUE VALUE PROP: ${ctx.unique_value_proposition}
+TOP BOTTLENECKS: ${ctx.top_bottlenecks?.join(', ')}
+BIGGEST CHALLENGE: ${ctx.biggest_challenge}
+PRIMARY GOAL: ${ctx.primary_goal}
+TIMEFRAME: ${ctx.timeframe}
+WEBSITE: ${ctx.website_url}
+
+USE THIS CONTEXT: Reference their specific business situation, industry, and challenges in your responses. Don't ask basic questions you already know the answers to.`;
   }
   
   return `You're Ruth's AI strategist. ${nameUsage}
@@ -471,6 +496,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Fetch business context for personalization
+    let businessContext = null;
+    try {
+      console.log('[AI-STRATEGIST] Fetching business context...');
+      const { data: contextData, error: contextError } = await supabase
+        .from('business_context')
+        .select('*')
+        .eq('user_id', user_id)
+        .single();
+
+      if (contextError && contextError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('[AI-STRATEGIST] Error fetching business context:', contextError);
+      } else if (contextData) {
+        businessContext = contextData;
+        console.log('[AI-STRATEGIST] Business context loaded:', contextData.business_name);
+      } else {
+        console.log('[AI-STRATEGIST] No business context found for user');
+      }
+    } catch (error) {
+      console.error('[AI-STRATEGIST] Business context fetch error:', error);
+    }
+
     // Generate system prompt with enhanced context
     console.log('[AI-STRATEGIST] Final userName before system prompt:', userName);
     console.log('[AI-STRATEGIST] Generating system prompt...');
@@ -485,7 +532,8 @@ export async function POST(request: NextRequest) {
         isFirstMessage || is_fresh_start,
         hasFileContext,
         searchContext,
-        frameworkContext
+        frameworkContext,
+        businessContext
       );
       console.log('[AI-STRATEGIST] System prompt generated successfully');
     } catch (promptError) {
