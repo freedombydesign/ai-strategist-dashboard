@@ -31,8 +31,9 @@ export default function Dashboard() {
     }
     
     if (!user?.id) {
-      console.log('[DASHBOARD] No user found, stopping loading')
+      console.log('[DASHBOARD] No user found, ProtectedRoute will handle redirect')
       setLoading(false)
+      setContextLoading(false)
       return
     }
     
@@ -148,7 +149,8 @@ export default function Dashboard() {
     return () => clearTimeout(timeout)
   }, [loading, isHydrated, user])
 
-  if (loading || contextLoading) {
+  // Let ProtectedRoute handle authentication loading
+  if ((user && loading) || (user && contextLoading)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

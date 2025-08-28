@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     session,
-    loading: loading && isClient, // Only show loading on client after hydration
+    loading: loading || !isClient, // Keep loading true until client-side hydration
     signOut,
     getUserProfile,
   }
