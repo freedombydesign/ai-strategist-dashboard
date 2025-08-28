@@ -15,7 +15,7 @@
     },
     generateBuildId: async () => {
       // Force new build ID to invalidate all cached bundles
-      return `build-${Date.now()}`
+      return `production-clean-${Date.now()}`
     },
   }
 
