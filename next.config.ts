@@ -11,6 +11,11 @@
       // Override any Supabase env vars to prevent multiple client creation
       NEXT_PUBLIC_SUPABASE_URL: '',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: '',
+      BUILD_ID: Date.now().toString(),
+    },
+    generateBuildId: async () => {
+      // Force new build ID to invalidate all cached bundles
+      return `build-${Date.now()}`
     },
   }
 

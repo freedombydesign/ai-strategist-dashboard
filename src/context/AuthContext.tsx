@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 
     return () => subscription.unsubscribe()
-  }, [isClient, supabase.auth])
+  }, [isClient])
 
   const signOut = async () => {
     console.log('[AUTH-CONTEXT] Signing out user')
