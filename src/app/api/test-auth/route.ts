@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase.auth.signInWithOtp({
       email: email,
       options: {
-        emailRedirectTo: `${request.nextUrl.origin}/dashboard`
+        emailRedirectTo: `https://scalewithruth.com/dashboard`
       }
     })
 

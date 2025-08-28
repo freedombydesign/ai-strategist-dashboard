@@ -65,7 +65,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/dashboard' }: 
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: `https://scalewithruth.com/auth/callback`,
           },
         })
         
@@ -111,7 +111,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/dashboard' }: 
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `https://scalewithruth.com/auth/callback`,
         },
       })
       
@@ -137,7 +137,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/dashboard' }: 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `https://scalewithruth.com/auth/callback`,
         },
       })
       
