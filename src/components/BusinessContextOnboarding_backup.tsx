@@ -38,12 +38,6 @@ interface BusinessContextData {
   businessAge: string
   websiteUrl: string
   additionalContext: string
-  
-  // Enhanced Context Fields
-  currentWorkflow: string
-  biggestTimeWaster: string
-  perfectClientExperience: string
-  businessVision: string
 }
 
 interface BusinessContextOnboardingProps {
@@ -62,10 +56,7 @@ const BOTTLENECK_OPTIONS = [
   'Time management & overwhelm',
   'Cash flow & financial management',
   'Customer retention & growth',
-  'Strategic planning & direction',
-  'Quality control & consistency',
-  'Client communication & expectations',
-  'Workflow automation & efficiency'
+  'Strategic planning & direction'
 ]
 
 export default function BusinessContextOnboarding({ onComplete, onSkip, existingData }: BusinessContextOnboardingProps) {
@@ -98,11 +89,7 @@ export default function BusinessContextOnboarding({ onComplete, onSkip, existing
       industry: '',
       businessAge: '',
       websiteUrl: '',
-      additionalContext: '',
-      currentWorkflow: '',
-      biggestTimeWaster: '',
-      perfectClientExperience: '',
-      businessVision: ''
+      additionalContext: ''
     }
     
     if (!existingData) return defaultData
@@ -577,55 +564,6 @@ export default function BusinessContextOnboarding({ onComplete, onSkip, existing
                 <option value="18 months">18 months</option>
                 <option value="2+ years">2+ years</option>
               </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Describe your current workflow/process
-              </label>
-              <textarea
-                value={formData.currentWorkflow}
-                onChange={(e) => handleInputChange('currentWorkflow', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-24"
-                placeholder="How do you currently handle clients from first contact to project completion?"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                What's your biggest time waster?
-              </label>
-              <input
-                type="text"
-                value={formData.biggestTimeWaster}
-                onChange={(e) => handleInputChange('biggestTimeWaster', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., Manual invoicing, endless client revisions, administrative tasks..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                What would a perfect client experience look like?
-              </label>
-              <textarea
-                value={formData.perfectClientExperience}
-                onChange={(e) => handleInputChange('perfectClientExperience', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-24"
-                placeholder="Describe the ideal journey your clients would have with your business..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                What's your 3-year vision for this business?
-              </label>
-              <textarea
-                value={formData.businessVision}
-                onChange={(e) => handleInputChange('businessVision', e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent h-24"
-                placeholder="Where do you see your business in 3 years? What would success look like?"
-              />
             </div>
 
             <div>

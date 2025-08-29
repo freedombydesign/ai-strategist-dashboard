@@ -7,15 +7,15 @@
     typescript: {
       ignoreBuildErrors: true,
     },
-    env: {
-      // Override any Supabase env vars to prevent multiple client creation
-      NEXT_PUBLIC_SUPABASE_URL: '',
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: '',
-      BUILD_ID: Date.now().toString(),
+    // Remove env override that was blocking Supabase variables
+    webpack: (config: any, { isServer }: { isServer: boolean }) => {
+      // Fix for Windows case sensitivity issues
+      config.resolve.symlinks = false
+      return config
     },
-    generateBuildId: async () => {
-      // Force new build ID to invalidate all cached bundles
-      return `production-clean-${Date.now()}`
+    experimental: {
+      // Help with Windows development issues
+      esmExternals: 'loose',
     },
   }
 

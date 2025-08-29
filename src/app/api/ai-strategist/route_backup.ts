@@ -6,41 +6,6 @@ import { getFrameworkContext } from '../../../lib/strategicFrameworks'
 
 // OpenAI client will be initialized inside the POST function
 
-// Task ID to human-readable name mapping
-function getTaskName(taskId: string): string {
-  const taskMapping: Record<string, string> = {
-    // Profitable Service Sprint
-    'profit-1-1': 'Analyze Service Profitability',
-    'profit-1-2': 'Identify High-Value Clients', 
-    'profit-2-1': 'Document Your Golden Service',
-    'profit-3-1': 'Create Service Focus Plan',
-    
-    // Smooth Path Sprint
-    'path-1-1': 'Map Your Current Buyer Journey',
-    'path-1-2': 'Identify Friction Points',
-    'path-2-1': 'Design Smooth Handoffs',
-    'path-3-1': 'Test Your New Path',
-    
-    // Sell Bottleneck Sprint
-    'sell-1-1': 'Identify Your Sales Bottlenecks',
-    'sell-1-2': 'Create Sales Scripts',
-    'sell-2-1': 'Design Sales System',
-    'sell-3-1': 'Test Sales Delegation',
-    
-    // Streamline Delivery Sprint
-    'delivery-1-1': 'Map Your Delivery Process',
-    'delivery-2-1': 'Create Delivery Templates',
-    'delivery-3-1': 'Test Streamlined Delivery',
-    
-    // Continuous Improve Sprint
-    'improve-1-1': 'Set Up Feedback Systems',
-    'improve-2-1': 'Create Improvement Process',
-    'improve-3-1': 'Schedule Regular Reviews'
-  };
-  
-  return taskMapping[taskId] || taskId;
-}
-
 // Add type definitions
 interface ConversationHistory {
   message: string
@@ -63,7 +28,7 @@ interface FreedomScore {
 
 // Removed generic conversation starters - AI should respond naturally to user input
 
-function generateSystemPrompt(userName: string | null, freedom_score: FreedomScore | null, personality = 'strategic', detectedLanguage = 'en', isNewUser = false, isFirstMessage = false, hasFileContext = false, searchContext?: string, frameworkContext?: any, businessContext?: any, sprintProgress?: any, sprintSteps?: any[], completedTasks?: string[], websiteIntelligence?: any, conversationMemory?: any) {
+function generateSystemPrompt(userName: string | null, freedom_score: FreedomScore | null, personality = 'strategic', detectedLanguage = 'en', isNewUser = false, isFirstMessage = false, hasFileContext = false, searchContext?: string, frameworkContext?: any, businessContext?: any, sprintProgress?: any, sprintSteps?: any[]) {
   // Current date context
   const currentDate = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -72,25 +37,12 @@ function generateSystemPrompt(userName: string | null, freedom_score: FreedomSco
     day: 'numeric' 
   });
   
-  // Generate completed tasks information that can be used in all return paths
-  let completedTasksInfo = '';
-  if (completedTasks && completedTasks.length > 0) {
-    completedTasksInfo = `\n\n✅ COMPLETED TASKS FROM UI:`;
-    completedTasks.forEach((taskId, index) => {
-      // Extract just the task ID from the format "sprintId:taskId"
-      const actualTaskId = taskId.includes(':') ? taskId.split(':')[1] : taskId;
-      const taskName = getTaskName(actualTaskId);
-      completedTasksInfo += `\n- ✓ ${taskName}`;
-    });
-    completedTasksInfo += `\n\n🎯 IMPORTANT: The user has completed ${completedTasks.length} task(s) in their sprint UI. When they ask "What tasks have I completed?" or similar questions, tell them specifically about these completed tasks by name!`;
-  }
-  
   // Always start fresh for first message of a session
   if (isFirstMessage) {
     if (freedom_score) {
-      return `You're Ruth's AI strategist built on the Freedom by Design Method. ${userName ? `Welcome back, ${userName}!` : "Hi! I'm your AI strategist."} I can see you just completed your Freedom Score diagnostic. How can I help you understand your results and next steps? Be warm and welcoming.${completedTasksInfo}`
+      return `You're Ruth's AI strategist built on the Freedom by Design Method. ${userName ? `Welcome back, ${userName}!` : "Hi! I'm your AI strategist."} I can see you just completed your Freedom Score diagnostic. How can I help you understand your results and next steps? Be warm and welcoming.`
     } else {
-      return `You're Ruth's AI strategist built on the Freedom by Design Method. Hi! I'm your AI strategist, built on the Freedom by Design Method. I'll guide you step-by-step so you can focus on growth while your business runs with less of you. ${!userName ? "First, what's your name? I'd love to personalize our conversation!" : `Great to see you again, ${userName}!`} What brings you here today? Be warm and welcoming.${completedTasksInfo}`
+      return `You're Ruth's AI strategist built on the Freedom by Design Method. Hi! I'm your AI strategist, built on the Freedom by Design Method. I'll guide you step-by-step so you can focus on growth while your business runs with less of you. ${!userName ? "First, what's your name? I'd love to personalize our conversation!" : `Great to see you again, ${userName}!`} What brings you here today? Be warm and welcoming.`
     }
   }
 
@@ -135,7 +87,7 @@ Your job:
 3. Connect findings to their #1 priority: "${topSprint.title}" (Freedom Score: ${freedom_score.percent}%)
 4. Provide specific, actionable recommendations
 
-Reference specific content from their documents. Be analytical and direct.${completedTasksInfo}`
+Reference specific content from their documents. Be analytical and direct.`
     } else {
       return `You're Ruth's AI strategist. ${nameUsage}
 
@@ -149,7 +101,7 @@ Analyze the documents to:
 3. Recommend specific systems and processes
 4. Suggest immediate action items
 
-Reference specific content from their documents.${completedTasksInfo}`
+Reference specific content from their documents.`
     }
   }
 
@@ -161,7 +113,9 @@ Reference specific content from their documents.${completedTasksInfo}`
     // Build framework context
     let frameworkInsights = '';
     if (frameworkContext?.userSprint) {
-      frameworkInsights = `\n\nSTRATEGIC FRAMEWORK CONTEXT:
+      frameworkInsights = `
+
+STRATEGIC FRAMEWORK CONTEXT:
 Sprint Focus: ${frameworkContext.userSprint.methodology}
 Key Objectives: ${frameworkContext.userSprint.objectives?.slice(0, 2).join(', ')}
 Common Challenges: ${frameworkContext.userSprint.common_challenges?.slice(0, 2).join(', ')}`;
@@ -170,13 +124,17 @@ Common Challenges: ${frameworkContext.userSprint.common_challenges?.slice(0, 2).
     let strategicGuidance = '';
     if (frameworkContext?.strategicGuidance?.length > 0) {
       const topGuidance = frameworkContext.strategicGuidance[0];
-      strategicGuidance = `\n\nRELEVANT STRATEGIC GUIDANCE:
+      strategicGuidance = `
+
+RELEVANT STRATEGIC GUIDANCE:
 ${topGuidance.title}: ${topGuidance.content.substring(0, 200)}...`;
     }
 
     let contextualInsights = '';
     if (frameworkContext?.contextualInsights?.length > 0) {
-      contextualInsights = `\n\nCONTEXTUAL INSIGHTS:
+      contextualInsights = `
+
+CONTEXTUAL INSIGHTS:
 ${frameworkContext.contextualInsights.slice(0, 2).join('\n')}`;
     }
     
@@ -184,83 +142,16 @@ ${frameworkContext.contextualInsights.slice(0, 2).join('\n')}`;
     let businessContextStr = '';
     if (businessContext) {
       const ctx = businessContext;
-      businessContextStr = `\n\nBUSINESS CONTEXT KNOWLEDGE:
-📊 BUSINESS PROFILE:
-- Company: ${ctx.business_name ? `"${ctx.business_name}"` : 'their business'} (${ctx.industry || 'industry not specified'})
-- Model: ${ctx.business_model || 'B2B'} ${ctx.revenue_model || 'business'}
-- Stage: ${ctx.growth_stage || 'Growth'} stage, ${ctx.current_revenue || 'revenue not specified'}, ${ctx.team_size || 'team size not specified'}
+      businessContextStr = `
 
-🎯 STRATEGIC CONTEXT:
-- Primary Goal: "${ctx.primary_goal || 'goal not specified'}"${ctx.timeframe ? ` (Timeline: ${ctx.timeframe})` : ''}
-- Biggest Challenge: "${ctx.biggest_challenge || 'challenge not specified'}"
-- Success Metrics: "${ctx.success_metrics || 'metrics not specified'}"
+BUSINESS CONTEXT KNOWLEDGE:
+You know this user runs ${ctx.business_name ? `"${ctx.business_name}"` : 'their business'} in the ${ctx.industry} industry. ${ctx.business_model ? `It's a ${ctx.business_model} business` : 'The business model varies'}${ctx.current_revenue ? ` generating ${ctx.current_revenue} in revenue` : ''} with ${ctx.team_size ? `a team of ${ctx.team_size}` : 'a small team'}. 
 
-🚧 KEY BOTTLENECKS: ${ctx.top_bottlenecks && ctx.top_bottlenecks.length > 0 ? ctx.top_bottlenecks.join(', ') : 'Not specified'}
+They're in the ${ctx.growth_stage || 'growth'} stage and their biggest challenge is: "${ctx.biggest_challenge}". Their primary goal is: "${ctx.primary_goal}"${ctx.timeframe ? ` within ${ctx.timeframe}` : ''}.
 
-👥 IDEAL CLIENT PROFILE:
-${(() => {
-  if (ctx.ideal_client_profile) {
-    if (typeof ctx.ideal_client_profile === 'object') {
-      return `- Title/Role: ${ctx.ideal_client_profile.title || ctx.ideal_client_profile.niche || 'Not specified'}
-- Company Size: ${ctx.ideal_client_profile.companySize || ctx.ideal_client_profile.company_size || 'Not specified'}  
-- Pain Points: ${ctx.ideal_client_profile.painPoints || ctx.ideal_client_profile.pain_points || 'Not specified'}`;
-    } else {
-      return `- Profile: ${ctx.ideal_client_profile}`;
-    }
-  }
-  return '- Not specified';
-})()}
-- Target Market: ${ctx.target_market || 'Not specified'}
+${ctx.top_bottlenecks?.length > 0 ? `Key bottlenecks: ${ctx.top_bottlenecks.join(', ')}.` : ''}
 
-💡 COMPETITIVE POSITIONING:
-- Value Proposition: "${ctx.unique_value_proposition || 'Not specified'}"
-- Main Competitors: ${ctx.main_competitors || 'Not specified'}
-- Competitive Advantage: "${ctx.competitive_advantage || 'Not specified'}"
-
-🔥 PERSONALIZATION INSTRUCTIONS:
-1. Reference specific business details naturally (company name, industry, challenges)
-2. Connect advice to their primary goal and success metrics
-3. Address their specific bottlenecks when relevant
-4. Speak to their growth stage and business model
-5. Reference their ideal client profile when discussing marketing/sales
-6. Act like you've worked with them before and know their business intimately
-7. Make recommendations specific to ${ctx.business_name || 'their business'} rather than generic advice
-
-💡 ENHANCED CONTEXT INTEGRATION:
-${websiteIntelligence ? `- Website Intelligence Available: ${websiteIntelligence.website_url}
-- Brand Tone to Match: ${websiteIntelligence.brand_voice_analysis?.tone || 'Professional'}
-- Target Audience: ${websiteIntelligence.target_audience_signals?.slice(0, 3).join(', ') || 'Business professionals'}` : '- No website intelligence - use professional tone'}
-
-${conversationMemory ? `- Conversation Memory: Building on ${conversationMemory.recent_topics?.length || 0} recent topics
-- Previous Strategic Decisions: ${conversationMemory.referenced_decisions?.slice(0, 2).join(', ') || 'None referenced'}` : '- Fresh conversation - establish context'}
-
-🎯 RESPONSE TRANSFORMATION RULE: 
-Transform generic responses into personalized ones using ${ctx.business_name || 'their business'} context, ${ctx.industry || 'their industry'}, and ${ctx.biggest_challenge || 'their challenges'}.`;
-    }
-
-    // Add enhanced website and conversation context
-    let enhancedContextStr = '';
-    if (websiteIntelligence || conversationMemory) {
-      enhancedContextStr += `\n\n🚀 ENHANCED PERSONALIZATION DATA:`;
-      
-      if (websiteIntelligence) {
-        enhancedContextStr += `\n\nWEBSITE INTELLIGENCE:
-- URL: ${websiteIntelligence.website_url}
-- Brand Voice: ${websiteIntelligence.brand_voice_analysis?.tone || 'Professional'} tone
-- Communication Style: ${websiteIntelligence.brand_voice_analysis?.communicationStyle || 'Balanced'}
-- Key Messages: ${websiteIntelligence.extracted_messaging?.headlines?.slice(0, 2).join(' | ') || 'Not available'}
-- Target Audience: ${websiteIntelligence.target_audience_signals?.slice(0, 3).join(', ') || 'Not specified'}
-- Services: ${websiteIntelligence.service_offerings?.slice(0, 3).join(', ') || 'Not specified'}
-- Content Themes: ${websiteIntelligence.content_themes?.slice(0, 3).join(', ') || 'General business'}`;
-      }
-
-      if (conversationMemory) {
-        enhancedContextStr += `\n\nCONVERSATION MEMORY:
-- Recent Discussion Topics: ${conversationMemory.recent_topics?.join(', ') || 'New conversation'}
-- Business Evolution: ${conversationMemory.business_stage || 'Current'} stage
-- Previous Strategic Decisions: ${conversationMemory.referenced_decisions?.slice(0, 3).join(', ') || 'None yet'}
-- Key Insights: ${conversationMemory.key_insights || 'Establishing foundation'}`;
-      }
+CONVERSATIONAL APPROACH: Reference this information naturally in conversation. Don't dump all details at once. Instead, mention relevant parts when they apply to the user's specific question or situation. Act like you remember their business details from previous conversations.`;
     }
     
     // Add sprint progress context to regular prompt as well
@@ -272,97 +163,31 @@ Transform generic responses into personalized ones using ${ctx.business_name || 
         const currentStep = sprintSteps[currentStepIndex] || sprintSteps[0];
         
         stepDetails = `
-🎯 CURRENT ACTION STEP: ${currentStepIndex + 1} of ${sprintSteps.length} - "${currentStep.title}"
-📝 STEP DESCRIPTION: ${currentStep.description}
-⏱️ ESTIMATED TIME: ${currentStep.estimated_minutes} minutes
-📅 DAY: ${currentStep.day_number}
-📊 PROGRESS: ${Math.round(((currentStepIndex + 1) / sprintSteps.length) * 100)}% through this sprint`;
+CURRENT STEP: ${currentStep.title}
+STEP DESCRIPTION: ${currentStep.description}
+ESTIMATED TIME: ${currentStep.estimated_minutes} minutes
+DAY: ${currentStep.day_number}
+
+NEXT STEPS AVAILABLE:`;
         
-        // Show next steps for context
-        if (currentStepIndex + 1 < sprintSteps.length) {
-          stepDetails += `\n\n🔮 NEXT STEPS COMING UP:`;
-          for (let i = currentStepIndex + 1; i < Math.min(currentStepIndex + 3, sprintSteps.length); i++) {
-            const step = sprintSteps[i];
-            stepDetails += `\n- Step ${i + 1}: ${step.title} (${step.estimated_minutes}min, Day ${step.day_number})`;
-          }
-        } else {
-          stepDetails += `\n\n🏁 FINAL STEP: You're on the last step of this sprint!`;
+        // Show next 2-3 steps for context
+        for (let i = currentStepIndex; i < Math.min(currentStepIndex + 3, sprintSteps.length); i++) {
+          const step = sprintSteps[i];
+          stepDetails += `\n- Step ${i + 1}: ${step.title} (${step.estimated_minutes}min)`;
         }
-        
-        // Show completed steps for context
-        if (currentStepIndex > 0) {
-          stepDetails += `\n\n✅ RECENTLY COMPLETED:`;
-          for (let i = Math.max(0, currentStepIndex - 2); i < currentStepIndex; i++) {
-            const completedStep = sprintSteps[i];
-            stepDetails += `\n- ✓ Step ${i + 1}: ${completedStep.title}`;
-          }
-        }
-        
-        // Add completed tasks information if available
-        if (completedTasks && completedTasks.length > 0) {
-          stepDetails += `\n\n✅ COMPLETED TASKS FROM UI:`;
-          completedTasks.forEach((taskId, index) => {
-            // Extract just the task ID from the format "sprintId:taskId"
-            const actualTaskId = taskId.includes(':') ? taskId.split(':')[1] : taskId;
-            const taskName = getTaskName(actualTaskId);
-            stepDetails += `\n- ✓ ${taskName}`;
-          });
-          stepDetails += `\n\n🎯 IMPORTANT: The user has completed ${completedTasks.length} task(s) in their sprint UI. When they ask "What tasks have I completed?" or similar questions, tell them specifically about these completed tasks by name!`;
-        }
-        
       } else {
         stepDetails = `
-🚀 CURRENT ACTION STEP: ${sprintProgress.step_number || 1} - "${sprintProgress.step_title || 'Getting Started'}"
-📝 DESCRIPTION: ${sprintProgress.step_title ? `Working on: ${sprintProgress.step_title}` : 'Initializing sprint and setting up first action items'}
-⏱️ STATUS: ${sprintProgress.status || 'started'}
-📋 NEXT: Ready to begin specific action steps`;
-        
-        // Add completed tasks information if available
-        if (completedTasks && completedTasks.length > 0) {
-          stepDetails += `\n\n✅ COMPLETED TASKS FROM UI:`;
-          completedTasks.forEach((taskId, index) => {
-            // Extract just the task ID from the format "sprintId:taskId"
-            const actualTaskId = taskId.includes(':') ? taskId.split(':')[1] : taskId;
-            const taskName = getTaskName(actualTaskId);
-            stepDetails += `\n- ✓ ${taskName}`;
-          });
-          stepDetails += `\n\n🎯 IMPORTANT: The user has completed ${completedTasks.length} task(s) in their sprint UI. When they ask "What tasks have I completed?" or similar questions, tell them specifically about these completed tasks by name!`;
-        }
+CURRENT STEP: Just started - no specific steps loaded yet
+STEP TITLE: ${sprintProgress.step_title || 'Not yet specified'}`;
       }
       
-      // Enhanced context with Freedom Score integration
-      let sprintContext = '';
-      if (freedom_score && freedom_score.recommendedOrder && freedom_score.recommendedOrder.length > 0) {
-        const currentSprintKey = sprintProgress.sprints?.sprint_key;
-        const currentSprintIndex = freedom_score.recommendedOrder.findIndex(sprint => sprint.sprintKey === currentSprintKey);
-        const currentRecommendedSprint = freedom_score.recommendedOrder[currentSprintIndex] || freedom_score.recommendedOrder[0];
-        
-        sprintContext = `\n\n🚀 FREEDOM SCORE SPRINT CONTEXT:
-🎯 RECOMMENDED SPRINT: #${currentSprintIndex + 1} of ${freedom_score.recommendedOrder.length} - "${currentRecommendedSprint.title}"
-💡 WHY THIS SPRINT: ${currentRecommendedSprint.why}
-🏆 FREEDOM SCORE: ${freedom_score.percent}% (${freedom_score.totalScore}/60)
-📈 PRIORITY LEVEL: ${currentSprintIndex === 0 ? 'TOP PRIORITY' : `Priority ${currentSprintIndex + 1}`}`;
-        
-        if (freedom_score.recommendedOrder.length > currentSprintIndex + 1) {
-          sprintContext += `\n\n🔄 REMAINING SPRINTS:`;
-          for (let i = currentSprintIndex + 1; i < Math.min(currentSprintIndex + 3, freedom_score.recommendedOrder.length); i++) {
-            const nextSprint = freedom_score.recommendedOrder[i];
-            sprintContext += `\n- #${i + 1}: ${nextSprint.title}`;
-          }
-        }
-      }
-      
-      businessContextStr += `${sprintContext}\n\n📋 CURRENT SPRINT PROGRESS:
-🎪 ACTIVE SPRINT: ${sprintProgress.sprints?.title || 'Unknown Sprint'}
-📊 STATUS: ${sprintProgress.status || 'started'}${stepDetails}
+      businessContextStr += `
 
-🔥 CRITICAL AI INSTRUCTIONS:
-1. ALWAYS reference their current step number when giving advice
-2. Help them complete their CURRENT step before suggesting next actions
-3. If they're stuck, break down their current step into smaller micro-tasks
-4. Track their progress and celebrate completed steps
-5. Connect current step to their Freedom Score improvement
-6. Reference how this step addresses their biggest bottleneck`;
+CURRENT SPRINT PROGRESS:
+ACTIVE SPRINT: ${sprintProgress.sprints?.title || 'Unknown Sprint'}
+STATUS: ${sprintProgress.status || 'started'}${stepDetails}
+
+IMPORTANT: You have access to their current sprint and specific step details. Provide actionable, step-by-step guidance for their current task. Reference the specific step they're on and help them complete it.`;
     }
     
     return `You're Ruth's AI strategist. ${nameUsage}
@@ -414,9 +239,9 @@ TRANSLATION MEMORY: You have access to conversation history. If you see language
 
 CRITICAL BALANCE: If the user has shared enough context about their problem, GIVE THEM SOLUTIONS. Only ask additional questions if you truly need more information to provide the best advice. When they say "can we come up with a plan now" or express frustration, shift immediately to solution mode.
 
-${businessContextStr}${enhancedContextStr}
+${businessContextStr}
 ${strategicGuidance}
-${contextualInsights}${completedTasksInfo}`
+${contextualInsights}`
   }
 
   // For returning users without fresh start - let conversation flow naturally
@@ -425,61 +250,34 @@ ${contextualInsights}${completedTasksInfo}`
   let strategicGuidance = '';
   if (frameworkContext?.strategicGuidance?.length > 0) {
     const topGuidance = frameworkContext.strategicGuidance[0];
-    strategicGuidance = `\n\nRELEVANT STRATEGIC GUIDANCE:
+    strategicGuidance = `
+
+RELEVANT STRATEGIC GUIDANCE:
 ${topGuidance.title}: ${topGuidance.content.substring(0, 200)}...`;
   }
 
   let contextualInsights = '';
   if (frameworkContext?.contextualInsights?.length > 0) {
-    contextualInsights = `\n\nCONTEXTUAL INSIGHTS:
+    contextualInsights = `
+
+CONTEXTUAL INSIGHTS:
 ${frameworkContext.contextualInsights.slice(0, 2).join('\n')}`;
   }
 
-  // Build business context for personalization (conversational style) - Same enhanced format
+  // Build business context for personalization (conversational style)
   let businessContextStr = '';
   if (businessContext) {
     const ctx = businessContext;
-    businessContextStr = `\n\nBUSINESS CONTEXT KNOWLEDGE:
-📊 BUSINESS PROFILE:
-- Company: ${ctx.business_name ? `"${ctx.business_name}"` : 'their business'} (${ctx.industry || 'industry not specified'})
-- Model: ${ctx.business_model || 'B2B'} ${ctx.revenue_model || 'business'}
-- Stage: ${ctx.growth_stage || 'Growth'} stage, ${ctx.current_revenue || 'revenue not specified'}, ${ctx.team_size || 'team size not specified'}
+    businessContextStr = `
 
-🎯 STRATEGIC CONTEXT:
-- Primary Goal: "${ctx.primary_goal || 'goal not specified'}"${ctx.timeframe ? ` (Timeline: ${ctx.timeframe})` : ''}
-- Biggest Challenge: "${ctx.biggest_challenge || 'challenge not specified'}"
-- Success Metrics: "${ctx.success_metrics || 'metrics not specified'}"
+BUSINESS CONTEXT KNOWLEDGE:
+You know this user runs ${ctx.business_name ? `"${ctx.business_name}"` : 'their business'} in the ${ctx.industry} industry. ${ctx.business_model ? `It's a ${ctx.business_model} business` : 'The business model varies'}${ctx.current_revenue ? ` generating ${ctx.current_revenue} in revenue` : ''} with ${ctx.team_size ? `a team of ${ctx.team_size}` : 'a small team'}. 
 
-🚧 KEY BOTTLENECKS: ${ctx.top_bottlenecks && ctx.top_bottlenecks.length > 0 ? ctx.top_bottlenecks.join(', ') : 'Not specified'}
+They're in the ${ctx.growth_stage || 'growth'} stage and their biggest challenge is: "${ctx.biggest_challenge}". Their primary goal is: "${ctx.primary_goal}"${ctx.timeframe ? ` within ${ctx.timeframe}` : ''}.
 
-👥 IDEAL CLIENT PROFILE:
-${(() => {
-  if (ctx.ideal_client_profile) {
-    if (typeof ctx.ideal_client_profile === 'object') {
-      return `- Title/Role: ${ctx.ideal_client_profile.title || ctx.ideal_client_profile.niche || 'Not specified'}
-- Company Size: ${ctx.ideal_client_profile.companySize || ctx.ideal_client_profile.company_size || 'Not specified'}  
-- Pain Points: ${ctx.ideal_client_profile.painPoints || ctx.ideal_client_profile.pain_points || 'Not specified'}`;
-    } else {
-      return `- Profile: ${ctx.ideal_client_profile}`;
-    }
-  }
-  return '- Not specified';
-})()}
-- Target Market: ${ctx.target_market || 'Not specified'}
+${ctx.top_bottlenecks?.length > 0 ? `Key bottlenecks: ${ctx.top_bottlenecks.join(', ')}.` : ''}
 
-💡 COMPETITIVE POSITIONING:
-- Value Proposition: "${ctx.unique_value_proposition || 'Not specified'}"
-- Main Competitors: ${ctx.main_competitors || 'Not specified'}
-- Competitive Advantage: "${ctx.competitive_advantage || 'Not specified'}"
-
-🔥 PERSONALIZATION INSTRUCTIONS:
-1. Reference specific business details naturally (company name, industry, challenges)
-2. Connect advice to their primary goal and success metrics
-3. Address their specific bottlenecks when relevant
-4. Speak to their growth stage and business model
-5. Reference their ideal client profile when discussing marketing/sales
-6. Act like you've worked with them before and know their business intimately
-7. Make recommendations specific to ${ctx.business_name || 'their business'} rather than generic advice`;
+CONVERSATIONAL APPROACH: Reference this information naturally in conversation. Don't dump all details at once. Instead, mention relevant parts when they apply to the user's specific question or situation. Act like you remember their business details from previous conversations.`;
   }
   
   // Add sprint progress context
@@ -505,17 +303,17 @@ NEXT STEPS AVAILABLE:`;
       }
     } else {
       stepDetails = `
-🚀 CURRENT ACTION STEP: ${sprintProgress.step_number || 1} - "${sprintProgress.step_title || 'Getting Started'}"
-📝 DESCRIPTION: ${sprintProgress.step_title ? `Working on: ${sprintProgress.step_title}` : 'Initializing sprint and setting up first action items'}
-⏱️ STATUS: ${sprintProgress.status || 'started'}
-📋 NEXT: Ready to begin specific action steps`;
+CURRENT STEP: Just started - no specific steps loaded yet
+STEP TITLE: ${sprintProgress.step_title || 'Not yet specified'}`;
     }
     
-    businessContextStr += `\n\n📋 CURRENT SPRINT PROGRESS:
-🎪 ACTIVE SPRINT: ${sprintProgress.sprints?.title || 'Unknown Sprint'}
-📊 STATUS: ${sprintProgress.status || 'started'}${stepDetails}
+    businessContextStr += `
 
-🔥 IMPORTANT: You have access to their current sprint and action step details. Always reference their specific step number and help them complete it before moving forward.`;
+CURRENT SPRINT PROGRESS:
+ACTIVE SPRINT: ${sprintProgress.sprints?.title || 'Unknown Sprint'}
+STATUS: ${sprintProgress.status || 'started'}${stepDetails}
+
+IMPORTANT: You have access to their current sprint and specific step details. Provide actionable, step-by-step guidance for their current task. Reference the specific step they're on and help them complete it.`;
   }
   
   return `You're Ruth's AI strategist. ${nameUsage}
@@ -554,7 +352,7 @@ IMPORTANT CONTEXT: Today's date is ${currentDate}. When discussing current event
 
 ${userName ? `IMPORTANT: The user's name is ${userName}. You already know their name, so don't ask for it again.` : ''}
 
-CRITICAL: Respond naturally to what the user just said. Don't use generic conversation starters. If they've shared enough context about their problem, GIVE THEM SOLUTIONS. When they ask for a plan or express frustration, shift immediately to solution mode with specific, actionable advice.${completedTasksInfo}`
+CRITICAL: Respond naturally to what the user just said. Don't use generic conversation starters. If they've shared enough context about their problem, GIVE THEM SOLUTIONS. When they ask for a plan or express frustration, shift immediately to solution mode with specific, actionable advice.`
 }
 
 // Function to detect if user is asking for current information
@@ -605,22 +403,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('[AI-STRATEGIST] *** API WITH ENHANCED SPRINT STEP TRACKING ***');
     console.log('[AI-STRATEGIST] ===== INCOMING REQUEST =====');
-    const { user_id, message, freedom_score, is_fresh_start, file_context, user_name, personality = 'strategic', completed_tasks } = await request.json()
-    
-    // TEMPORARY: Manually inject completed task until frontend cache is resolved
-    const manualCompletedTasks = user_id === 'f85eba27-6eb9-4933-9459-2517739ef846' ? ['140b8cda-0074-4ca0-a48a-5e310747c18b:profit-1-1'] : []
-    const finalCompletedTasks = completed_tasks && completed_tasks.length > 0 ? completed_tasks : manualCompletedTasks
-    
-    // Force manual injection for testing user to ensure completed tasks are always shown
-    const testCompletedTasks = user_id === 'f85eba27-6eb9-4933-9459-2517739ef846' ? 
-      ['7a9df959-ab1e-4ef7-b7be-f5efd21fbafc:improve-1-1', '140b8cda-0074-4ca0-a48a-5e310747c18b:profit-1-1', 'f98cf5e2-1656-45e5-83b6-2c48be78c61f:delivery-1-1'] : 
-      finalCompletedTasks
-    
-    console.log('[AI-STRATEGIST] ===== COMPLETED TASKS DEBUG =====');
-    console.log('[AI-STRATEGIST] Raw completed_tasks from request:', completed_tasks);
-    console.log('[AI-STRATEGIST] Manual completed tasks:', manualCompletedTasks);
-    console.log('[AI-STRATEGIST] Final completed tasks:', finalCompletedTasks);
-    console.log('[AI-STRATEGIST] Test completed tasks:', testCompletedTasks);
+    const { user_id, message, freedom_score, is_fresh_start, file_context, user_name, personality = 'strategic' } = await request.json()
     
     // Import comprehensive language detection
     const { LanguageDetector } = await import('../../../lib/languageDetection');
@@ -643,8 +426,7 @@ export async function POST(request: NextRequest) {
       detectedLanguage,
       is_fresh_start: is_fresh_start, 
       file_context: !!file_context,
-      user_name: user_name || 'none',
-      completed_tasks: finalCompletedTasks || []
+      user_name: user_name || 'none'
     });
 
     console.log('[AI-STRATEGIST] Request data:', {
@@ -754,9 +536,14 @@ export async function POST(request: NextRequest) {
         if (searchResponse.ok) {
           const searchData = await searchResponse.json();
           if (searchData.success) {
-            searchContext = `CURRENT WEB SEARCH RESULTS for "${searchQuery}":\n${searchData.searchResults?.map((r: any) => 
+            searchContext = `CURRENT WEB SEARCH RESULTS for "${searchQuery}":
+${searchData.searchResults?.map((r: any) => 
               `• ${r.title}: ${r.description} (Source: ${r.url})`
-            ).join('\n') || 'No specific results found'}\n\nAI Analysis: ${searchData.aiResponse}\n\n`;
+            ).join('\n') || 'No specific results found'}
+
+AI Analysis: ${searchData.aiResponse}
+
+`;
           }
         }
       } catch (searchError) {
@@ -867,133 +654,23 @@ export async function POST(request: NextRequest) {
       console.error('[AI-STRATEGIST] Business context fetch error:', error);
     }
 
-    // Fetch enhanced context data for personalization
-    let websiteIntelligence = null;
-    let conversationMemory = null;
-    
-    try {
-      console.log('[AI-STRATEGIST] Fetching enhanced context data...');
-      
-      // Get website intelligence
-      const { data: websiteData, error: websiteError } = await supabase
-        .from('website_intelligence')
-        .select('website_url, brand_voice_analysis, extracted_messaging, target_audience_signals, service_offerings, content_themes')
-        .eq('user_id', user_id)
-        .eq('status', 'active')
-        .order('last_analyzed', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (websiteError && websiteError.code !== 'PGRST116') {
-        console.error('[AI-STRATEGIST] Error fetching website intelligence:', websiteError);
-      } else if (websiteData) {
-        websiteIntelligence = websiteData;
-        console.log('[AI-STRATEGIST] Website intelligence loaded from:', websiteData.website_url);
-      }
-
-      // Get conversation memory context
-      const { data: memoryData, error: memoryError } = await supabase
-        .from('conversation_memory')
-        .select('context_tags, interaction_type, business_stage, key_insights, referenced_decisions, created_at')
-        .eq('user_id', user_id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (memoryError) {
-        console.error('[AI-STRATEGIST] Error fetching conversation memory:', memoryError);
-      } else if (memoryData && memoryData.length > 0) {
-        // Process memory data for context
-        const recentTopics = Array.from(new Set(
-          memoryData.flatMap(m => m.context_tags || [])
-        )).slice(0, 5);
-        
-        const referencedDecisions = Array.from(new Set(
-          memoryData.flatMap(m => m.referenced_decisions || [])
-        )).slice(0, 3);
-
-        const latestBusinessStage = memoryData.find(m => m.business_stage)?.business_stage;
-        const keyInsights = memoryData
-          .filter(m => m.key_insights && Object.keys(m.key_insights).length > 0)
-          .slice(0, 3)
-          .map(m => Object.values(m.key_insights).join(', '))
-          .join('; ');
-
-        conversationMemory = {
-          recent_topics: recentTopics,
-          business_stage: latestBusinessStage,
-          referenced_decisions: referencedDecisions,
-          key_insights: keyInsights || 'Building strategic foundation'
-        };
-        
-        console.log('[AI-STRATEGIST] Conversation memory loaded:', {
-          recent_topics: recentTopics.length,
-          decisions: referencedDecisions.length,
-          stage: latestBusinessStage
-        });
-      }
-      
-    } catch (error) {
-      console.error('[AI-STRATEGIST] Error fetching enhanced context:', error);
-    }
-
     // Fetch sprint progress for personalization
     let sprintProgress = null;
     let sprintSteps = null;
     try {
-      console.log('[AI-STRATEGIST] ========== SPRINT PROGRESS DEBUGGING ==========');
-      console.log('[AI-STRATEGIST] Fetching sprint progress for user:', user_id);
-      
-      // First, let's see ALL user steps for this user
-      const { data: allUserSteps, error: allStepsError } = await supabase
-        .from('user_steps')
-        .select('*, sprints(*)')
-        .eq('user_id', user_id)
-        .order('created_at', { ascending: false });
-        
-      console.log('[AI-STRATEGIST] === ALL USER STEPS ===');
-      console.log('[AI-STRATEGIST] Total steps found:', allUserSteps?.length || 0);
-      if (allUserSteps && allUserSteps.length > 0) {
-        allUserSteps.forEach((step, index) => {
-          console.log(`[AI-STRATEGIST] Step ${index + 1}:`, {
-            id: step.id,
-            sprint_id: step.sprint_id,
-            step_number: step.step_number,
-            step_title: step.step_title,
-            status: step.status,
-            created_at: step.created_at,
-            sprint_name: step.sprints?.name,
-            sprint_title: step.sprints?.client_facing_title
-          });
-        });
-      } else {
-        console.log('[AI-STRATEGIST] No user steps found at all!');
-      }
-      
-      // Now try the filtered query
+      console.log('[AI-STRATEGIST] Fetching sprint progress...');
       const { data: progressData, error: progressError } = await supabase
         .from('user_steps')
         .select('*, sprints!inner(*)')
         .eq('user_id', user_id)
-        .in('status', ['started', 'in_progress', 'active'])
+        .eq('status', 'started')
         .order('created_at', { ascending: false })
         .limit(1);
-        
-      console.log('[AI-STRATEGIST] === FILTERED QUERY RESULTS ===');
-      console.log('[AI-STRATEGIST] Filtered results found:', progressData?.length || 0);
 
       if (progressError) {
-        console.error('[AI-STRATEGIST] Error in filtered query:', progressError);
+        console.error('[AI-STRATEGIST] Error fetching sprint progress:', progressError);
       } else if (progressData && progressData.length > 0) {
         sprintProgress = progressData[0];
-        console.log('[AI-STRATEGIST] ✅ SUCCESS - Found active sprint:', {
-          id: sprintProgress.id,
-          sprint_id: sprintProgress.sprint_id,
-          step_number: sprintProgress.step_number,
-          step_title: sprintProgress.step_title,
-          status: sprintProgress.status,
-          sprint_name: sprintProgress.sprints?.name,
-          sprint_title: sprintProgress.sprints?.client_facing_title
-        });
         
         // Fetch the steps for this sprint to provide specific guidance
         try {
@@ -1009,96 +686,6 @@ export async function POST(request: NextRequest) {
           } else {
             sprintSteps = stepsData || [];
             console.log('[AI-STRATEGIST] Found', sprintSteps.length, 'steps for sprint');
-            
-            // If no formal steps found, use the task-based system that's actually in use
-            if (sprintSteps.length === 0) {
-              console.log('[AI-STRATEGIST] ⚠️ No formal steps found, using task-based sprint structure...');
-              
-              const sprintName = sprintProgress.sprints?.name;
-              console.log('[AI-STRATEGIST] Sprint name for task lookup:', sprintName);
-              
-              // Create step structure based on the actual task system
-              if (sprintName === 'profitable_service') {
-                sprintSteps = [
-                  {
-                    id: 'day-1-tasks',
-                    title: 'Day 1: Analyze & Identify',
-                    description: 'Complete: (1) Analyze Service Profitability [20min], (2) Identify High-Value Clients [15min]',
-                    estimated_minutes: 35,
-                    day_number: 1,
-                    order_index: 0,
-                    tasks: ['profit-1-1', 'profit-1-2']
-                  },
-                  {
-                    id: 'day-2-tasks', 
-                    title: 'Day 2: Document Process',
-                    description: 'Complete: Document Your Golden Service [25min] - Write down every step of your most profitable service delivery process',
-                    estimated_minutes: 25,
-                    day_number: 2,
-                    order_index: 1,
-                    tasks: ['profit-2-1']
-                  },
-                  {
-                    id: 'day-3-tasks',
-                    title: 'Day 3: Create Focus Plan', 
-                    description: 'Complete: Create Service Focus Plan [15min] - Decide what percentage of your time will focus on this profitable service',
-                    estimated_minutes: 15,
-                    day_number: 3,
-                    order_index: 2,
-                    tasks: ['profit-3-1']
-                  }
-                ];
-              } else if (sprintName === 'smooth_path') {
-                sprintSteps = [
-                  {
-                    id: 'day-1-tasks',
-                    title: 'Day 1: Map & Identify',
-                    description: 'Complete: (1) Map Your Current Buyer Journey [20min], (2) Identify Friction Points [15min]',
-                    estimated_minutes: 35,
-                    day_number: 1,
-                    order_index: 0,
-                    tasks: ['path-1-1', 'path-1-2']
-                  },
-                  {
-                    id: 'day-2-tasks',
-                    title: 'Day 2: Design Smooth Handoffs',
-                    description: 'Complete: Design Smooth Handoffs [25min] - Create simple transition processes between each stage',
-                    estimated_minutes: 25,
-                    day_number: 2,
-                    order_index: 1,
-                    tasks: ['path-2-1']
-                  }
-                ];
-              } else if (sprintName === 'streamline_delivery') {
-                sprintSteps = [
-                  {
-                    id: 'day-1-tasks',
-                    title: 'Day 1: Audit & Streamline',
-                    description: 'Focus on streamlining client delivery without losing personal touch',
-                    estimated_minutes: 30,
-                    day_number: 1,
-                    order_index: 0,
-                    tasks: ['delivery-1-1']
-                  }
-                ];
-              } else {
-                // Fallback for unknown sprints
-                sprintSteps = [
-                  {
-                    id: 'step-1',
-                    title: sprintProgress.step_title || 'Getting Started',
-                    description: `Working on: ${sprintProgress.sprints?.client_facing_title}`,
-                    estimated_minutes: 20,
-                    day_number: 1,
-                    order_index: 0
-                  }
-                ];
-              }
-              
-              console.log('[AI-STRATEGIST] ✅ Created', sprintSteps.length, 'task-based steps for', sprintName);
-            } else {
-              console.log('[AI-STRATEGIST] ✅ Found', sprintSteps.length, 'formal steps in database');
-            }
           }
         } catch (error) {
           console.error('[AI-STRATEGIST] Error in steps query:', error);
@@ -1112,51 +699,7 @@ export async function POST(request: NextRequest) {
           available_steps: sprintSteps ? sprintSteps.length : 0
         });
       } else {
-        console.log('[AI-STRATEGIST] ❌ No active sprints found with status filter');
-        
-        // Try the most recent sprint regardless of status
-        if (allUserSteps && allUserSteps.length > 0) {
-          const latestSprint = allUserSteps[0];
-          console.log('[AI-STRATEGIST] 🔄 ATTEMPTING AUTO-FIX of latest sprint:', {
-            id: latestSprint.id,
-            current_status: latestSprint.status,
-            current_step_number: latestSprint.step_number,
-            current_step_title: latestSprint.step_title
-          });
-          
-          // Try to fix the sprint by updating its status and step info
-          try {
-            const { data: fixedSprint, error: fixError } = await supabase
-              .from('user_steps')
-              .update({
-                step_number: latestSprint.step_number || 1,
-                step_title: latestSprint.step_title || 'Getting Started with Sprint',
-                status: 'started',
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', latestSprint.id)
-              .select('*, sprints(*)')
-              .single();
-              
-            if (fixError) {
-              console.error('[AI-STRATEGIST] ❌ Failed to auto-fix sprint:', fixError);
-            } else {
-              sprintProgress = fixedSprint;
-              console.log('[AI-STRATEGIST] ✅ AUTO-FIXED sprint successfully:', {
-                id: sprintProgress.id,
-                sprint_id: sprintProgress.sprint_id,
-                step_number: sprintProgress.step_number,
-                step_title: sprintProgress.step_title,
-                status: sprintProgress.status,
-                sprint_name: sprintProgress.sprints?.name
-              });
-            }
-          } catch (fixError) {
-            console.error('[AI-STRATEGIST] Exception during auto-fix:', fixError);
-          }
-        } else {
-          console.log('[AI-STRATEGIST] ❌ No sprint data found at all for user');
-        }
+        console.log('[AI-STRATEGIST] No active sprint found for user');
       }
     } catch (error) {
       console.error('[AI-STRATEGIST] Error fetching sprint progress:', error);
@@ -1164,25 +707,7 @@ export async function POST(request: NextRequest) {
 
     // Generate system prompt with enhanced context
     console.log('[AI-STRATEGIST] Final userName before system prompt:', userName);
-    console.log('[AI-STRATEGIST] ========== FINAL CONTEXT SUMMARY ==========');
-    console.log('[AI-STRATEGIST] Freedom Score:', freedom_score ? `${freedom_score.percent}%` : 'None');
-    console.log('[AI-STRATEGIST] Sprint Progress:', sprintProgress ? {
-      id: sprintProgress.id,
-      sprint_name: sprintProgress.sprints?.name,
-      step_number: sprintProgress.step_number,
-      step_title: sprintProgress.step_title,
-      status: sprintProgress.status
-    } : 'None');
-    console.log('[AI-STRATEGIST] Sprint Steps:', sprintSteps ? sprintSteps.length : 'None');
-    console.log('[AI-STRATEGIST] Business Context:', businessContext ? 'Available' : 'None');
-    console.log('[AI-STRATEGIST] Website Intelligence:', websiteIntelligence ? `Available (${websiteIntelligence.website_url})` : 'None');
-    console.log('[AI-STRATEGIST] Conversation Memory:', conversationMemory ? `Available (${conversationMemory.recent_topics?.length || 0} topics)` : 'None');
-    console.log('[AI-STRATEGIST] Enhanced Personalization:', (businessContext ? 1 : 0) + (websiteIntelligence ? 1 : 0) + (conversationMemory ? 1 : 0), '/ 3 sources');
-    console.log('[AI-STRATEGIST] ================================================');
-    
     console.log('[AI-STRATEGIST] Generating system prompt...');
-    console.log('[AI-STRATEGIST] ===== SYSTEM PROMPT PARAMETERS =====');
-    console.log('[AI-STRATEGIST] finalCompletedTasks being passed:', finalCompletedTasks);
     let systemPrompt;
     try {
       systemPrompt = generateSystemPrompt(
@@ -1197,10 +722,7 @@ export async function POST(request: NextRequest) {
         frameworkContext,
         businessContext,
         sprintProgress,
-        sprintSteps,
-        testCompletedTasks,
-        websiteIntelligence,
-        conversationMemory
+        sprintSteps
       );
       console.log('[AI-STRATEGIST] System prompt generated successfully');
     } catch (promptError) {
@@ -1218,7 +740,11 @@ export async function POST(request: NextRequest) {
     if (file_context) {
       messages.push({
         role: "system",
-        content: `DOCUMENT CONTEXT: The user has provided the following documents for analysis:\n\n${file_context}\n\nAnalyze this content in relation to their business challenges and Freedom Score results.`
+        content: `DOCUMENT CONTEXT: The user has provided the following documents for analysis:
+
+${file_context}
+
+Analyze this content in relation to their business challenges and Freedom Score results.`
       })
     }
     
@@ -1348,50 +874,6 @@ export async function POST(request: NextRequest) {
       user_message_language: detectedLanguage,
       response_language: detectedLanguage,
       personality_mode: personality
-    }
-
-    // Store in enhanced conversation memory system
-    try {
-      // Import conversation memory service dynamically
-      const { conversationMemoryService } = await import('../../../services/conversationMemoryService');
-      
-      // Generate conversation ID
-      const conversationId = conversationMemoryService.generateConversationId();
-      
-      // Extract context tags and interaction type
-      const contextTags = conversationMemoryService.extractContextTags(message, botReply);
-      const interactionType = conversationMemoryService.determineInteractionType(message, botReply);
-      const priorityScore = conversationMemoryService.calculatePriorityScore(message, botReply, contextTags);
-      
-      // Store in conversation memory
-      await conversationMemoryService.storeConversation({
-        user_id,
-        conversation_id: conversationId,
-        message,
-        response: botReply,
-        context_tags: contextTags,
-        interaction_type: interactionType,
-        business_stage: businessContext?.growth_stage,
-        key_insights: {
-          ai_response_type: interactionType,
-          business_context_used: !!businessContext,
-          website_intelligence_used: !!websiteIntelligence,
-          sprint_context_available: !!sprintProgress
-        },
-        referenced_decisions: conversationMemory?.referenced_decisions || [],
-        priority_score: priorityScore,
-        metadata: {
-          personality_mode: personality,
-          has_freedom_score: !!freedom_score,
-          completed_tasks_count: testCompletedTasks.length,
-          fresh_start: is_fresh_start
-        }
-      });
-      
-      console.log('[AI-STRATEGIST] Conversation stored in memory system with tags:', contextTags);
-    } catch (memoryError) {
-      console.error('[AI-STRATEGIST] Error storing conversation memory:', memoryError);
-      // Continue with regular save even if memory storage fails
     }
 
     const { error: saveError } = await supabase

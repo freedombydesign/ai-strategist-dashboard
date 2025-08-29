@@ -5,12 +5,15 @@ import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import SimpleSprintPlanner from '@/components/SimpleSprintPlanner'
+import EnhancedSprintTracker from '@/components/EnhancedSprintTracker'
 import { diagnosticService } from '@/services/diagnosticService'
 import { LogOut } from 'lucide-react'
 import BusinessContextOnboarding from '@/components/BusinessContextOnboarding'
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth()
+  console.log('[DASHBOARD] *** COMPONENT RENDERED WITH LATEST CHANGES ***');
+  console.log('[DASHBOARD] Render triggered - checking if dev tools caused re-render');
+  const { user, signOut, isSigningOut } = useAuth()
   const [freedomScore, setFreedomScore] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,21 +48,125 @@ export default function Dashboard() {
 
   // Check for business context
   useEffect(() => {
-    if (!isHydrated || !user?.id) return
+    console.log('[DASHBOARD] Business context useEffect triggered:', { isHydrated, userId: user?.id, userObject: !!user });
+    if (!isHydrated) {
+      console.log('[DASHBOARD] Skipping business context - not hydrated');
+      return;
+    }
     
-    checkBusinessContext()
+    if (!user?.id) {
+      console.log('[DASHBOARD] Skipping business context - no user ID:', { user: !!user, id: user?.id });
+      return;
+    }
+    
+    console.log('[DASHBOARD] All conditions met - triggering business context check');
+    checkBusinessContext();
   }, [isHydrated, user])
 
   const checkBusinessContext = async () => {
     try {
       setContextLoading(true)
+      console.log('[DASHBOARD] Fetching business context for user:', user?.id)
       const response = await fetch(`/api/business-context?userId=${user?.id}`)
       const result = await response.json()
+      console.log('[DASHBOARD] Business context API response:', result)
       
       if (result.success && result.data) {
-        setBusinessContext(result.data)
+        console.log('[DASHBOARD] Found business context data:', result.data)
+        // Transform database data to match component interface
+        const transformedData = {
+          businessName: result.data.business_name || '',
+          businessModel: result.data.business_model || 'B2B',
+          revenueModel: result.data.revenue_model || '',
+          currentRevenue: result.data.current_revenue || '',
+          teamSize: result.data.team_size || '',
+          growthStage: result.data.growth_stage || 'Growth',
+          targetMarket: result.data.target_market || '',
+          idealClientProfile: (() => {
+            console.log('[DASHBOARD] Processing ideal_client_profile:', result.data.ideal_client_profile, typeof result.data.ideal_client_profile);
+            try {
+              if (result.data.ideal_client_profile) {
+                // If it's already an object, use it directly
+                if (typeof result.data.ideal_client_profile === 'object') {
+                  return {
+                    title: result.data.ideal_client_profile.title || result.data.ideal_client_profile.niche || '',
+                    companySize: result.data.ideal_client_profile.companySize || result.data.ideal_client_profile.company_size || '',
+                    painPoints: result.data.ideal_client_profile.painPoints || result.data.ideal_client_profile.pain_points || ''
+                  };
+                }
+                // If it's a string, try to parse as JSON
+                if (typeof result.data.ideal_client_profile === 'string') {
+                  try {
+                    const parsed = JSON.parse(result.data.ideal_client_profile);
+                    return {
+                      title: parsed.title || parsed.niche || '',
+                      companySize: parsed.companySize || parsed.company_size || '',
+                      painPoints: parsed.painPoints || parsed.pain_points || ''
+                    };
+                  } catch {
+                    // If JSON parsing fails, treat as simple string for title
+                    return {
+                      title: result.data.ideal_client_profile,
+                      companySize: '',
+                      painPoints: ''
+                    };
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('[DASHBOARD] Error processing ideal_client_profile:', error);
+            }
+            return {
+              title: '',
+              companySize: '',
+              painPoints: ''
+            };
+          })(),
+          uniqueValueProposition: result.data.unique_value_proposition || '',
+          mainCompetitors: result.data.main_competitors || '',
+          competitiveAdvantage: result.data.competitive_advantage || '',
+          topBottlenecks: (() => {
+            console.log('[DASHBOARD] Processing top_bottlenecks:', result.data.top_bottlenecks, typeof result.data.top_bottlenecks);
+            try {
+              if (!result.data.top_bottlenecks) return [];
+              
+              // If it's already an array, return it
+              if (Array.isArray(result.data.top_bottlenecks)) {
+                return result.data.top_bottlenecks;
+              }
+              
+              // If it's a string, try JSON parse first
+              if (typeof result.data.top_bottlenecks === 'string') {
+                try {
+                  const parsed = JSON.parse(result.data.top_bottlenecks);
+                  if (Array.isArray(parsed)) return parsed;
+                } catch {
+                  // If JSON parse fails, try comma-separated string
+                  return result.data.top_bottlenecks.split(',').map((item: string) => item.trim()).filter(Boolean);
+                }
+              }
+              
+              return [];
+            } catch (error) {
+              console.error('[DASHBOARD] Error processing top_bottlenecks:', error);
+              return [];
+            }
+          })(),
+          biggestChallenge: result.data.biggest_challenge || '',
+          previousFrameworks: result.data.previous_frameworks || '',
+          primaryGoal: result.data.primary_goal || '',
+          successMetrics: result.data.success_metrics || '',
+          timeframe: result.data.timeframe || '',
+          industry: result.data.industry || '',
+          businessAge: result.data.business_age || '',
+          websiteUrl: result.data.website_url || '',
+          additionalContext: result.data.additional_context || ''
+        }
+        setBusinessContext(transformedData)
+        console.log('[DASHBOARD] Transformed business context:', transformedData)
         setShowBusinessOnboarding(false)
       } else {
+        console.log('[DASHBOARD] No business context found, showing onboarding')
         // No business context found, show onboarding
         setShowBusinessOnboarding(true)
       }
@@ -87,6 +194,8 @@ export default function Dashboard() {
   
   const handleUpdateBusinessContext = () => {
     // Show onboarding with existing data pre-populated
+    console.log('[DASHBOARD] Updating business profile with existing data:', businessContext);
+    console.log('[DASHBOARD] Setting showBusinessOnboarding to true with existingData');
     setShowBusinessOnboarding(true)
   }
 
@@ -244,10 +353,15 @@ export default function Dashboard() {
               </Link>
               <button
                 onClick={signOut}
-                className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+                disabled={isSigningOut}
+                className={`flex items-center gap-2 font-medium ${
+                  isSigningOut 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'text-red-600 hover:text-red-800'
+                }`}
               >
                 <LogOut size={16} />
-                Sign Out
+                {isSigningOut ? 'Signing Out...' : 'Sign Out'}
               </button>
             </div>
           </div>
@@ -314,6 +428,9 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* Enhanced Sprint Tracking */}
+              <EnhancedSprintTracker freedomScore={freedomScore} className="mb-6" />
+              
               {/* Sprint Planning */}
               <SimpleSprintPlanner freedomScore={freedomScore} />
             </div>
@@ -348,7 +465,10 @@ export default function Dashboard() {
                     Retake Freedom Score
                   </Link>
                   <button
-                    onClick={handleRetakeBusinessContext}
+                    onClick={() => {
+                      console.log('[DASHBOARD] Update Business Profile button clicked');
+                      handleUpdateBusinessContext();
+                    }}
                     className="flex items-center text-gray-600 hover:text-gray-900 w-full text-left"
                   >
                     <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

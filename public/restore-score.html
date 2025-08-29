@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restore Freedom Score</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            line-height: 1.6;
+        }
+        .button { 
+            background: #3b82f6; 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .button:hover { 
+            background: #2563eb; 
+        }
+        .success { 
+            background: #10b981; 
+        }
+        .error { 
+            background: #ef4444; 
+        }
+        #result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .info {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Restore Your Freedom Score</h1>
+    
+    <div class="info">
+        <p><strong>What this does:</strong></p>
+        <ul>
+            <li>Retrieves your Freedom Score from browser storage</li>
+            <li>Saves it properly to the database</li>
+            <li>Fixes your sprint progress tracking</li>
+            <li>Enables the AI to know which step you're on</li>
+        </ul>
+    </div>
+
+    <button class="button" onclick="restoreScore()">🔄 Restore My Freedom Score</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function restoreScore() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = '';
+            resultDiv.innerHTML = '⏳ Checking localStorage for Freedom Score...';
+
+            try {
+                // Check localStorage for Freedom Score
+                const freedomScoreStr = localStorage.getItem('lastFreedomScore');
+                const scoreCompletedAt = localStorage.getItem('scoreCompletedAt');
+
+                if (!freedomScoreStr) {
+                    resultDiv.innerHTML = '❌ No Freedom Score found in localStorage. Please retake the assessment.';
+                    resultDiv.className = 'error';
+                    return;
+                }
+
+                const freedomScore = JSON.parse(freedomScoreStr);
+                console.log('Found Freedom Score:', freedomScore);
+
+                // Get user ID (this is a simplified approach)
+                const userId = 'f85eba27-6eb9-4933-9459-2517739ef846'; // Your user ID
+
+                resultDiv.innerHTML = `⏳ Found Freedom Score: ${freedomScore.percent}%<br>Saving to database...`;
+
+                // Call the restore API
+                const response = await fetch('/api/restore-freedom-score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        freedomScore: freedomScore,
+                        assessmentAnswers: null // Could be enhanced to save original answers
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    let message = `✅ <strong>Freedom Score Restored Successfully!</strong><br><br>`;
+                    message += `📊 <strong>Your Score:</strong> ${result.freedomScore.percent}% (${result.freedomScore.totalScore}/60)<br>`;
+                    message += `🎯 <strong>Top Priority:</strong> ${result.freedomScore.recommendedOrder[0].title}<br><br>`;
+                    
+                    if (result.sprintInfo) {
+                        message += `🏃‍♀️ <strong>Current Sprint:</strong> ${result.sprintInfo.sprint_title}<br>`;
+                        message += `📋 <strong>Current Step:</strong> ${result.sprintInfo.step_number} - ${result.sprintInfo.step_title}<br>`;
+                        message += `✅ <strong>Status:</strong> ${result.sprintInfo.status}<br><br>`;
+                    }
+                    
+                    message += `<strong>✨ Your AI strategist now knows exactly which step you're on!</strong><br>`;
+                    message += `Try asking: "What step am I currently on?" in the chat.`;
+                    
+                    resultDiv.innerHTML = message;
+                    resultDiv.className = 'success';
+                } else {
+                    resultDiv.innerHTML = `❌ Error: ${result.error || 'Unknown error occurred'}`;
+                    resultDiv.className = 'error';
+                }
+
+            } catch (error) {
+                console.error('Error restoring score:', error);
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultDiv.className = 'error';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,513 @@
+import * as cheerio from 'cheerio'
+import { conversationMemoryService } from './conversationMemoryService'
+
+interface WebsiteAnalysis {
+  extractedMessaging: {
+    headlines: string[]
+    valuePropositions: string[]
+    callsToAction: string[]
+    taglines: string[]
+  }
+  brandVoiceAnalysis: {
+    tone: 'professional' | 'casual' | 'authoritative' | 'friendly' | 'technical' | 'creative'
+    personality: string[]
+    communicationStyle: string
+    keyPhrases: string[]
+  }
+  competitivePositioning: string
+  targetAudienceSignals: string[]
+  serviceOfferings: string[]
+  pricingSignals: {
+    hasVisiblePricing: boolean
+    pricingStrategy: string
+    pricePoints: string[]
+  }
+  socialProofElements: string[]
+  contentThemes: string[]
+  seoKeywords: string[]
+}
+
+interface WebsiteScrapeResult {
+  url: string
+  title: string
+  content: string
+  analysis: WebsiteAnalysis
+  success: boolean
+  error?: string
+}
+
+export class WebsiteIntelligenceService {
+  
+  // Scrape and analyze a website
+  async scrapeAndAnalyzeWebsite(url: string, userId: string): Promise<WebsiteScrapeResult> {
+    try {
+      console.log('[WEBSITE-INTEL] Starting website analysis for:', url)
+      
+      // Ensure URL has protocol
+      const normalizedUrl = url.startsWith('http') ? url : `https://${url}`
+      
+      // Scrape website content
+      const response = await fetch(normalizedUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+        },
+        redirect: 'follow'
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
+      const html = await response.text()
+      const $ = cheerio.load(html)
+      
+      // Extract text content and clean it
+      const textContent = this.extractCleanText($)
+      const title = $('title').text() || 'No title found'
+      
+      console.log('[WEBSITE-INTEL] Scraped content length:', textContent.length)
+      
+      // Analyze the content
+      const analysis = await this.analyzeWebsiteContent($, textContent)
+      
+      // Store in database
+      await conversationMemoryService.storeWebsiteIntelligence({
+        user_id: userId,
+        website_url: normalizedUrl,
+        page_content: textContent.slice(0, 10000), // Limit content size
+        extracted_messaging: analysis.extractedMessaging,
+        brand_voice_analysis: analysis.brandVoiceAnalysis,
+        competitive_positioning: analysis.competitivePositioning,
+        target_audience_signals: analysis.targetAudienceSignals,
+        service_offerings: analysis.serviceOfferings,
+        pricing_signals: analysis.pricingSignals,
+        social_proof_elements: analysis.socialProofElements,
+        content_themes: analysis.contentThemes,
+        seo_keywords: analysis.seoKeywords
+      })
+      
+      return {
+        url: normalizedUrl,
+        title,
+        content: textContent,
+        analysis,
+        success: true
+      }
+      
+    } catch (error) {
+      console.error('[WEBSITE-INTEL] Error scraping website:', error)
+      
+      return {
+        url,
+        title: 'Error',
+        content: '',
+        analysis: this.getEmptyAnalysis(),
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  }
+  
+  // Extract clean text content from HTML
+  private extractCleanText($: cheerio.CheerioAPI): string {
+    // Remove script and style elements
+    $('script, style, nav, footer, .cookie-banner, .popup').remove()
+    
+    // Extract main content
+    let content = ''
+    
+    // Try to find main content areas
+    const mainSelectors = ['main', '.main-content', '#main-content', '.content', '#content', 'article']
+    
+    for (const selector of mainSelectors) {
+      const mainContent = $(selector).first()
+      if (mainContent.length && mainContent.text().trim().length > 100) {
+        content = mainContent.text()
+        break
+      }
+    }
+    
+    // Fallback to body if no main content found
+    if (!content) {
+      content = $('body').text()
+    }
+    
+    // Clean up the text
+    return content
+      .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
+      .replace(/\n+/g, '\n') // Replace multiple newlines with single newline
+      .trim()
+  }
+  
+  // Analyze website content and extract insights
+  private async analyzeWebsiteContent($: cheerio.CheerioAPI, textContent: string): Promise<WebsiteAnalysis> {
+    const analysis: WebsiteAnalysis = {
+      extractedMessaging: await this.extractMessaging($),
+      brandVoiceAnalysis: await this.analyzeBrandVoice(textContent),
+      competitivePositioning: await this.analyzeCompetitivePositioning(textContent),
+      targetAudienceSignals: await this.extractTargetAudienceSignals(textContent),
+      serviceOfferings: await this.extractServiceOfferings(textContent),
+      pricingSignals: await this.extractPricingSignals($, textContent),
+      socialProofElements: await this.extractSocialProof($),
+      contentThemes: await this.extractContentThemes(textContent),
+      seoKeywords: await this.extractSEOKeywords($)
+    }
+    
+    return analysis
+  }
+  
+  // Extract key messaging elements
+  private async extractMessaging($: cheerio.CheerioAPI): Promise<WebsiteAnalysis['extractedMessaging']> {
+    const headlines = []
+    const valuePropositions = []
+    const callsToAction = []
+    const taglines = []
+    
+    // Extract headlines (h1, h2, prominent text)
+    $('h1, h2, .hero-title, .main-headline, .banner-title').each((_, elem) => {
+      const text = $(elem).text().trim()
+      if (text && text.length > 5 && text.length < 200) {
+        headlines.push(text)
+      }
+    })
+    
+    // Extract CTAs
+    $('button, .btn, .cta, a[href*="contact"], a[href*="signup"], a[href*="subscribe"], a[href*="buy"], a[href*="get-started"]').each((_, elem) => {
+      const text = $(elem).text().trim()
+      if (text && text.length > 2 && text.length < 100) {
+        callsToAction.push(text)
+      }
+    })
+    
+    // Extract value propositions (common sections)
+    $('.value-prop, .benefits, .why-us, .hero-subtitle, .description').each((_, elem) => {
+      const text = $(elem).text().trim()
+      if (text && text.length > 20 && text.length < 500) {
+        valuePropositions.push(text)
+      }
+    })
+    
+    // Extract taglines (meta description, short descriptions)
+    const metaDescription = $('meta[name="description"]').attr('content')
+    if (metaDescription) {
+      taglines.push(metaDescription)
+    }
+    
+    return {
+      headlines: headlines.slice(0, 10),
+      valuePropositions: valuePropositions.slice(0, 5),
+      callsToAction: [...new Set(callsToAction)].slice(0, 10), // Remove duplicates
+      taglines: taglines.slice(0, 3)
+    }
+  }
+  
+  // Analyze brand voice and personality
+  private async analyzeBrandVoice(textContent: string): Promise<WebsiteAnalysis['brandVoiceAnalysis']> {
+    const words = textContent.toLowerCase().split(/\s+/)
+    const sentences = textContent.split(/[.!?]+/).filter(s => s.trim().length > 0)
+    
+    // Analyze tone indicators
+    let tone: WebsiteAnalysis['brandVoiceAnalysis']['tone'] = 'professional'
+    
+    const casualIndicators = ['hey', 'awesome', 'cool', 'amazing', 'love', 'fun', 'easy']
+    const professionalIndicators = ['solution', 'expertise', 'experience', 'professional', 'industry', 'business']
+    const authoritativeIndicators = ['proven', 'leading', 'expert', 'authority', 'trusted', 'established']
+    const friendlyIndicators = ['welcome', 'help', 'support', 'care', 'together', 'team']
+    const technicalIndicators = ['integration', 'api', 'platform', 'system', 'technology', 'data']
+    const creativeIndicators = ['creative', 'design', 'innovative', 'unique', 'artistic', 'brand']
+    
+    const toneScores = {
+      casual: this.countWordsInText(words, casualIndicators),
+      professional: this.countWordsInText(words, professionalIndicators),
+      authoritative: this.countWordsInText(words, authoritativeIndicators),
+      friendly: this.countWordsInText(words, friendlyIndicators),
+      technical: this.countWordsInText(words, technicalIndicators),
+      creative: this.countWordsInText(words, creativeIndicators)
+    }
+    
+    // Get the highest scoring tone
+    tone = Object.entries(toneScores).reduce((a, b) => toneScores[a[0]] > toneScores[b[0]] ? a : b)[0] as typeof tone
+    
+    // Extract personality traits
+    const personality = []
+    if (toneScores.friendly > 3) personality.push('Friendly')
+    if (toneScores.authoritative > 3) personality.push('Authoritative')
+    if (toneScores.creative > 3) personality.push('Creative')
+    if (toneScores.technical > 5) personality.push('Technical')
+    if (words.length > 0 && sentences.length > 0 && words.length / sentences.length > 20) personality.push('Detail-oriented')
+    if (sentences.length > 0 && sentences.filter(s => s.length < 80).length / sentences.length > 0.7) personality.push('Concise')
+    
+    // Communication style
+    const avgSentenceLength = words.length / Math.max(sentences.length, 1)
+    let communicationStyle = 'Balanced'
+    if (avgSentenceLength < 12) communicationStyle = 'Concise and direct'
+    else if (avgSentenceLength > 25) communicationStyle = 'Detailed and thorough'
+    
+    // Key phrases (most repeated meaningful phrases)
+    const keyPhrases = this.extractKeyPhrases(textContent)
+    
+    return {
+      tone,
+      personality: personality.length > 0 ? personality : ['Professional'],
+      communicationStyle,
+      keyPhrases: keyPhrases.slice(0, 10)
+    }
+  }
+  
+  // Count specific words in text
+  private countWordsInText(words: string[], indicators: string[]): number {
+    return words.filter(word => indicators.includes(word.toLowerCase())).length
+  }
+  
+  // Extract key repeated phrases
+  private extractKeyPhrases(text: string): string[] {
+    const phrases: { [key: string]: number } = {}
+    const sentences = text.split(/[.!?]+/)
+    
+    for (const sentence of sentences) {
+      const words = sentence.toLowerCase().match(/\b\w+\b/g) || []
+      
+      // Extract 2-4 word phrases
+      for (let i = 0; i < words.length - 1; i++) {
+        for (let len = 2; len <= Math.min(4, words.length - i); len++) {
+          const phrase = words.slice(i, i + len).join(' ')
+          if (phrase.length > 6 && phrase.length < 50) {
+            phrases[phrase] = (phrases[phrase] || 0) + 1
+          }
+        }
+      }
+    }
+    
+    // Return most frequent phrases
+    return Object.entries(phrases)
+      .filter(([_, count]) => count >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .map(([phrase]) => phrase)
+      .slice(0, 10)
+  }
+  
+  // Analyze competitive positioning
+  private async analyzeCompetitivePositioning(textContent: string): Promise<string> {
+    const positioningKeywords = [
+      'unlike', 'different', 'unique', 'only', 'first', 'leading', 'best', 'top',
+      'exclusive', 'proprietary', 'innovative', 'revolutionary', 'breakthrough'
+    ]
+    
+    const sentences = textContent.split(/[.!?]+/)
+    const positioningSentences = sentences.filter(sentence =>
+      positioningKeywords.some(keyword => 
+        sentence.toLowerCase().includes(keyword)
+      )
+    )
+    
+    return positioningSentences.slice(0, 3).join('. ') || 'No clear competitive positioning found'
+  }
+  
+  // Extract target audience signals
+  private async extractTargetAudienceSignals(textContent: string): Promise<string[]> {
+    const audienceSignals = []
+    const text = textContent.toLowerCase()
+    
+    // Business types
+    if (text.includes('small business') || text.includes('entrepreneur')) audienceSignals.push('Small Business Owners')
+    if (text.includes('enterprise') || text.includes('large company')) audienceSignals.push('Enterprise Companies')
+    if (text.includes('startup')) audienceSignals.push('Startups')
+    if (text.includes('freelancer') || text.includes('consultant')) audienceSignals.push('Freelancers/Consultants')
+    if (text.includes('agency') || text.includes('agencies')) audienceSignals.push('Agencies')
+    
+    // Professional levels
+    if (text.includes('ceo') || text.includes('founder') || text.includes('executive')) audienceSignals.push('Executives/Leaders')
+    if (text.includes('manager') || text.includes('director')) audienceSignals.push('Managers/Directors')
+    if (text.includes('developer') || text.includes('technical')) audienceSignals.push('Technical Professionals')
+    if (text.includes('marketing') || text.includes('marketer')) audienceSignals.push('Marketing Professionals')
+    
+    // Industries
+    if (text.includes('saas') || text.includes('software')) audienceSignals.push('Software/SaaS')
+    if (text.includes('ecommerce') || text.includes('retail')) audienceSignals.push('E-commerce/Retail')
+    if (text.includes('healthcare') || text.includes('medical')) audienceSignals.push('Healthcare')
+    if (text.includes('real estate')) audienceSignals.push('Real Estate')
+    if (text.includes('financial') || text.includes('finance')) audienceSignals.push('Financial Services')
+    
+    return [...new Set(audienceSignals)]
+  }
+  
+  // Extract service offerings
+  private async extractServiceOfferings(textContent: string): Promise<string[]> {
+    const services = []
+    const text = textContent.toLowerCase()
+    
+    // Common service types
+    const serviceKeywords = {
+      'Consulting': ['consulting', 'advisory', 'guidance', 'strategy consulting'],
+      'Web Development': ['web development', 'website design', 'web design', 'frontend', 'backend'],
+      'Digital Marketing': ['digital marketing', 'seo', 'ppc', 'social media marketing', 'content marketing'],
+      'Design Services': ['graphic design', 'ui design', 'ux design', 'branding', 'logo design'],
+      'Training': ['training', 'coaching', 'workshops', 'courses', 'education'],
+      'Software Development': ['software development', 'app development', 'custom software'],
+      'Content Creation': ['content creation', 'copywriting', 'blog writing', 'content strategy'],
+      'Analytics': ['analytics', 'data analysis', 'reporting', 'insights'],
+      'Support': ['support', 'maintenance', 'help desk', 'customer service'],
+      'Integration': ['integration', 'api', 'automation', 'workflow']
+    }
+    
+    for (const [service, keywords] of Object.entries(serviceKeywords)) {
+      if (keywords.some(keyword => text.includes(keyword))) {
+        services.push(service)
+      }
+    }
+    
+    return services
+  }
+  
+  // Extract pricing signals
+  private async extractPricingSignals($: cheerio.CheerioAPI, textContent: string): Promise<WebsiteAnalysis['pricingSignals']> {
+    const text = textContent.toLowerCase()
+    
+    // Check for visible pricing
+    const hasVisiblePricing = $('.price, .pricing, [class*="price"], [id*="price"]').length > 0 ||
+                             text.includes('$') || text.includes('price') || text.includes('cost')
+    
+    // Determine pricing strategy
+    let pricingStrategy = 'Unknown'
+    if (text.includes('free') && (text.includes('trial') || text.includes('plan'))) pricingStrategy = 'Freemium'
+    else if (text.includes('subscription') || text.includes('monthly') || text.includes('yearly')) pricingStrategy = 'Subscription'
+    else if (text.includes('one-time') || text.includes('purchase')) pricingStrategy = 'One-time Purchase'
+    else if (text.includes('custom') || text.includes('quote') || text.includes('contact for pricing')) pricingStrategy = 'Custom Pricing'
+    
+    // Extract price points
+    const priceMatches = textContent.match(/\$[\d,]+(?:\.\d{2})?/g) || []
+    const pricePoints = [...new Set(priceMatches)].slice(0, 10)
+    
+    return {
+      hasVisiblePricing,
+      pricingStrategy,
+      pricePoints
+    }
+  }
+  
+  // Extract social proof elements
+  private async extractSocialProof($: cheerio.CheerioAPI): Promise<string[]> {
+    const socialProof = []
+    
+    // Testimonials
+    const testimonialElements = $('.testimonial, .review, .quote, [class*="testimonial"], [class*="review"]')
+    if (testimonialElements.length > 0) {
+      socialProof.push(`${testimonialElements.length} testimonials found`)
+    }
+    
+    // Client logos
+    const clientLogos = $('.client-logo, .partner-logo, [class*="client"], [class*="partner"] img')
+    if (clientLogos.length > 0) {
+      socialProof.push(`${clientLogos.length} client/partner logos`)
+    }
+    
+    // Numbers/stats
+    const statsElements = $('[class*="stat"], [class*="number"], .metric')
+    statsElements.each((_, elem) => {
+      const text = $(elem).text()
+      if (text.match(/\d+[kK]?[\+%]?/)) {
+        socialProof.push(text.trim())
+      }
+    })
+    
+    // Awards/certifications
+    if ($('.award, .certification, [class*="award"], [class*="cert"]').length > 0) {
+      socialProof.push('Awards/certifications displayed')
+    }
+    
+    return socialProof.slice(0, 10)
+  }
+  
+  // Extract content themes
+  private async extractContentThemes(textContent: string): Promise<string[]> {
+    const themes = []
+    const text = textContent.toLowerCase()
+    
+    const themeKeywords = {
+      'Growth': ['growth', 'scale', 'expand', 'increase', 'boost'],
+      'Efficiency': ['efficiency', 'streamline', 'optimize', 'automate', 'faster'],
+      'Innovation': ['innovation', 'innovative', 'cutting-edge', 'advanced', 'breakthrough'],
+      'Results': ['results', 'roi', 'performance', 'success', 'achievement'],
+      'Trust': ['trust', 'reliable', 'secure', 'proven', 'established'],
+      'Support': ['support', 'help', 'assistance', 'guidance', 'service'],
+      'Quality': ['quality', 'premium', 'excellence', 'best-in-class', 'superior'],
+      'Simplicity': ['simple', 'easy', 'straightforward', 'user-friendly', 'intuitive']
+    }
+    
+    for (const [theme, keywords] of Object.entries(themeKeywords)) {
+      const count = keywords.filter(keyword => text.includes(keyword)).length
+      if (count >= 2) {
+        themes.push(theme)
+      }
+    }
+    
+    return themes
+  }
+  
+  // Extract SEO keywords
+  private async extractSEOKeywords($: cheerio.CheerioAPI): Promise<string[]> {
+    const keywords = []
+    
+    // Meta keywords (if present)
+    const metaKeywords = $('meta[name="keywords"]').attr('content')
+    if (metaKeywords) {
+      keywords.push(...metaKeywords.split(',').map(k => k.trim()))
+    }
+    
+    // Title keywords
+    const title = $('title').text()
+    if (title) {
+      keywords.push(...title.split(/\s+/).filter(word => word.length > 3))
+    }
+    
+    // H1, H2 keywords
+    $('h1, h2').each((_, elem) => {
+      const text = $(elem).text()
+      keywords.push(...text.split(/\s+/).filter(word => word.length > 3))
+    })
+    
+    return [...new Set(keywords.map(k => k.toLowerCase()))].slice(0, 20)
+  }
+  
+  // Get empty analysis structure
+  private getEmptyAnalysis(): WebsiteAnalysis {
+    return {
+      extractedMessaging: {
+        headlines: [],
+        valuePropositions: [],
+        callsToAction: [],
+        taglines: []
+      },
+      brandVoiceAnalysis: {
+        tone: 'professional',
+        personality: [],
+        communicationStyle: 'Unknown',
+        keyPhrases: []
+      },
+      competitivePositioning: 'Unable to analyze',
+      targetAudienceSignals: [],
+      serviceOfferings: [],
+      pricingSignals: {
+        hasVisiblePricing: false,
+        pricingStrategy: 'Unknown',
+        pricePoints: []
+      },
+      socialProofElements: [],
+      contentThemes: [],
+      seoKeywords: []
+    }
+  }
+  
+  // Get website intelligence for user
+  async getWebsiteIntelligence(userId: string) {
+    return conversationMemoryService.getWebsiteIntelligence(userId)
+  }
+}
+
+export const websiteIntelligenceService = new WebsiteIntelligenceService()

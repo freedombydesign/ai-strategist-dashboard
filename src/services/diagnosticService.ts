@@ -75,21 +75,28 @@ export const diagnosticService = {
       const scoreResult = scoreAndRecommend(answers);
 
       // Save the raw responses to the database  
-      // Try the simple approach first - just store the essential data
-      const { data: responseData, error: saveError } = await supabase
-        .from('freedom_responses')
-        .insert({
-          user_id: userId,
-          // Store answers as individual columns for now to avoid schema issues
-          M1_Q1: answers.M1_Q1, M1_Q2: answers.M1_Q2,
-          M2_Q1: answers.M2_Q1, M2_Q2: answers.M2_Q2,
-          M3_Q1: answers.M3_Q1, M3_Q2: answers.M3_Q2,
-          M4_Q1: answers.M4_Q1, M4_Q2: answers.M4_Q2,
-          M5_Q1: answers.M5_Q1, M5_Q2: answers.M5_Q2,
-          M6_Q1: answers.M6_Q1, M6_Q2: answers.M6_Q2
-        })
-        .select()
-        .single();
+      // Try JSON column approach first, fallback to individual columns if needed
+      let responseData = null;
+      let saveError = null;
+      
+      try {
+        // Use the existing diagnostic_responses table
+        const { data, error } = await supabase
+          .from('diagnostic_responses')
+          .insert({
+            user_id: userId,
+            responses: answers,
+            score_result: scoreResult,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        responseData = data;
+        saveError = error;
+      } catch (error: any) {
+        console.error('[DIAGNOSTIC] Error saving to diagnostic_responses:', error);
+        saveError = error;
+      }
 
       if (saveError) {
         console.error('Error saving responses:', saveError);
@@ -113,27 +120,32 @@ export const diagnosticService = {
   async getUserResponses(userId: string): Promise<SavedResponse[]> {
     try {
       const { data, error } = await supabase
-        .from('freedom_responses')
+        .from('diagnostic_responses')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
 
       if (error) throw error
       
-      // Transform the data and recalculate scores
-      return (data || []).map(row => ({
-        id: row.id,
-        user_id: row.user_id,
-        created_at: row.created_at,
-        scoreResult: scoreAndRecommend({
+      // Transform the data and recalculate scores - handle both schema types
+      return (data || []).map(row => {
+        // Try JSON column first, fallback to individual columns
+        const responses = row.responses || {
           M1_Q1: row.M1_Q1, M1_Q2: row.M1_Q2,
           M2_Q1: row.M2_Q1, M2_Q2: row.M2_Q2,
           M3_Q1: row.M3_Q1, M3_Q2: row.M3_Q2,
           M4_Q1: row.M4_Q1, M4_Q2: row.M4_Q2,
           M5_Q1: row.M5_Q1, M5_Q2: row.M5_Q2,
           M6_Q1: row.M6_Q1, M6_Q2: row.M6_Q2
-        })
-      }));
+        };
+        
+        return {
+          id: row.id,
+          user_id: row.user_id,
+          created_at: row.created_at,
+          scoreResult: scoreAndRecommend(responses)
+        }
+      });
 
     } catch (error) {
       console.error('Error fetching user responses:', error)

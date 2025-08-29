@@ -27,6 +27,25 @@ export default function AIChat({ freedomScore, userId, isExpanded = false }: AIC
   const [showFileUpload, setShowFileUpload] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Function to get completed tasks from localStorage
+  const getCompletedTasks = () => {
+    try {
+      const completed: string[] = []
+      // Check for sprint task completions in localStorage
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith('task-') && localStorage.getItem(key) === 'completed') {
+          completed.push(key.replace('task-', ''))
+        }
+      }
+      console.log('[AIChat] Found completed tasks:', completed)
+      return completed
+    } catch (error) {
+      console.warn('[AIChat] Could not read localStorage tasks:', error)
+      return []
+    }
+  }
+
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -46,6 +65,7 @@ export default function AIChat({ freedomScore, userId, isExpanded = false }: AIC
   const sendInitialGreeting = async () => {
     setIsLoading(true)
     try {
+      const completedTasks = getCompletedTasks()
       const response = await fetch('/api/ai-strategist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -53,7 +73,8 @@ export default function AIChat({ freedomScore, userId, isExpanded = false }: AIC
           user_id: userId,
           message: "Hello",
           freedom_score: freedomScore,
-          is_fresh_start: true
+          is_fresh_start: true,
+          completed_tasks: completedTasks
         })
       })
 
@@ -141,6 +162,7 @@ const handleFilesSelected = async (files: File[]) => {
     const contextMessage = `I've uploaded ${files.length} document(s) for you to analyze. Here's what I found in them:\n\n${processedContent}\n\nPlease analyze these documents in the context of my business and Freedom Score results. What insights and recommendations do you have?`;
 
     console.log('Step 7: Calling AI strategist API...');
+    const completedTasks = getCompletedTasks()
     const aiResponse = await fetch('/api/ai-strategist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -149,7 +171,8 @@ const handleFilesSelected = async (files: File[]) => {
         message: contextMessage,
         freedom_score: freedomScore,
         is_fresh_start: false,
-        file_context: processedContent // Add file context
+        file_context: processedContent, // Add file context
+        completed_tasks: completedTasks
       })
     });
 
@@ -207,6 +230,7 @@ const handleFilesSelected = async (files: File[]) => {
     setIsLoading(true)
 
     try {
+      const completedTasks = getCompletedTasks()
       const response = await fetch('/api/ai-strategist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -214,7 +238,8 @@ const handleFilesSelected = async (files: File[]) => {
           user_id: userId,
           message: inputMessage,
           freedom_score: freedomScore,
-          is_fresh_start: false
+          is_fresh_start: false,
+          completed_tasks: completedTasks
         })
       })
 

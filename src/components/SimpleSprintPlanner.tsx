@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useAuth } from '../context/AuthContext'
 import { sprintService } from '../services/sprintService'
@@ -21,6 +21,8 @@ interface SimpleSprint {
 }
 
 export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlannerProps) {
+  console.log('[SIMPLE-SPRINT] *** COMPONENT RE-RENDER - SPRINT FIX DEPLOYED ***');
+  console.log('[SIMPLE-SPRINT] *** COMPONENT RE-RENDER - DEV TOOLS CHECK ***');
   const { user } = useAuth()
   const [sprints, setSprints] = useState<SimpleSprint[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,7 +77,7 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
     }
   }
 
-  const getRecommendedSprints = (): SimpleSprint[] => {
+  const recommendedSprints = useMemo((): SimpleSprint[] => {
     console.log('[SIMPLE-SPRINT] Getting recommended sprints:', {
       has_freedom_score: !!freedomScore,
       has_recommended_order: !!freedomScore?.recommendedOrder,
@@ -131,7 +133,17 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
     }
 
     return recommendedSprints
-  }
+  }, [freedomScore, sprints])
+
+  // Add effect to log when recommended sprints change (after useMemo)
+  useEffect(() => {
+    console.log('[SIMPLE-SPRINT] Recommended sprints updated:', {
+      count: recommendedSprints.length,
+      sprints: recommendedSprints.map(s => ({ id: s.id, name: s.name })),
+      has_freedom_score: !!freedomScore,
+      sprints_loaded: sprints.length > 0
+    });
+  }, [recommendedSprints, freedomScore, sprints.length])
 
   const handleStartSprint = async (sprint: SimpleSprint) => {
     if (!user?.id) return
@@ -201,7 +213,7 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
       )}
 
       <div className="space-y-4">
-        {getRecommendedSprints().map((sprint, index) => {
+        {recommendedSprints.map((sprint, index) => {
           const isStarting = startingSprintId === sprint.id
           const isStarted = startedSprints.has(sprint.id)
 

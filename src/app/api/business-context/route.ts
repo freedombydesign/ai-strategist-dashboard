@@ -35,6 +35,10 @@ export async function POST(request: NextRequest) {
         business_age: contextData.businessAge,
         website_url: contextData.websiteUrl,
         additional_context: contextData.additionalContext,
+        current_workflow: contextData.currentWorkflow || '',
+        biggest_time_waster: contextData.biggestTimeWaster || '',
+        perfect_client_experience: contextData.perfectClientExperience || '',
+        business_vision: contextData.businessVision || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }, {

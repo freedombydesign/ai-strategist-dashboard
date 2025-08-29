@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  isSigningOut: boolean
   signOut: () => Promise<void>
   getUserProfile: () => Promise<any>
 }
@@ -162,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading: loading || !isClient, // Keep loading true until client-side hydration
+    isSigningOut,
     signOut,
     getUserProfile,
   }

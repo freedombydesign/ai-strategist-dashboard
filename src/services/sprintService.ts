@@ -180,12 +180,18 @@ export const sprintService = {
     try {
       console.log('[SPRINT-SERVICE] Starting sprint:', sprintId, 'for user:', userId)
       
-      // Temporary: Store in user_steps table until proper tables are created
+      // Get the first step for this sprint to initialize properly
+      const stepsData = await this.getSprintSteps(sprintId)
+      const firstStep = stepsData.length > 0 ? stepsData[0] : null
+      
+      // Store in user_steps table with proper step initialization
       const { data, error } = await supabase
         .from('user_steps')
         .insert({
           user_id: userId,
           sprint_id: sprintId,
+          step_number: 1,
+          step_title: firstStep ? firstStep.title : 'Getting Started',
           status: 'started',
           created_at: new Date().toISOString()
         })

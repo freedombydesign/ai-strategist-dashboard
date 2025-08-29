@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { Send, Mic, Paperclip, Bot, User, Sparkles, Edit2, Check, X, Download, FileText, Plus, MessageSquare, Trash2 } from 'lucide-react';
+import { Send, Mic, Paperclip, Bot, User, Sparkles, Edit2, Check, X, Download, FileText, Plus, MessageSquare, Trash2, Globe } from 'lucide-react';
 import WhisperVoiceChat from './WhisperVoiceChat';
 import FileUpload from './FileUpload';
+import WebsiteAnalyzer from './WebsiteAnalyzer';
 
 interface Message {
   id: number;
@@ -41,11 +42,14 @@ interface Personality {
 }
 
 export default function EnhancedChat({ userId }: EnhancedChatProps) {
+  console.log('🚨🚨🚨 ENHANCED CHAT LOADED - TIMESTAMP: 2025-08-29-14:43 🚨🚨🚨')
+  console.log('✅ COMPLETED TASKS FUNCTIONALITY ACTIVE ✅')
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [showWebsiteAnalyzer, setShowWebsiteAnalyzer] = useState(false);
   const [aiPersonality, setAiPersonality] = useState<PersonalityType>('strategic');
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -53,7 +57,69 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
   const [sessionId, setSessionId] = useState<string>('default');
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [isNewSession, setIsNewSession] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Function to get completed tasks from localStorage
+  const getCompletedTasks = () => {
+    try {
+      console.log('[ENHANCED-CHAT] 🔍 Starting completed tasks scan...')
+      const allCompleted: string[] = []
+      const allKeys: string[] = []
+      
+      // Scan all localStorage keys first
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key) {
+          allKeys.push(key)
+        }
+      }
+      
+      console.log('[ENHANCED-CHAT] 📋 All localStorage keys:', allKeys)
+      console.log('[ENHANCED-CHAT] 🎯 Looking for keys starting with "completed_tasks_"')
+      
+      // Check for sprint task completions with format: completed_tasks_${user.id}_${sprint.id}
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith('completed_tasks_')) {
+          console.log('[ENHANCED-CHAT] ✅ Found completed_tasks key:', key)
+          
+          try {
+            const rawValue = localStorage.getItem(key)
+            console.log('[ENHANCED-CHAT] 📄 Raw value for key:', key, '=', rawValue)
+            
+            const taskIds = JSON.parse(rawValue || '[]')
+            console.log('[ENHANCED-CHAT] 🔢 Parsed task IDs:', taskIds)
+            
+            if (Array.isArray(taskIds) && taskIds.length > 0) {
+              // Extract sprint info from key for context
+              const parts = key.split('_')
+              const sprintId = parts[parts.length - 1]
+              console.log('[ENHANCED-CHAT] 🏃‍♀️ Sprint ID extracted:', sprintId)
+              
+              // Add tasks with sprint context
+              taskIds.forEach(taskId => {
+                const taskWithContext = `${sprintId}:${taskId}`
+                allCompleted.push(taskWithContext)
+                console.log('[ENHANCED-CHAT] ➕ Added task:', taskWithContext)
+              })
+            } else {
+              console.log('[ENHANCED-CHAT] ⚠️ No tasks found in key:', key)
+            }
+          } catch (parseError) {
+            console.warn('[ENHANCED-CHAT] ❌ Could not parse tasks from key:', key, parseError)
+          }
+        }
+      }
+      
+      console.log('[ENHANCED-CHAT] 🎉 Final completed tasks array:', allCompleted)
+      console.log('[ENHANCED-CHAT] 📊 Total completed tasks found:', allCompleted.length)
+      return allCompleted
+    } catch (error) {
+      console.error('[ENHANCED-CHAT] ❌ Error in getCompletedTasks:', error)
+      return []
+    }
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -96,8 +162,11 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     setInput('');
     setSelectedFiles([]);
     setShowFileUpload(false);
+    setShowWebsiteAnalyzer(false);
+    setShowWebsiteAnalyzer(false);
     setEditingMessageId(null);
     setEditingContent('');
+    setIsNewSession(true); // Flag to prevent immediate server loading
     
     // Show initial greeting for new session
     const greeting = userName 
@@ -149,6 +218,9 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
           }
         });
         
+        // Set timestamp to prevent server restoration
+        localStorage.setItem('lastConversationClear', Date.now().toString());
+        
         console.log('[CHAT] All conversations cleared successfully');
       } else {
         console.error('[CHAT] Failed to clear conversations:', result);
@@ -167,6 +239,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     setInput('');
     setSelectedFiles([]);
     setShowFileUpload(false);
+    setShowWebsiteAnalyzer(false);
   };
 
   const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
@@ -232,11 +305,12 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       
       // Load user name from localStorage first for immediate display
       const localUserName = localStorage.getItem(`user_name_${userId}`);
+      console.log(`[CHAT] Checking local user name for ${userId}:`, localUserName);
       if (localUserName && localUserName !== 'drowning' && localUserName.length > 1) {
-        console.log(`[CHAT] Found local user name: ${localUserName}`);
+        console.log(`[CHAT] Found valid local user name: ${localUserName}`);
         setUserName(localUserName);
       } else {
-        console.log(`[CHAT] Invalid or missing local user name, will fetch from server`);
+        console.log(`[CHAT] Invalid or missing local user name (${localUserName}), will fetch from server`);
         // Clear bad name from localStorage
         if (localUserName === 'drowning') {
           localStorage.removeItem(`user_name_${userId}`);
@@ -278,13 +352,19 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
 
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
+          console.log(`[CHAT] Profile API response:`, profileData);
           if (profileData.success && profileData.profile?.name) {
-            console.log(`[CHAT] Server user name: ${profileData.profile.name}`);
+            console.log(`[CHAT] Found server user name: ${profileData.profile.name}`);
             if (profileData.profile.name !== localUserName) {
+              console.log(`[CHAT] Updating userName from server: ${profileData.profile.name}`);
               setUserName(profileData.profile.name);
               localStorage.setItem(`user_name_${userId}`, profileData.profile.name);
             }
+          } else {
+            console.log(`[CHAT] No name found in server profile`);
           }
+        } else {
+          console.log(`[CHAT] Profile API error:`, profileResponse.status);
         }
       } catch (error) {
         console.error('Error loading user profile:', error);
@@ -292,6 +372,13 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
 
       // Fetch conversation history from server to ensure sync
       try {
+        // Skip server conversation loading if we just started a new session
+        if (isNewSession) {
+          console.log('[CHAT] Skipping server conversation loading - new session started');
+          setIsNewSession(false); // Reset the flag
+          return;
+        }
+        
         console.log('[CHAT] Fetching conversation history from server...');
         const response = await fetch(`/api/chat-history?user_id=${encodeURIComponent(userId)}`, {
           method: 'GET',
@@ -303,14 +390,31 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
           console.log(`[CHAT] Server returned ${data.conversations?.length || 0} conversation entries`);
           
           if (data.success && data.conversations?.length > 0) {
+            console.log('[CHAT] WARNING: Server still has conversation data after deletion attempts');
+            // Don't restore server conversations if user recently cleared them
+            const lastClearTime = localStorage.getItem('lastConversationClear');
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            
+            if (lastClearTime && parseInt(lastClearTime) > fiveMinutesAgo) {
+              console.log('[CHAT] Ignoring server conversations - recently cleared by user');
+              return;
+            }
+            
             const serverMessages: Message[] = [];
             
             data.conversations.forEach((conv: any, index: number) => {
+              // Clean metadata tags from messages before displaying
+              const cleanMessage = conv.message.replace(/^\[Lang:[^\]]+\]\s*/, '');
+              const cleanResponse = conv.response
+                .replace(/^\[Lang:[^,]+,Personality:[^\]]+\]\s*/, '')
+                .replace(/^\[Lang:[^\]]+\]\s*/, '')
+                .replace(/^\[[^\]]+\]\s*/, '');
+              
               // Add user message
               serverMessages.push({
                 id: Date.now() + index * 2,
                 role: 'user' as const,
-                content: conv.message,
+                content: cleanMessage,
                 timestamp: new Date(conv.created_at)
               });
               
@@ -318,7 +422,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
               serverMessages.push({
                 id: Date.now() + index * 2 + 1,
                 role: 'assistant' as const,
-                content: conv.response,
+                content: cleanResponse,
                 timestamp: new Date(conv.created_at)
               });
             });
@@ -387,6 +491,24 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
   const sendMessage = async (messageText = input, files = selectedFiles) => {
     if (!messageText.trim() && files.length === 0) return;
 
+    // Check if user is asking about website analysis
+    const websiteAnalysisKeywords = /website|site|analyze.*site|look.*website|brand.*voice|messaging|scrape.*site|pull.*from.*site|analyze.*web/i;
+    if (websiteAnalysisKeywords.test(messageText) && !showWebsiteAnalyzer) {
+      setShowWebsiteAnalyzer(true);
+      
+      // Add a system message about website analysis
+      const systemMessage: Message = {
+        id: Date.now(),
+        role: 'assistant',
+        content: "I'd be happy to analyze your website! Please use the website analyzer below to get started. Once I analyze your site, I'll be able to reference your brand voice, messaging, and target audience in all my responses.",
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, systemMessage]);
+      setInput('');
+      return;
+    }
+
     // Check if user is introducing their name
     const nameMatch = messageText.match(/(?:i'm|i am|my name is|call me|name's)\s+([a-zA-Z]+)/i);
     if (nameMatch && !userName) {
@@ -422,6 +544,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     setInput('');
     setSelectedFiles([]);
     setShowFileUpload(false);
+    setShowWebsiteAnalyzer(false);
 
     try {
       // Get Freedom Score from localStorage first, then database fallback
@@ -506,13 +629,17 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         console.log('No files to process');
       }
 
+      // Get completed tasks for AI context
+      const completedTasks = getCompletedTasks();
+      
       // Send to AI strategist API with file context
       console.log('[CHAT] Sending request to AI strategist API with:', {
         user_id: userId,
         message: messageText.substring(0, 50) + '...',
         has_freedom_score: !!freedomScore,
         has_file_context: !!fileContext,
-        is_fresh_start: false
+        is_fresh_start: false,
+        completed_tasks_count: completedTasks.length
       });
       
       const response = await fetch('/api/ai-strategist', {
@@ -525,7 +652,8 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
           file_context: fileContext || undefined,
           is_fresh_start: false,
           user_name: userName || null, // Send known user name to backend
-          personality: aiPersonality // Send selected personality to backend
+          personality: aiPersonality, // Send selected personality to backend
+          completed_tasks: completedTasks // Add completed tasks for AI context
         })
       });
 
@@ -716,6 +844,9 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         // Build message history for context (excluding the current edited message)
         const conversationHistory = messagesToKeep.slice(0, -1);
         
+        // Get completed tasks for AI context
+        const completedTasks = getCompletedTasks();
+        
         // Send to AI strategist API to get new response
         const editedMessageContent = editedMessage.content; // Use the saved content instead of editingContent
         console.log('[EDIT] Calling AI strategist with edited message:', editedMessageContent);
@@ -728,7 +859,8 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
             freedom_score: freedomScore,
             is_fresh_start: false,
             user_name: userName || null, // Send known user name for editing too
-            personality: aiPersonality // Send selected personality for editing too
+            personality: aiPersonality, // Send selected personality for editing too
+            completed_tasks: completedTasks // Add completed tasks for AI context
           })
         });
 
@@ -1265,14 +1397,53 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         </div>
       )}
 
+      {/* Website Analyzer */}
+      {showWebsiteAnalyzer && (
+        <div className="p-4 border-t border-gray-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+          <WebsiteAnalyzer 
+            onAnalysisComplete={(analysis) => {
+              console.log('[ENHANCED-CHAT] Website analysis completed:', analysis);
+              setShowWebsiteAnalyzer(false);
+              
+              // Add a success message
+              const successMessage: Message = {
+                id: Date.now(),
+                role: 'assistant',
+                content: `Perfect! I've analyzed your website and now understand your brand voice (${analysis.brand_voice_analysis?.tone || 'Professional'} tone) and messaging. All my future responses will be personalized to match your business style and target audience.`,
+                timestamp: new Date(),
+              };
+              
+              setMessages(prev => [...prev, successMessage]);
+            }}
+          />
+          <div className="flex justify-end gap-2 mt-3">
+            <button
+              onClick={() => setShowWebsiteAnalyzer(false)}
+              className="px-3 py-1 text-gray-500 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="p-4 border-t border-gray-200">
         <div className="flex gap-2">
           <button
             onClick={() => setShowFileUpload(!showFileUpload)}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+            title="Upload files"
           >
             <Paperclip size={20} />
+          </button>
+
+          <button
+            onClick={() => setShowWebsiteAnalyzer(!showWebsiteAnalyzer)}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+            title="Analyze website for personalized responses"
+          >
+            <Globe size={20} />
           </button>
           
           <div className="flex-1">
