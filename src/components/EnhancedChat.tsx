@@ -42,8 +42,6 @@ interface Personality {
 }
 
 export default function EnhancedChat({ userId }: EnhancedChatProps) {
-  console.log('🚨🚨🚨 ENHANCED CHAT LOADED - TIMESTAMP: 2025-08-29-14:43 🚨🚨🚨')
-  console.log('✅ COMPLETED TASKS FUNCTIONALITY ACTIVE ✅')
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
