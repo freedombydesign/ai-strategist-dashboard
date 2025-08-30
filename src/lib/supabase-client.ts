@@ -9,12 +9,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOi
 
 function getSupabaseInstance(): SupabaseClient {
   if (!supabaseInstance) {
-    console.log('[SUPABASE-CLIENT] Creating SINGLE Supabase instance v3.0 with URL:', supabaseUrl)
-    console.log('[SUPABASE-CLIENT] Using environment variables:')
-    console.log('[SUPABASE-CLIENT] NEXT_PUBLIC_SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('[SUPABASE-CLIENT] NEXT_PUBLIC_SUPABASE_ANON_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-    console.log('[SUPABASE-CLIENT] Runtime check - supabaseUrl:', supabaseUrl?.slice(0, 20) + '...')
-    console.log('[SUPABASE-CLIENT] Runtime check - supabaseAnonKey:', supabaseAnonKey?.slice(0, 20) + '...')
+    console.log('[SUPABASE-CLIENT] Creating SINGLE Supabase instance v4.0 with URL:', supabaseUrl?.slice(0, 30) + '...')
     
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {

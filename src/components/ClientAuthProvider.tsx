@@ -12,24 +12,11 @@ export default function ClientAuthProvider({ children }: ClientAuthProviderProps
 
   useEffect(() => {
     setIsHydrated(true);
-    console.log('[CLIENT-AUTH-PROVIDER] Hydrated on URL:', window.location.href);
   }, []);
 
-  // TEMPORARY DEBUG: Bypass AuthProvider to test for redirect issues
+  // Always wrap with AuthProvider, but show loading during hydration
   return (
-    <div>
-      <div style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        background: 'red', 
-        color: 'white', 
-        padding: '10px', 
-        zIndex: 9999,
-        fontSize: '12px'
-      }}>
-        DEBUG MODE: Auth disabled. Current URL: {typeof window !== 'undefined' ? window.location.href : 'SSR'}
-      </div>
+    <AuthProvider>
       {!isHydrated ? (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
@@ -40,6 +27,6 @@ export default function ClientAuthProvider({ children }: ClientAuthProviderProps
       ) : (
         children
       )}
-    </div>
+    </AuthProvider>
   );
 }
