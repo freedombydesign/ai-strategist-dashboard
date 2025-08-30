@@ -1,17 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
 import { v4 as uuidv4 } from 'uuid'
+import { supabase } from '../lib/supabase-client'
 
-// Lazy initialization to avoid import-time errors
-let supabase: any = null
-const getSupabase = () => {
-  if (!supabase) {
-    supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-  }
-  return supabase
-}
+// Use centralized Supabase client to avoid conflicts
+const getSupabase = () => supabase
 
 interface ConversationMemoryEntry {
   id?: number
