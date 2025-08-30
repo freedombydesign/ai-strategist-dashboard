@@ -660,7 +660,22 @@ export async function POST(request: NextRequest) {
   try {
     console.log('[AI-STRATEGIST] *** API WITH ENHANCED SPRINT STEP TRACKING ***');
     console.log('[AI-STRATEGIST] ===== INCOMING REQUEST =====');
-    const { user_id, message, freedom_score, is_fresh_start, file_context, user_name, personality = 'strategic', completed_tasks, website_intelligence } = await request.json()
+    const requestBody = await request.json();
+    const { user_id, message, freedom_score, is_fresh_start, file_context, user_name, personality = 'strategic', completed_tasks, website_intelligence } = requestBody;
+    
+    console.log('[AI-STRATEGIST] ===== REQUEST BODY DEBUG =====');
+    console.log('[AI-STRATEGIST] Full request body keys:', Object.keys(requestBody));
+    console.log('[AI-STRATEGIST] website_intelligence received:', !!website_intelligence);
+    console.log('[AI-STRATEGIST] website_intelligence type:', typeof website_intelligence);
+    if (website_intelligence) {
+      console.log('[AI-STRATEGIST] website_intelligence keys:', Object.keys(website_intelligence));
+      console.log('[AI-STRATEGIST] website_intelligence.analysis keys:', Object.keys(website_intelligence.analysis || {}));
+      console.log('[AI-STRATEGIST] website_intelligence preview:', {
+        url: website_intelligence.website_url,
+        hasAnalysis: !!website_intelligence.analysis,
+        timestamp: website_intelligence.timestamp
+      });
+    }
     
     // TEMPORARY: Manually inject completed task until frontend cache is resolved
     const manualCompletedTasks = user_id === 'f85eba27-6eb9-4933-9459-2517739ef846' ? ['140b8cda-0074-4ca0-a48a-5e310747c18b:profit-1-1'] : []
@@ -939,6 +954,21 @@ export async function POST(request: NextRequest) {
           conversionOpt: !!website_intelligence.analysis?.conversionOptimization,
           audienceInsights: !!website_intelligence.analysis?.audienceInsights
         });
+        console.log('[AI-STRATEGIST] FULL WEBSITE INTELLIGENCE DATA:');
+        console.log('[AI-STRATEGIST] Raw website intelligence:', JSON.stringify(website_intelligence, null, 2));
+        
+        if (website_intelligence.analysis?.pageStructureAnalysis) {
+          console.log('[AI-STRATEGIST] Page Structure Analysis:', website_intelligence.analysis.pageStructureAnalysis);
+        }
+        if (website_intelligence.analysis?.conversionOptimization) {
+          console.log('[AI-STRATEGIST] Conversion Optimization:', website_intelligence.analysis.conversionOptimization);
+        }
+        if (website_intelligence.analysis?.messagingGaps) {
+          console.log('[AI-STRATEGIST] Messaging Gaps:', website_intelligence.analysis.messagingGaps);
+        }
+        if (website_intelligence.analysis?.audienceInsights) {
+          console.log('[AI-STRATEGIST] Audience Insights:', website_intelligence.analysis.audienceInsights);
+        }
       } else {
         // Fallback to database lookup if not provided in request
         const { data: websiteData, error: websiteError } = await supabase
