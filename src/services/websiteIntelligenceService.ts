@@ -46,25 +46,41 @@ export class WebsiteIntelligenceService {
       // Ensure URL has protocol
       const normalizedUrl = url.startsWith('http') ? url : `https://${url}`
       
-      // Scrape website content
-      const response = await fetch(normalizedUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'DNT': '1',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-        },
-        redirect: 'follow'
-      })
+      // Scrape website content with timeout and better error handling
+      console.log('[WEBSITE-INTEL] Attempting to fetch:', normalizedUrl)
       
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
+      
+      let response, html
+      try {
+        response = await fetch(normalizedUrl, {
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; Bot/1.0)',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          },
+          redirect: 'follow'
+        })
+        
+        clearTimeout(timeoutId)
+        
+        console.log('[WEBSITE-INTEL] Fetch response status:', response.status, response.statusText)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        
+        html = await response.text()
+      } catch (fetchError) {
+        clearTimeout(timeoutId)
+        console.error('[WEBSITE-INTEL] Fetch error details:', {
+          message: fetchError.message,
+          name: fetchError.name,
+          cause: fetchError.cause
+        })
+        throw fetchError
       }
-      
-      const html = await response.text()
       const $ = cheerio.load(html)
       
       // Extract text content and clean it
