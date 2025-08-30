@@ -503,7 +503,15 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
   }, [messages.length, userName]);
 
   const sendMessage = async (messageText = input, files = selectedFiles) => {
-    if (!messageText.trim() && files.length === 0) return;
+    console.log('🎯🎯🎯 SENDMESSAGE CALLED - LATEST VERSION!', { 
+      messageText: messageText.substring(0, 50), 
+      hasFiles: files.length > 0,
+      timestamp: new Date().toISOString()
+    });
+    if (!messageText.trim() && files.length === 0) {
+      console.log('❌ Message empty, returning early');
+      return;
+    }
 
     // Check if user is asking about website analysis
     const websiteAnalysisKeywords = /website|site|analyze.*site|look.*website|brand.*voice|messaging|scrape.*site|pull.*from.*site|analyze.*web/i;
@@ -689,7 +697,18 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         completed_tasks_count: completedTasks.length
       });
       
-      const response = await fetch('/api/ai-strategist', {
+      console.log('[CHAT] 🚀 SENDING API REQUEST NOW!');
+      console.log('[CHAT] Request URL: /api/ai-strategist');
+      console.log('[CHAT] Request payload preview:', {
+        user_id: userId,
+        message: messageText.substring(0, 50) + '...',
+        has_website_intelligence: !!websiteIntelligence,
+        website_url: websiteIntelligence?.website_url || 'none'
+      });
+      
+      let response;
+      try {
+        response = await fetch('/api/ai-strategist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -704,28 +723,51 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
           completed_tasks: completedTasks // Add completed tasks for AI context
         })
       });
+      } catch (fetchError) {
+        console.error('[CHAT] 🚨 NETWORK ERROR during API call:', fetchError);
+        throw new Error(`Network error: ${fetchError instanceof Error ? fetchError.message : 'Unknown network error'}`);
+      }
+      
+      console.log('[CHAT] 📡 API RESPONSE STATUS:', response.status);
+      console.log('[CHAT] API response ok:', response.ok);
 
       console.log('[CHAT] AI strategist API response status:', response.status);
       
       if (!response.ok) {
-        console.error('[CHAT] AI strategist API error - Status:', response.status, 'StatusText:', response.statusText);
+        console.error('[CHAT] 🚨 AI strategist API error - Status:', response.status, 'StatusText:', response.statusText);
         const errorText = await response.text();
-        console.error('[CHAT] AI strategist API error response:', errorText);
+        console.error('[CHAT] 🚨 AI strategist API error response:', errorText);
         throw new Error(`AI strategist API error: ${response.status} ${response.statusText}`);
       }
+      
+      console.log('[CHAT] ✅ API call successful, processing response...');
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+        console.log('[CHAT] ✅ JSON parsing successful');
+      } catch (jsonError) {
+        console.error('[CHAT] 🚨 JSON PARSING ERROR:', jsonError);
+        throw new Error(`Failed to parse API response: ${jsonError instanceof Error ? jsonError.message : 'Unknown JSON error'}`);
+      }
       console.log('[CHAT] AI strategist API response data:', {
         has_reply: !!data.reply,
-        reply_preview: data.reply?.substring(0, 100) + '...',
+        reply_preview: (data.reply && typeof data.reply === 'string') ? data.reply.substring(0, 100) + '...' : 'No reply content',
         error: data.error
       });
+      
+      console.log('[CHAT] 🚨 CRITICAL TEST LOG - IF YOU SEE THIS, PROCESSING CONTINUES!');
+      
+      console.log('[CHAT] 🎯 ABOUT TO PROCESS SUCCESSFUL API RESPONSE');
+      console.log('[CHAT] Reply text length:', data.reply?.length || 0);
       
       // Check for API error response
       if (data.error) {
         console.error('[CHAT] AI strategist API returned error:', data.error, data.details);
         throw new Error(data.error);
       }
+      
+      console.log('[CHAT] 🎯 NO ERROR, CONTINUING TO PROCESS REPLY...');
       
       // Check if user requested document creation OR if AI response suggests document generation
       const userDocumentRequest = detectDocumentGeneration(input);
@@ -770,9 +812,15 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         downloadableDocuments: downloadableDocuments.length > 0 ? downloadableDocuments : undefined
       };
 
+      console.log('[CHAT] 🎯 SETTING BOT MESSAGE TO STATE:', {
+        id: botMessage.id,
+        content_length: botMessage.content?.length || 0,
+        content_preview: botMessage.content?.substring(0, 50) + '...'
+      });
       setMessages(prev => [...prev, botMessage]);
+      console.log('[CHAT] ✅ BOT MESSAGE ADDED TO STATE');
     } catch (error) {
-      console.error('Chat error:', error);
+      console.error('[CHAT] 🚨 ERROR IN SENDMESSAGE:', error);
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: 'assistant',
@@ -780,7 +828,9 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         timestamp: new Date()
       }]);
     } finally {
+      console.log('[CHAT] 🎯 FINALLY BLOCK: SETTING LOADING TO FALSE');
       setIsLoading(false);
+      console.log('[CHAT] ✅ LOADING STATE SET TO FALSE');
     }
   };
 
@@ -1537,9 +1587,22 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
           />
           
           <button
-            onClick={() => sendMessage()}
+            onClick={(e) => {
+              console.log('[CHAT] 🔘 RAW BUTTON CLICK EVENT!', { 
+                event: e.type,
+                target: e.target,
+                inputLength: input.trim().length, 
+                filesCount: selectedFiles.length, 
+                isLoading,
+                disabled: (!input.trim() && selectedFiles.length === 0) || isLoading
+              });
+              e.preventDefault();
+              e.stopPropagation();
+              sendMessage();
+            }}
             disabled={(!input.trim() && selectedFiles.length === 0) || isLoading}
             className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ zIndex: 1000, position: 'relative' }}
           >
             <Send size={20} />
           </button>
