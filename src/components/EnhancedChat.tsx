@@ -638,6 +638,14 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         if (websiteData) {
           websiteIntelligence = JSON.parse(websiteData);
           console.log('[CHAT] Retrieved website intelligence:', websiteIntelligence);
+          console.log('[CHAT] Analysis structure check:', {
+            hasBasicAnalysis: !!websiteIntelligence.analysis,
+            hasPageStructure: !!websiteIntelligence.analysis?.pageStructureAnalysis,
+            hasMessagingGaps: !!websiteIntelligence.analysis?.messagingGaps,
+            hasConversionOpt: !!websiteIntelligence.analysis?.conversionOptimization,
+            hasAudienceInsights: !!websiteIntelligence.analysis?.audienceInsights,
+            analysisKeys: websiteIntelligence.analysis ? Object.keys(websiteIntelligence.analysis) : 'none'
+          });
         }
       } catch (error) {
         console.error('[CHAT] Error retrieving website intelligence:', error);
