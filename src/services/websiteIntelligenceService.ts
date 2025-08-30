@@ -25,6 +25,36 @@ interface WebsiteAnalysis {
   socialProofElements: string[]
   contentThemes: string[]
   seoKeywords: string[]
+  // Enhanced analysis fields
+  pageStructureAnalysis: {
+    hasHeroBanner: boolean
+    hasAboutSection: boolean
+    hasTestimonials: boolean
+    hasFeatures: boolean
+    hasPricing: boolean
+    hasContact: boolean
+    missingElements: string[]
+  }
+  messagingGaps: {
+    problemStatements: string[]
+    solutionClarification: string[]
+    benefitCommunication: string[]
+    urgencyCreation: string[]
+  }
+  conversionOptimization: {
+    ctaStrength: 'weak' | 'moderate' | 'strong'
+    trustSignals: string[]
+    riskReduction: string[]
+    valuePropsClarity: 'unclear' | 'moderate' | 'clear'
+    recommendations: string[]
+  }
+  audienceInsights: {
+    painPoints: string[]
+    demographics: string[]
+    psychographics: string[]
+    buyingStage: 'awareness' | 'consideration' | 'decision'
+    languageMatching: 'poor' | 'good' | 'excellent'
+  }
 }
 
 interface WebsiteScrapeResult {
@@ -172,7 +202,12 @@ export class WebsiteIntelligenceService {
       pricingSignals: await this.extractPricingSignals($, textContent),
       socialProofElements: await this.extractSocialProof($),
       contentThemes: await this.extractContentThemes(textContent),
-      seoKeywords: await this.extractSEOKeywords($)
+      seoKeywords: await this.extractSEOKeywords($),
+      // Enhanced analysis
+      pageStructureAnalysis: await this.analyzePageStructure($),
+      messagingGaps: await this.analyzeMessagingGaps($, textContent),
+      conversionOptimization: await this.analyzeConversionOptimization($, textContent),
+      audienceInsights: await this.analyzeAudienceInsights($, textContent)
     }
     
     return analysis
@@ -516,8 +551,306 @@ export class WebsiteIntelligenceService {
       },
       socialProofElements: [],
       contentThemes: [],
-      seoKeywords: []
+      seoKeywords: [],
+      pageStructureAnalysis: {
+        hasHeroBanner: false,
+        hasAboutSection: false,
+        hasTestimonials: false,
+        hasFeatures: false,
+        hasPricing: false,
+        hasContact: false,
+        missingElements: []
+      },
+      messagingGaps: {
+        problemStatements: [],
+        solutionClarification: [],
+        benefitCommunication: [],
+        urgencyCreation: []
+      },
+      conversionOptimization: {
+        ctaStrength: 'weak',
+        trustSignals: [],
+        riskReduction: [],
+        valuePropsClarity: 'unclear',
+        recommendations: []
+      },
+      audienceInsights: {
+        painPoints: [],
+        demographics: [],
+        psychographics: [],
+        buyingStage: 'awareness',
+        languageMatching: 'poor'
+      }
     }
+  }
+
+  // Analyze page structure and missing elements
+  private async analyzePageStructure($: cheerio.CheerioAPI): Promise<WebsiteAnalysis['pageStructureAnalysis']> {
+    const structure = {
+      hasHeroBanner: false,
+      hasAboutSection: false,
+      hasTestimonials: false,
+      hasFeatures: false,
+      hasPricing: false,
+      hasContact: false,
+      missingElements: [] as string[]
+    }
+
+    // Check for hero banner
+    if ($('.hero, .banner, .jumbotron, .hero-section, .main-banner').length > 0 || 
+        ($('h1').length > 0 && $('h1').first().closest('section, div').find('p, .subtitle').length > 0)) {
+      structure.hasHeroBanner = true
+    }
+
+    // Check for about section
+    if ($('[class*="about"], [id*="about"], section:contains("About"), .bio, .story').length > 0) {
+      structure.hasAboutSection = true
+    }
+
+    // Check for testimonials
+    if ($('[class*="testimonial"], [class*="review"], [class*="quote"], .client-feedback, [class*="social-proof"]').length > 0) {
+      structure.hasTestimonials = true
+    }
+
+    // Check for features
+    if ($('[class*="feature"], .benefits, .services, .offerings, .what-we-do').length > 0) {
+      structure.hasFeatures = true
+    }
+
+    // Check for pricing
+    if ($('[class*="pricing"], [class*="price"], .cost, .investment, [class*="package"]').length > 0) {
+      structure.hasPricing = true
+    }
+
+    // Check for contact
+    if ($('[class*="contact"], .get-in-touch, .reach-out, form, input[type="email"]').length > 0) {
+      structure.hasContact = true
+    }
+
+    // Identify missing elements
+    const missingElements = []
+    if (!structure.hasHeroBanner) missingElements.push('Hero banner with clear value proposition')
+    if (!structure.hasAboutSection) missingElements.push('About section to build trust and credibility')
+    if (!structure.hasTestimonials) missingElements.push('Testimonials or social proof')
+    if (!structure.hasFeatures) missingElements.push('Clear features or benefits section')
+    if (!structure.hasPricing) missingElements.push('Pricing or investment information')
+    if (!structure.hasContact) missingElements.push('Contact form or clear next steps')
+
+    structure.missingElements = missingElements
+
+    return structure
+  }
+
+  // Analyze messaging gaps
+  private async analyzeMessagingGaps($: cheerio.CheerioAPI, textContent: string): Promise<WebsiteAnalysis['messagingGaps']> {
+    const gaps = {
+      problemStatements: [],
+      solutionClarification: [],
+      benefitCommunication: [],
+      urgencyCreation: []
+    }
+
+    const text = textContent.toLowerCase()
+    
+    // Check for problem statements
+    const problemWords = ['problem', 'challenge', 'struggle', 'difficult', 'frustrated', 'overwhelmed', 'stuck']
+    const hasProblemFocus = problemWords.some(word => text.includes(word))
+    if (!hasProblemFocus) {
+      gaps.problemStatements.push('No clear problem statement - visitors may not understand what you solve')
+      gaps.problemStatements.push('Consider adding "Are you struggling with..." or "Tired of..." language')
+    }
+
+    // Check for solution clarity
+    const solutionWords = ['solution', 'solve', 'fix', 'help', 'achieve', 'get results', 'transform']
+    const hasSolutionClarity = solutionWords.some(word => text.includes(word))
+    if (!hasSolutionClarity) {
+      gaps.solutionClarification.push('Solution is not clearly articulated')
+      gaps.solutionClarification.push('Add specific outcomes and transformations you provide')
+    }
+
+    // Check for benefit communication
+    const benefitWords = ['benefit', 'result', 'outcome', 'success', 'achieve', 'increase', 'improve', 'save']
+    const hasBenefits = benefitWords.some(word => text.includes(word))
+    if (!hasBenefits) {
+      gaps.benefitCommunication.push('Benefits are not clearly communicated')
+      gaps.benefitCommunication.push('Add specific, measurable results clients can expect')
+    }
+
+    // Check for urgency
+    const urgencyWords = ['now', 'today', 'limited', 'urgent', 'deadline', 'act fast', 'don\'t wait']
+    const hasUrgency = urgencyWords.some(word => text.includes(word))
+    if (!hasUrgency) {
+      gaps.urgencyCreation.push('No sense of urgency or reason to act now')
+      gaps.urgencyCreation.push('Consider adding time-sensitive offers or consequences of delay')
+    }
+
+    return gaps
+  }
+
+  // Analyze conversion optimization opportunities
+  private async analyzeConversionOptimization($: cheerio.CheerioAPI, textContent: string): Promise<WebsiteAnalysis['conversionOptimization']> {
+    const optimization = {
+      ctaStrength: 'weak' as 'weak' | 'moderate' | 'strong',
+      trustSignals: [],
+      riskReduction: [],
+      valuePropsClarity: 'unclear' as 'unclear' | 'moderate' | 'clear',
+      recommendations: []
+    }
+
+    // Analyze CTA strength
+    const ctas = []
+    $('button, .btn, .cta, a[href*="contact"], a[href*="buy"], a[href*="signup"]').each((_, elem) => {
+      ctas.push($(elem).text().trim().toLowerCase())
+    })
+    
+    const strongCtaWords = ['get started', 'transform', 'achieve', 'unlock', 'discover', 'claim']
+    const weakCtaWords = ['click here', 'learn more', 'read more', 'submit']
+    
+    const hasStrongCtas = ctas.some(cta => strongCtaWords.some(word => cta.includes(word)))
+    const hasWeakCtas = ctas.some(cta => weakCtaWords.some(word => cta.includes(word)))
+    
+    if (hasStrongCtas) optimization.ctaStrength = 'strong'
+    else if (ctas.length > 0 && !hasWeakCtas) optimization.ctaStrength = 'moderate'
+    
+    // Identify trust signals
+    if ($('img[alt*="certification"], img[alt*="award"], img[alt*="badge"]').length > 0) {
+      optimization.trustSignals.push('Professional certifications or awards displayed')
+    }
+    if ($('[class*="testimonial"], [class*="review"]').length > 0) {
+      optimization.trustSignals.push('Client testimonials present')
+    }
+    if ($('img[alt*="client"], img[alt*="logo"], .client-logos').length > 0) {
+      optimization.trustSignals.push('Client logos or case studies shown')
+    }
+
+    // Check for risk reduction
+    const text = textContent.toLowerCase()
+    if (text.includes('guarantee') || text.includes('refund') || text.includes('risk-free')) {
+      optimization.riskReduction.push('Money-back guarantee offered')
+    }
+    if (text.includes('free consultation') || text.includes('free call') || text.includes('no obligation')) {
+      optimization.riskReduction.push('Free consultation reduces commitment risk')
+    }
+
+    // Analyze value prop clarity
+    const headlines = []
+    $('h1, h2, .hero-title').each((_, elem) => {
+      headlines.push($(elem).text().trim())
+    })
+    
+    const hasSpecificValue = headlines.some(h => 
+      h.includes('increase') || h.includes('save') || h.includes('achieve') || 
+      /\d+/.test(h) // Contains numbers
+    )
+    
+    if (hasSpecificValue) optimization.valuePropsClarity = 'clear'
+    else if (headlines.length > 0) optimization.valuePropsClarity = 'moderate'
+
+    // Generate recommendations
+    const recommendations = []
+    if (optimization.ctaStrength === 'weak') {
+      recommendations.push('Strengthen CTAs with action-oriented, benefit-focused language')
+    }
+    if (optimization.trustSignals.length < 2) {
+      recommendations.push('Add more trust signals: testimonials, certifications, or client logos')
+    }
+    if (optimization.riskReduction.length === 0) {
+      recommendations.push('Offer risk reduction: free consultation, guarantee, or trial period')
+    }
+    if (optimization.valuePropsClarity !== 'clear') {
+      recommendations.push('Make value propositions more specific with numbers and concrete outcomes')
+    }
+    
+    optimization.recommendations = recommendations
+
+    return optimization
+  }
+
+  // Analyze audience insights
+  private async analyzeAudienceInsights($: cheerio.CheerioAPI, textContent: string): Promise<WebsiteAnalysis['audienceInsights']> {
+    const insights = {
+      painPoints: [],
+      demographics: [],
+      psychographics: [],
+      buyingStage: 'awareness' as 'awareness' | 'consideration' | 'decision',
+      languageMatching: 'poor' as 'poor' | 'good' | 'excellent'
+    }
+
+    const text = textContent.toLowerCase()
+
+    // Extract pain points from content
+    const painPatterns = [
+      /struggling with (\w+(?:\s+\w+)*)/g,
+      /tired of (\w+(?:\s+\w+)*)/g,
+      /frustrated by (\w+(?:\s+\w+)*)/g,
+      /problem with (\w+(?:\s+\w+)*)/g,
+      /difficulty (\w+(?:\s+\w+)*)/g
+    ]
+
+    painPatterns.forEach(pattern => {
+      const matches = [...text.matchAll(pattern)]
+      matches.forEach(match => {
+        if (match[1] && match[1].length < 50) {
+          insights.painPoints.push(match[1])
+        }
+      })
+    })
+
+    // Identify demographics from language patterns
+    if (text.includes('entrepreneur') || text.includes('founder') || text.includes('ceo')) {
+      insights.demographics.push('Business owners/entrepreneurs')
+    }
+    if (text.includes('professional') || text.includes('executive') || text.includes('manager')) {
+      insights.demographics.push('Corporate professionals')
+    }
+    if (text.includes('consultant') || text.includes('freelancer') || text.includes('coach')) {
+      insights.demographics.push('Service providers/consultants')
+    }
+
+    // Identify psychographics
+    if (text.includes('growth') || text.includes('scale') || text.includes('expand')) {
+      insights.psychographics.push('Growth-oriented')
+    }
+    if (text.includes('efficient') || text.includes('productive') || text.includes('optimize')) {
+      insights.psychographics.push('Efficiency-focused')
+    }
+    if (text.includes('success') || text.includes('achieve') || text.includes('results')) {
+      insights.psychographics.push('Results-driven')
+    }
+
+    // Determine buying stage based on content focus
+    const awarenessWords = ['learn', 'understand', 'discover', 'explore', 'what is', 'how to']
+    const considerationWords = ['compare', 'versus', 'benefits', 'features', 'why choose']
+    const decisionWords = ['buy', 'purchase', 'get started', 'sign up', 'contact', 'schedule']
+
+    const awarenessCount = awarenessWords.filter(word => text.includes(word)).length
+    const considerationCount = considerationWords.filter(word => text.includes(word)).length
+    const decisionCount = decisionWords.filter(word => text.includes(word)).length
+
+    if (decisionCount > awarenessCount && decisionCount > considerationCount) {
+      insights.buyingStage = 'decision'
+    } else if (considerationCount > awarenessCount) {
+      insights.buyingStage = 'consideration'
+    }
+
+    // Assess language matching (professional vs casual)
+    const professionalWords = ['solution', 'expertise', 'professional', 'strategic', 'optimize']
+    const casualWords = ['easy', 'simple', 'awesome', 'great', 'love', 'fun']
+    
+    const professionalCount = professionalWords.filter(word => text.includes(word)).length
+    const casualCount = casualWords.filter(word => text.includes(word)).length
+    
+    const totalWords = text.split(' ').length
+    const professionalRatio = professionalCount / totalWords * 1000
+    const casualRatio = casualCount / totalWords * 1000
+
+    if (professionalRatio > 2 || casualRatio > 2) {
+      insights.languageMatching = professionalRatio > casualRatio ? 'excellent' : 'good'
+    } else {
+      insights.languageMatching = 'good'
+    }
+
+    return insights
   }
   
   // Get website intelligence for user
