@@ -630,12 +630,26 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       // Get completed tasks for AI context
       const completedTasks = getCompletedTasks();
       
-      // Send to AI strategist API with file context
+      // Get website intelligence for AI context
+      let websiteIntelligence = null;
+      try {
+        const websiteKey = `website_intelligence_${userId}`;
+        const websiteData = localStorage.getItem(websiteKey);
+        if (websiteData) {
+          websiteIntelligence = JSON.parse(websiteData);
+          console.log('[CHAT] Retrieved website intelligence:', websiteIntelligence);
+        }
+      } catch (error) {
+        console.error('[CHAT] Error retrieving website intelligence:', error);
+      }
+      
+      // Send to AI strategist API with file context and website intelligence
       console.log('[CHAT] Sending request to AI strategist API with:', {
         user_id: userId,
         message: messageText.substring(0, 50) + '...',
         has_freedom_score: !!freedomScore,
         has_file_context: !!fileContext,
+        has_website_intelligence: !!websiteIntelligence,
         is_fresh_start: false,
         completed_tasks_count: completedTasks.length
       });
@@ -648,6 +662,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
           message: messageText,
           freedom_score: freedomScore,
           file_context: fileContext || undefined,
+          website_intelligence: websiteIntelligence || undefined,
           is_fresh_start: false,
           user_name: userName || null, // Send known user name to backend
           personality: aiPersonality, // Send selected personality to backend
