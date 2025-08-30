@@ -244,14 +244,52 @@ Transform generic responses into personalized ones using ${ctx.business_name || 
       enhancedContextStr += `\n\n🚀 ENHANCED PERSONALIZATION DATA:`;
       
       if (websiteIntelligence) {
+        const analysis = websiteIntelligence.analysis || websiteIntelligence;
+        
         enhancedContextStr += `\n\nWEBSITE INTELLIGENCE:
 - URL: ${websiteIntelligence.website_url}
-- Brand Voice: ${websiteIntelligence.brand_voice_analysis?.tone || 'Professional'} tone
-- Communication Style: ${websiteIntelligence.brand_voice_analysis?.communicationStyle || 'Balanced'}
-- Key Messages: ${websiteIntelligence.extracted_messaging?.headlines?.slice(0, 2).join(' | ') || 'Not available'}
-- Target Audience: ${websiteIntelligence.target_audience_signals?.slice(0, 3).join(', ') || 'Not specified'}
-- Services: ${websiteIntelligence.service_offerings?.slice(0, 3).join(', ') || 'Not specified'}
-- Content Themes: ${websiteIntelligence.content_themes?.slice(0, 3).join(', ') || 'General business'}`;
+- Brand Voice: ${analysis.brand_voice_analysis?.tone || analysis.brandVoiceAnalysis?.tone || 'Professional'} tone
+- Communication Style: ${analysis.brand_voice_analysis?.communicationStyle || analysis.brandVoiceAnalysis?.communicationStyle || 'Balanced'}
+- Key Messages: ${analysis.extracted_messaging?.headlines?.slice(0, 2).join(' | ') || analysis.extractedMessaging?.headlines?.slice(0, 2).join(' | ') || 'Not available'}
+- Target Audience: ${analysis.target_audience_signals?.slice(0, 3).join(', ') || analysis.targetAudienceSignals?.slice(0, 3).join(', ') || 'Not specified'}
+- Services: ${analysis.service_offerings?.slice(0, 3).join(', ') || analysis.serviceOfferings?.slice(0, 3).join(', ') || 'Not specified'}`;
+
+        // Add enhanced analysis if available
+        if (analysis.pageStructureAnalysis) {
+          enhancedContextStr += `\n\n🔍 PAGE STRUCTURE ANALYSIS:
+- Missing Elements: ${analysis.pageStructureAnalysis.missingElements?.slice(0, 3).join(', ') || 'Page structure is complete'}
+- Has Hero Banner: ${analysis.pageStructureAnalysis.hasHeroBanner ? 'Yes' : 'No'}
+- Has Testimonials: ${analysis.pageStructureAnalysis.hasTestimonials ? 'Yes' : 'No'}
+- Has Clear Pricing: ${analysis.pageStructureAnalysis.hasPricing ? 'Yes' : 'No'}`;
+        }
+
+        if (analysis.conversionOptimization) {
+          enhancedContextStr += `\n\n📈 CONVERSION OPTIMIZATION:
+- CTA Strength: ${analysis.conversionOptimization.ctaStrength}
+- Value Prop Clarity: ${analysis.conversionOptimization.valuePropsClarity}
+- Trust Signals: ${analysis.conversionOptimization.trustSignals?.length || 0} present
+- Recommendations: ${analysis.conversionOptimization.recommendations?.slice(0, 2).join('; ') || 'Page is well optimized'}`;
+        }
+
+        if (analysis.messagingGaps) {
+          const gaps = [];
+          if (analysis.messagingGaps.problemStatements?.length > 0) gaps.push('Problem clarity');
+          if (analysis.messagingGaps.solutionClarification?.length > 0) gaps.push('Solution articulation');
+          if (analysis.messagingGaps.benefitCommunication?.length > 0) gaps.push('Benefit communication');
+          if (analysis.messagingGaps.urgencyCreation?.length > 0) gaps.push('Urgency creation');
+          
+          if (gaps.length > 0) {
+            enhancedContextStr += `\n\n⚠️ MESSAGING GAPS IDENTIFIED: ${gaps.join(', ')}`;
+          }
+        }
+
+        if (analysis.audienceInsights) {
+          enhancedContextStr += `\n\n👥 AUDIENCE INSIGHTS:
+- Pain Points: ${analysis.audienceInsights.painPoints?.slice(0, 2).join(', ') || 'General business challenges'}
+- Demographics: ${analysis.audienceInsights.demographics?.join(', ') || 'Business professionals'}
+- Buying Stage: ${analysis.audienceInsights.buyingStage || 'awareness'} stage
+- Language Match: ${analysis.audienceInsights.languageMatching || 'good'} alignment`;
+        }
       }
 
       if (conversationMemory) {
@@ -605,7 +643,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log('[AI-STRATEGIST] *** API WITH ENHANCED SPRINT STEP TRACKING ***');
     console.log('[AI-STRATEGIST] ===== INCOMING REQUEST =====');
-    const { user_id, message, freedom_score, is_fresh_start, file_context, user_name, personality = 'strategic', completed_tasks } = await request.json()
+    const { user_id, message, freedom_score, is_fresh_start, file_context, user_name, personality = 'strategic', completed_tasks, website_intelligence } = await request.json()
     
     // TEMPORARY: Manually inject completed task until frontend cache is resolved
     const manualCompletedTasks = user_id === 'f85eba27-6eb9-4933-9459-2517739ef846' ? ['140b8cda-0074-4ca0-a48a-5e310747c18b:profit-1-1'] : []
@@ -874,21 +912,33 @@ export async function POST(request: NextRequest) {
     try {
       console.log('[AI-STRATEGIST] Fetching enhanced context data...');
       
-      // Get website intelligence
-      const { data: websiteData, error: websiteError } = await supabase
-        .from('website_intelligence')
-        .select('website_url, brand_voice_analysis, extracted_messaging, target_audience_signals, service_offerings, content_themes')
-        .eq('user_id', user_id)
-        .eq('status', 'active')
-        .order('last_analyzed', { ascending: false })
-        .limit(1)
-        .single();
+      // Get website intelligence - prioritize request data over database
+      if (website_intelligence) {
+        websiteIntelligence = website_intelligence;
+        console.log('[AI-STRATEGIST] Website intelligence loaded from request:', website_intelligence.website_url);
+        console.log('[AI-STRATEGIST] Enhanced analysis available:', {
+          pageStructure: !!website_intelligence.analysis?.pageStructureAnalysis,
+          messagingGaps: !!website_intelligence.analysis?.messagingGaps,
+          conversionOpt: !!website_intelligence.analysis?.conversionOptimization,
+          audienceInsights: !!website_intelligence.analysis?.audienceInsights
+        });
+      } else {
+        // Fallback to database lookup if not provided in request
+        const { data: websiteData, error: websiteError } = await supabase
+          .from('website_intelligence')
+          .select('website_url, brand_voice_analysis, extracted_messaging, target_audience_signals, service_offerings, content_themes')
+          .eq('user_id', user_id)
+          .eq('status', 'active')
+          .order('last_analyzed', { ascending: false })
+          .limit(1)
+          .single();
 
-      if (websiteError && websiteError.code !== 'PGRST116') {
-        console.error('[AI-STRATEGIST] Error fetching website intelligence:', websiteError);
-      } else if (websiteData) {
-        websiteIntelligence = websiteData;
-        console.log('[AI-STRATEGIST] Website intelligence loaded from:', websiteData.website_url);
+        if (websiteError && websiteError.code !== 'PGRST116') {
+          console.error('[AI-STRATEGIST] Error fetching website intelligence:', websiteError);
+        } else if (websiteData) {
+          websiteIntelligence = websiteData;
+          console.log('[AI-STRATEGIST] Website intelligence loaded from database:', websiteData.website_url);
+        }
       }
 
       // Get conversation memory context
