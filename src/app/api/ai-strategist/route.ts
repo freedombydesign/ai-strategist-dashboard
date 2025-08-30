@@ -658,6 +658,9 @@ function needsWebSearch(message: string): string | null {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('\n\n🚨 AI-STRATEGIST API CALLED! 🚨');
+    console.log('🚨 TIME:', new Date().toISOString());
+    console.log('🚨 THIS IS THE API ENDPOINT BEING HIT');
     console.log('[AI-STRATEGIST] *** API WITH ENHANCED SPRINT STEP TRACKING ***');
     console.log('[AI-STRATEGIST] ===== INCOMING REQUEST =====');
     const requestBody = await request.json();

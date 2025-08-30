@@ -48,6 +48,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showWebsiteAnalyzer, setShowWebsiteAnalyzer] = useState(false);
+  const [lastAnalysisTime, setLastAnalysisTime] = useState<number>(0);
   const [aiPersonality, setAiPersonality] = useState<PersonalityType>('strategic');
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -160,7 +161,6 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     setInput('');
     setSelectedFiles([]);
     setShowFileUpload(false);
-    setShowWebsiteAnalyzer(false);
     setShowWebsiteAnalyzer(false);
     setEditingMessageId(null);
     setEditingContent('');
@@ -301,6 +301,21 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     const loadUserData = async () => {
       console.log(`[CHAT] Loading user data for: ${userId}`);
       
+      // Initialize analysis timer if website intelligence exists
+      const existingWebsiteData = localStorage.getItem(`website_intelligence_${userId}`);
+      if (existingWebsiteData) {
+        try {
+          const parsed = JSON.parse(existingWebsiteData);
+          if (parsed.timestamp) {
+            const analysisTime = new Date(parsed.timestamp).getTime();
+            setLastAnalysisTime(analysisTime);
+            console.log('[CHAT] Initialized analysis timer from existing data:', new Date(parsed.timestamp));
+          }
+        } catch (error) {
+          console.error('[CHAT] Error parsing existing website data timestamp:', error);
+        }
+      }
+
       // Load user name from localStorage first for immediate display
       const localUserName = localStorage.getItem(`user_name_${userId}`);
       console.log(`[CHAT] Checking local user name for ${userId}:`, localUserName);
@@ -492,19 +507,28 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     // Check if user is asking about website analysis
     const websiteAnalysisKeywords = /website|site|analyze.*site|look.*website|brand.*voice|messaging|scrape.*site|pull.*from.*site|analyze.*web/i;
     if (websiteAnalysisKeywords.test(messageText) && !showWebsiteAnalyzer) {
-      setShowWebsiteAnalyzer(true);
+      // Check if we recently completed analysis or already have data
+      const existingData = localStorage.getItem(`website_intelligence_${userId}`);
+      const timeSinceLastAnalysis = Date.now() - lastAnalysisTime;
       
-      // Add a system message about website analysis
-      const systemMessage: Message = {
-        id: Date.now(),
-        role: 'assistant',
-        content: "I'd be happy to analyze your website! Please use the website analyzer below to get started. Once I analyze your site, I'll be able to reference your brand voice, messaging, and target audience in all my responses.",
-        timestamp: new Date(),
-      };
-      
-      setMessages(prev => [...prev, systemMessage]);
-      setInput('');
-      return;
+      if (existingData && timeSinceLastAnalysis < 30000) { // 30 seconds cooldown
+        console.log('[CHAT] Website analysis already exists and recently completed, skipping auto-trigger');
+        // Continue with normal message processing instead of showing analyzer
+      } else {
+        setShowWebsiteAnalyzer(true);
+        
+        // Add a system message about website analysis
+        const systemMessage: Message = {
+          id: Date.now(),
+          role: 'assistant',
+          content: "I'd be happy to analyze your website! Please use the website analyzer below to get started. Once I analyze your site, I'll be able to reference your brand voice, messaging, and target audience in all my responses.",
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, systemMessage]);
+        setInput('');
+        return;
+      }
     }
 
     // Check if user is introducing their name
@@ -1425,6 +1449,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
             onAnalysisComplete={(analysis) => {
               console.log('[ENHANCED-CHAT] Website analysis completed:', analysis);
               setShowWebsiteAnalyzer(false);
+              setLastAnalysisTime(Date.now()); // Prevent re-showing for 30 seconds
               
               // Add a success message
               const successMessage: Message = {
@@ -1460,7 +1485,17 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
           </button>
 
           <button
-            onClick={() => setShowWebsiteAnalyzer(!showWebsiteAnalyzer)}
+            onClick={() => {
+              // Check if we already have website intelligence to prevent loops
+              const existingData = localStorage.getItem(`website_intelligence_${userId}`);
+              const timeSinceLastAnalysis = Date.now() - lastAnalysisTime;
+              
+              if (!showWebsiteAnalyzer && existingData && timeSinceLastAnalysis < 30000) {
+                console.log('[CHAT] Website intelligence already exists and recently completed, not showing analyzer');
+                return;
+              }
+              setShowWebsiteAnalyzer(!showWebsiteAnalyzer);
+            }}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
             title="Analyze website for personalized responses"
           >
