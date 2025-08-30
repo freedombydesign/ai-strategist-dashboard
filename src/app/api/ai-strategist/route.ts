@@ -256,19 +256,21 @@ Transform generic responses into personalized ones using ${ctx.business_name || 
 
         // Add enhanced analysis if available
         if (analysis.pageStructureAnalysis) {
-          enhancedContextStr += `\n\n🔍 PAGE STRUCTURE ANALYSIS:
-- Missing Elements: ${analysis.pageStructureAnalysis.missingElements?.slice(0, 3).join(', ') || 'Page structure is complete'}
-- Has Hero Banner: ${analysis.pageStructureAnalysis.hasHeroBanner ? 'Yes' : 'No'}
-- Has Testimonials: ${analysis.pageStructureAnalysis.hasTestimonials ? 'Yes' : 'No'}
-- Has Clear Pricing: ${analysis.pageStructureAnalysis.hasPricing ? 'Yes' : 'No'}`;
+          enhancedContextStr += `\n\n🔍 PAGE STRUCTURE ANALYSIS - DEFINITIVE FINDINGS:
+- Missing Critical Elements: ${analysis.pageStructureAnalysis.missingElements?.slice(0, 3).join(', ') || 'All key elements are present'}
+- Hero Banner Status: ${analysis.pageStructureAnalysis.hasHeroBanner ? 'Present and working' : 'MISSING - Major conversion issue'}
+- Social Proof: ${analysis.pageStructureAnalysis.hasTestimonials ? 'Testimonials found' : 'NO testimonials - Trust issue'}
+- Pricing Clarity: ${analysis.pageStructureAnalysis.hasPricing ? 'Pricing is clear' : 'UNCLEAR pricing - Friction point'}`;
         }
 
         if (analysis.conversionOptimization) {
-          enhancedContextStr += `\n\n📈 CONVERSION OPTIMIZATION:
-- CTA Strength: ${analysis.conversionOptimization.ctaStrength}
-- Value Prop Clarity: ${analysis.conversionOptimization.valuePropsClarity}
-- Trust Signals: ${analysis.conversionOptimization.trustSignals?.length || 0} present
-- Recommendations: ${analysis.conversionOptimization.recommendations?.slice(0, 2).join('; ') || 'Page is well optimized'}`;
+          enhancedContextStr += `\n\n📈 CONVERSION OPTIMIZATION - SPECIFIC FINDINGS:
+- Call-to-Action Assessment: ${analysis.conversionOptimization.ctaStrength} CTAs identified
+- Value Proposition Clarity: ${analysis.conversionOptimization.valuePropsClarity || 'needs improvement'}
+- Trust Signal Count: ${analysis.conversionOptimization.trustSignals?.length || 0} trust elements present
+- Critical Improvements Needed: ${analysis.conversionOptimization.recommendations?.slice(0, 2).join('; ') || 'No major issues found'}
+
+🎯 CONVERSION INSTRUCTION: When user asks about their sales page performance, cite these SPECIFIC findings rather than generic advice.`;
         }
 
         if (analysis.messagingGaps) {
@@ -279,16 +281,31 @@ Transform generic responses into personalized ones using ${ctx.business_name || 
           if (analysis.messagingGaps.urgencyCreation?.length > 0) gaps.push('Urgency creation');
           
           if (gaps.length > 0) {
-            enhancedContextStr += `\n\n⚠️ MESSAGING GAPS IDENTIFIED: ${gaps.join(', ')}`;
+            enhancedContextStr += `\n\n⚠️ MESSAGING GAPS IDENTIFIED: ${gaps.join(', ')}
+🔥 MESSAGING INSTRUCTION: Tell user exactly what messaging is missing from their sales page based on these gaps.`;
           }
         }
 
         if (analysis.audienceInsights) {
-          enhancedContextStr += `\n\n👥 AUDIENCE INSIGHTS:
-- Pain Points: ${analysis.audienceInsights.painPoints?.slice(0, 2).join(', ') || 'General business challenges'}
-- Demographics: ${analysis.audienceInsights.demographics?.join(', ') || 'Business professionals'}
-- Buying Stage: ${analysis.audienceInsights.buyingStage || 'awareness'} stage
-- Language Match: ${analysis.audienceInsights.languageMatching || 'good'} alignment`;
+          enhancedContextStr += `\n\n👥 AUDIENCE INSIGHTS - SPECIFIC TO THEIR PAGE:
+- Pain Points Addressed: ${analysis.audienceInsights.painPoints?.slice(0, 2).join(', ') || 'General business challenges'}  
+- Target Demographics: ${analysis.audienceInsights.demographics?.join(', ') || 'Business professionals'}
+- Buyer Journey Stage: ${analysis.audienceInsights.buyingStage || 'awareness'} stage visitors
+- Message-Market Match: ${analysis.audienceInsights.languageMatching || 'good'} alignment
+
+🎯 AUDIENCE INSTRUCTION: Reference these specific audience insights when giving sales page feedback.`;
+        }
+
+        // Add critical instruction for using website data
+        if (analysis.pageStructureAnalysis || analysis.conversionOptimization || analysis.messagingGaps || analysis.audienceInsights) {
+          enhancedContextStr += `\n\n🚨 CRITICAL AI INSTRUCTION FOR WEBSITE FEEDBACK:
+1. You HAVE analyzed their actual sales page at ${websiteIntelligence.website_url}
+2. Give DEFINITIVE statements like "Your page is missing..." or "I found that your..."
+3. DO NOT use "if" statements or conditional language
+4. Cite SPECIFIC findings from the analysis above
+5. When they ask "what's working well" or "what needs improvement" - reference the actual data
+6. Be SPECIFIC about what you found, not generic
+7. This is THEIR page analysis, not hypothetical advice`;
         }
       }
 
