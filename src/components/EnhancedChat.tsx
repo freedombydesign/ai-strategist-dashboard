@@ -49,6 +49,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showWebsiteAnalyzer, setShowWebsiteAnalyzer] = useState(false);
   const [lastAnalysisTime, setLastAnalysisTime] = useState<number>(0);
+  const [pendingQuestion, setPendingQuestion] = useState<string>('');
   const [aiPersonality, setAiPersonality] = useState<PersonalityType>('strategic');
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState('');
@@ -511,17 +512,19 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       const existingData = localStorage.getItem(`website_intelligence_${userId}`);
       const timeSinceLastAnalysis = Date.now() - lastAnalysisTime;
       
-      if (existingData && timeSinceLastAnalysis < 30000) { // 30 seconds cooldown
-        console.log('[CHAT] Website analysis already exists and recently completed, skipping auto-trigger');
-        // Continue with normal message processing instead of showing analyzer
+      if (existingData) {
+        console.log('[CHAT] Website intelligence already exists, processing question with existing data instead of showing analyzer');
+        // Continue with normal message processing using existing website data
       } else {
+        console.log('[CHAT] No website data found, storing question and showing analyzer first');
+        setPendingQuestion(messageText); // Store the question to process after analysis
         setShowWebsiteAnalyzer(true);
         
         // Add a system message about website analysis
         const systemMessage: Message = {
           id: Date.now(),
           role: 'assistant',
-          content: "I'd be happy to analyze your website! Please use the website analyzer below to get started. Once I analyze your site, I'll be able to reference your brand voice, messaging, and target audience in all my responses.",
+          content: `I'd love to help answer "${messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText}"! But first, let me analyze your website so I can give you specific, personalized feedback instead of generic advice.`,
           timestamp: new Date(),
         };
         
@@ -1455,11 +1458,23 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
               const successMessage: Message = {
                 id: Date.now(),
                 role: 'assistant',
-                content: `Perfect! I've analyzed your website and now understand your brand voice (${analysis.brand_voice_analysis?.tone || 'Professional'} tone) and messaging. All my future responses will be personalized to match your business style and target audience.`,
+                content: `Perfect! I've analyzed your website and now understand your brand voice (${analysis.brand_voice_analysis?.tone || 'Professional'} tone) and messaging. ${pendingQuestion ? `Now let me answer your question: "${pendingQuestion.length > 50 ? pendingQuestion.substring(0, 50) + '...' : pendingQuestion}"` : 'All my future responses will be personalized to match your business style and target audience.'}`,
                 timestamp: new Date(),
               };
               
               setMessages(prev => [...prev, successMessage]);
+              
+              // Process the pending question if there is one
+              if (pendingQuestion.trim()) {
+                console.log('[ENHANCED-CHAT] Processing pending question after analysis:', pendingQuestion);
+                const questionToProcess = pendingQuestion;
+                setPendingQuestion(''); // Clear pending question
+                
+                // Process the question after a short delay to let the success message appear first
+                setTimeout(() => {
+                  sendMessage(questionToProcess, []);
+                }, 1000);
+              }
             }}
           />
           <div className="flex justify-end gap-2 mt-3">
