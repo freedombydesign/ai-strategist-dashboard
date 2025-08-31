@@ -23,46 +23,41 @@ function removeFormattingAndAddSolutions(text: string): string {
   // Clean up section headers that use colons or dashes
   cleaned = cleaned.replace(/^\s*\d+\.\s*\*\*(.*?)\*\*\s*[-:]?\s*/gm, '$1: ')
   
-  // Split into sentences and create natural paragraph breaks
-  const sentences = cleaned.split(/(?<=[.!?])\s+/)
-  let result = ''
-  let currentParagraph = ''
-  let sentenceCount = 0
+  // Use ChatGPT's grouped paragraph approach
+  // Step 1: split by double newlines = paragraph boundaries
+  const rawParagraphs = cleaned.split(/\n\s*\n/)
+  const grouped = []
   
-  for (const sentence of sentences) {
-    const trimmedSentence = sentence.trim()
-    if (!trimmedSentence) continue
-    
-    currentParagraph += trimmedSentence + ' '
-    sentenceCount++
-    
-    // Create paragraph break after 2-4 sentences or when we hit transition patterns
-    const shouldBreak = sentenceCount >= 2 && (
-      trimmedSentence.includes('Instead') ||
-      trimmedSentence.includes('Try') ||
-      trimmedSentence.includes('Consider') ||
-      trimmedSentence.includes('Another') ||
-      trimmedSentence.includes('However') ||
-      trimmedSentence.includes('Your CTAs') ||
-      trimmedSentence.includes('The page content') ||
-      trimmedSentence.includes('There\'s also') ||
-      trimmedSentence.includes('Firstly') ||
-      trimmedSentence.includes('Next') ||
-      trimmedSentence.includes('Finally') ||
-      sentenceCount >= 4 ||
-      (sentenceCount >= 3 && currentParagraph.length > 200)
-    )
-    
-    if (shouldBreak) {
-      result += currentParagraph.trim() + '\n\n'
-      currentParagraph = ''
-      sentenceCount = 0
+  for (const para of rawParagraphs) {
+    // collapse line breaks inside a paragraph
+    const lines = para.split('\n').map(line => line.trim()).filter(line => line.length > 0)
+    if (lines.length > 0) {
+      grouped.push(lines.join(' '))
     }
   }
   
-  // Add remaining content
-  if (currentParagraph.trim()) {
-    result += currentParagraph.trim()
+  // Step 2: re-join paragraphs with double newlines
+  let result = grouped.join('\n\n')
+  
+  // Step 3: if we still have one giant paragraph, split on transition words
+  if (grouped.length === 1 && result.length > 300) {
+    // Split on common transition patterns while preserving sentence structure
+    const transitionPattern = /(First|However|Another|Your CTAs|The page content|Finally|Next)\s/g
+    let parts = result.split(transitionPattern)
+    let rebuilt = []
+    
+    for (let i = 0; i < parts.length; i++) {
+      if (i % 2 === 0 && parts[i].trim()) {
+        // Regular content
+        rebuilt.push(parts[i].trim())
+      } else if (i % 2 === 1 && parts[i + 1]) {
+        // Transition word + following content
+        rebuilt.push((parts[i] + parts[i + 1]).trim())
+        i++ // Skip the next part since we combined it
+      }
+    }
+    
+    result = rebuilt.filter(part => part.length > 0).join('\n\n')
   }
   
   // Clean up spacing

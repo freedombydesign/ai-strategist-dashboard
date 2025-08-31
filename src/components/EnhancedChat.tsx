@@ -1071,8 +1071,8 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       { pattern: /(?:create|make|generate).*(?:quick|simple).*document/i, type: 'document', title: 'Business Document' },
       { pattern: /document.*(?:of|with|about|for).*(?:objections|sales|challenges|processes)/i, type: 'document', title: 'Business Document' },
       { pattern: /(?:list|document).*(?:typical|common).*(?:objections|challenges|issues)/i, type: 'document', title: 'Business Document' },
-      { pattern: /I'll create.*(?:plan|document|strategy|report)/i, type: 'document', title: 'Generated Document' },
-      { pattern: /Here's.*(?:plan|document|strategy|report).*for you/i, type: 'document', title: 'Generated Document' }
+      { pattern: /I'll create.*(?:a plan|a document|a strategy|a report|an SOP)/i, type: 'document', title: 'Generated Document' },
+      { pattern: /Here's.*(?:the plan|the document|your strategy|your report|your SOP).*for you/i, type: 'document', title: 'Generated Document' }
     ];
 
     for (const trigger of documentTriggers) {
