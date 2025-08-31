@@ -666,18 +666,24 @@ export async function POST(request: NextRequest) {
     const requestBody = await request.json();
     const { user_id, message, freedom_score, is_fresh_start, file_context, user_name, personality = 'strategic', completed_tasks, website_intelligence } = requestBody;
     
-    console.log('[AI-STRATEGIST] ===== REQUEST BODY DEBUG =====');
+    console.log('[AI-STRATEGIST] ===== CRITICAL DIAGNOSTIC - MOVED TO TOP =====');
     console.log('[AI-STRATEGIST] Full request body keys:', Object.keys(requestBody));
     console.log('[AI-STRATEGIST] website_intelligence received:', !!website_intelligence);
     console.log('[AI-STRATEGIST] website_intelligence type:', typeof website_intelligence);
     
     // DIAGNOSTIC: Check if we received website_intelligence data
     if (website_intelligence) {
-      console.log('[AI-STRATEGIST] ✅ WEBSITE INTELLIGENCE DATA RECEIVED');
+      console.log('[AI-STRATEGIST] ✅ WEBSITE INTELLIGENCE DATA RECEIVED - SHOULD GIVE SPECIFIC INSIGHTS');
       console.log('[AI-STRATEGIST] website_intelligence keys:', Object.keys(website_intelligence));
       console.log('[AI-STRATEGIST] website_intelligence.analysis keys:', Object.keys(website_intelligence.analysis || {}));
+      console.log('[AI-STRATEGIST] Enhanced analysis check:', {
+        hasPageStructure: !!website_intelligence.analysis?.pageStructureAnalysis,
+        hasMessagingGaps: !!website_intelligence.analysis?.messagingGaps,
+        hasConversionOpt: !!website_intelligence.analysis?.conversionOptimization,
+        hasAudienceInsights: !!website_intelligence.analysis?.audienceInsights
+      });
     } else {
-      console.log('[AI-STRATEGIST] ❌ NO WEBSITE INTELLIGENCE DATA - This is why we get generic responses');
+      console.log('[AI-STRATEGIST] ❌ NO WEBSITE INTELLIGENCE DATA - This explains generic responses');
       console.log('[AI-STRATEGIST] Available request body keys:', Object.keys(requestBody));
       console.log('[AI-STRATEGIST] has_website_intelligence flag:', requestBody.has_website_intelligence);
       console.log('[AI-STRATEGIST] website_url:', requestBody.website_url);
