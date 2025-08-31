@@ -106,7 +106,12 @@ export async function GET(request: Request) {
           pricingSignals: intelligence.pricing_signals,
           socialProofElements: intelligence.social_proof_elements,
           contentThemes: intelligence.content_themes,
-          seoKeywords: intelligence.seo_keywords
+          seoKeywords: intelligence.seo_keywords,
+          // Enhanced analysis fields
+          pageStructureAnalysis: intelligence.page_structure_analysis,
+          messagingGaps: intelligence.messaging_gaps,
+          conversionOptimization: intelligence.conversion_optimization,
+          audienceInsights: intelligence.audience_insights
         }
       }
     })

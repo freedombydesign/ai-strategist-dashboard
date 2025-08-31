@@ -135,7 +135,12 @@ export class WebsiteIntelligenceService {
         pricing_signals: analysis.pricingSignals,
         social_proof_elements: analysis.socialProofElements,
         content_themes: analysis.contentThemes,
-        seo_keywords: analysis.seoKeywords
+        seo_keywords: analysis.seoKeywords,
+        // Enhanced analysis fields
+        page_structure_analysis: analysis.pageStructureAnalysis,
+        messaging_gaps: analysis.messagingGaps,
+        conversion_optimization: analysis.conversionOptimization,
+        audience_insights: analysis.audienceInsights
       })
       
       return {

@@ -45,6 +45,11 @@ interface WebsiteIntelligence {
   social_proof_elements: string[]
   content_themes: string[]
   seo_keywords: string[]
+  // Enhanced analysis fields
+  page_structure_analysis?: Record<string, any>
+  messaging_gaps?: Record<string, any>
+  conversion_optimization?: Record<string, any>
+  audience_insights?: Record<string, any>
 }
 
 interface GeneratedAsset {
