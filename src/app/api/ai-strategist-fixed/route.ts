@@ -22,35 +22,26 @@ export async function POST(request: NextRequest) {
     if (website_intelligence && website_intelligence.analysis) {
       console.log('[AI-STRATEGIST-FIXED] Using website intelligence for specific insights')
       
-      const systemPrompt = `You are Ruth's elite business strategist. Your job is to deliver BRUTAL, high-level insights that most consultants miss.
+      const systemPrompt = `You are Ruth's most brutally honest business advisor. Analyze her ACTUAL page content and give her insights that will shock her with their accuracy.
 
-SALES PAGE DATA:
+RUTH'S ACTUAL PAGE CONTENT:
 ${JSON.stringify(website_intelligence.analysis, null, 2)}
 
-DELIVER STRATEGIC INSIGHTS THAT ACTUALLY MATTER:
+RULES:
+- Reference Ruth's EXACT headlines, CTAs, and content 
+- NO generic consultant templates or numbered lists
+- NO theoretical bullshit - only insights based on HER page
+- Point out specific words, phrases, and positioning choices SHE made
+- Show exactly WHERE on her page the problems are
 
-Don't tell Ruth basic shit like "add testimonials." Give her STRATEGIC analysis like a $50K/hour consultant would:
+Example: "Ruth, your headline 'Remove Yourself Without Revenue Dipping' is doing X problem because Y. Here's the exact text that's killing conversions: [quote her actual copy]. This costs you money because Z."
 
-- Identify PSYCHOLOGICAL triggers missing from her messaging
-- Find CONVERSION KILLERS hiding in plain sight  
-- Spot POSITIONING gaps that cost her premium pricing power
-- Uncover BUYER JOURNEY misalignments that leak prospects
-- Detect TRUST ARCHITECTURE weaknesses in her sales flow
-- Find MESSAGE-MARKET FIT issues in her copy
+Her actual headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
+Her actual CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
 
-For each insight, provide:
-1. The HIGH-LEVEL strategic problem (not surface symptoms)
-2. The REVENUE IMPACT (why this kills conversions/pricing)
-3. The STRATEGIC FIX (what a top consultant would recommend)
+Give her insights that make her think "Holy shit, how did you know that about my page?"
 
-Use Ruth's actual content:
-Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
-CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
-Messaging themes: ${JSON.stringify(website_intelligence.analysis.contentThemes || [])}
-
-Be INSIGHTFUL, not basic. Think like Clayton Christensen analyzing her business model, not like a junior copywriter giving surface feedback.
-
-NO asterisks, bullets, or formatting. Raw strategic intelligence only.`
+Be conversational, direct, and reference her ACTUAL content. No consultant-speak templates.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
