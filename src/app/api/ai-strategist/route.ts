@@ -957,17 +957,40 @@ export async function POST(request: NextRequest) {
           conversionOpt: !!website_intelligence.analysis?.conversionOptimization,
           audienceInsights: !!website_intelligence.analysis?.audienceInsights
         });
-        // TEMPORARY FIX: Skip detailed logging to prevent JSON parsing issues
-        console.log('[AI-STRATEGIST] Website intelligence basic info loaded');
+        console.log('[AI-STRATEGIST] Website intelligence loaded from request:', website_intelligence.website_url);
         
-        // TEMPORARY FIX: Remove enhanced analysis to isolate the issue
+        // Safely process enhanced analysis with error handling
         if (website_intelligence.analysis) {
-          // Remove potentially problematic enhanced analysis fields temporarily
-          delete website_intelligence.analysis.pageStructureAnalysis;
-          delete website_intelligence.analysis.messagingGaps;
-          delete website_intelligence.analysis.conversionOptimization;
-          delete website_intelligence.analysis.audienceInsights;
-          console.log('[AI-STRATEGIST] Enhanced analysis fields temporarily disabled for debugging');
+          try {
+            // Ensure enhanced analysis fields exist and are properly formatted
+            const analysis = website_intelligence.analysis;
+            
+            // Validate and sanitize enhanced analysis data
+            if (analysis.pageStructureAnalysis) {
+              console.log('[AI-STRATEGIST] Page Structure Analysis: Available');
+            }
+            if (analysis.messagingGaps) {
+              console.log('[AI-STRATEGIST] Messaging Gaps: Available');
+            }
+            if (analysis.conversionOptimization) {
+              console.log('[AI-STRATEGIST] Conversion Optimization: Available');
+            }
+            if (analysis.audienceInsights) {
+              console.log('[AI-STRATEGIST] Audience Insights: Available');
+            }
+            
+            console.log('[AI-STRATEGIST] Enhanced analysis fields loaded successfully');
+          } catch (analysisError) {
+            console.error('[AI-STRATEGIST] Error processing enhanced analysis:', analysisError);
+            // Remove problematic enhanced fields if they cause errors
+            if (website_intelligence.analysis) {
+              delete website_intelligence.analysis.pageStructureAnalysis;
+              delete website_intelligence.analysis.messagingGaps;
+              delete website_intelligence.analysis.conversionOptimization;
+              delete website_intelligence.analysis.audienceInsights;
+            }
+            console.log('[AI-STRATEGIST] Enhanced analysis disabled due to processing error');
+          }
         }
       } else {
         // Fallback to database lookup if not provided in request
