@@ -957,20 +957,17 @@ export async function POST(request: NextRequest) {
           conversionOpt: !!website_intelligence.analysis?.conversionOptimization,
           audienceInsights: !!website_intelligence.analysis?.audienceInsights
         });
-        console.log('[AI-STRATEGIST] FULL WEBSITE INTELLIGENCE DATA:');
-        console.log('[AI-STRATEGIST] Raw website intelligence:', JSON.stringify(website_intelligence, null, 2));
+        // TEMPORARY FIX: Skip detailed logging to prevent JSON parsing issues
+        console.log('[AI-STRATEGIST] Website intelligence basic info loaded');
         
-        if (website_intelligence.analysis?.pageStructureAnalysis) {
-          console.log('[AI-STRATEGIST] Page Structure Analysis:', website_intelligence.analysis.pageStructureAnalysis);
-        }
-        if (website_intelligence.analysis?.conversionOptimization) {
-          console.log('[AI-STRATEGIST] Conversion Optimization:', website_intelligence.analysis.conversionOptimization);
-        }
-        if (website_intelligence.analysis?.messagingGaps) {
-          console.log('[AI-STRATEGIST] Messaging Gaps:', website_intelligence.analysis.messagingGaps);
-        }
-        if (website_intelligence.analysis?.audienceInsights) {
-          console.log('[AI-STRATEGIST] Audience Insights:', website_intelligence.analysis.audienceInsights);
+        // TEMPORARY FIX: Remove enhanced analysis to isolate the issue
+        if (website_intelligence.analysis) {
+          // Remove potentially problematic enhanced analysis fields temporarily
+          delete website_intelligence.analysis.pageStructureAnalysis;
+          delete website_intelligence.analysis.messagingGaps;
+          delete website_intelligence.analysis.conversionOptimization;
+          delete website_intelligence.analysis.audienceInsights;
+          console.log('[AI-STRATEGIST] Enhanced analysis fields temporarily disabled for debugging');
         }
       } else {
         // Fallback to database lookup if not provided in request
