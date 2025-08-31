@@ -451,10 +451,20 @@ export class WebsiteIntelligenceService {
   private async extractSocialProof($: cheerio.CheerioAPI): Promise<string[]> {
     const socialProof = []
     
-    // Testimonials
-    const testimonialElements = $('.testimonial, .review, .quote, [class*="testimonial"], [class*="review"]')
-    if (testimonialElements.length > 0) {
-      socialProof.push(`${testimonialElements.length} testimonials found`)
+    // Testimonials - More specific detection to avoid false positives
+    const testimonialElements = $('.testimonial, .testimonials, [class="testimonial"], [id="testimonials"], [class="review"], .client-testimonial')
+    let actualTestimonials = 0
+    
+    // Verify testimonials contain actual customer quotes or feedback
+    testimonialElements.each((_, el) => {
+      const text = $(el).text().toLowerCase()
+      if (text.length > 20 && (text.includes('"') || text.includes('testimonial') || text.includes('review'))) {
+        actualTestimonials++
+      }
+    })
+    
+    if (actualTestimonials > 0) {
+      socialProof.push(`${actualTestimonials} testimonials found`)
     }
     
     // Client logos
@@ -612,8 +622,18 @@ export class WebsiteIntelligenceService {
       structure.hasAboutSection = true
     }
 
-    // Check for testimonials
-    if ($('[class*="testimonial"], [class*="review"], [class*="quote"], .client-feedback, [class*="social-proof"]').length > 0) {
+    // Check for testimonials - More specific detection to match social proof logic
+    const testimonialElements = $('.testimonial, .testimonials, [class="testimonial"], [id="testimonials"], [class="review"], .client-testimonial')
+    let actualTestimonials = 0
+    
+    testimonialElements.each((_, el) => {
+      const text = $(el).text().toLowerCase()
+      if (text.length > 20 && (text.includes('"') || text.includes('testimonial') || text.includes('review'))) {
+        actualTestimonials++
+      }
+    })
+    
+    if (actualTestimonials > 0) {
       structure.hasTestimonials = true
     }
 
@@ -622,8 +642,15 @@ export class WebsiteIntelligenceService {
       structure.hasFeatures = true
     }
 
-    // Check for pricing
-    if ($('[class*="pricing"], [class*="price"], .cost, .investment, [class*="package"]').length > 0) {
+    // Check for pricing - Use same logic as pricingSignals for consistency
+    const textContent = $('body').text()
+    const pricingElements = $('.price, .pricing, [class*="price"], [id*="price"]')
+    const hasVisiblePricing = pricingElements.length > 0 || 
+                             textContent.includes('$') || 
+                             textContent.toLowerCase().includes('price') || 
+                             textContent.toLowerCase().includes('cost')
+    
+    if (hasVisiblePricing) {
       structure.hasPricing = true
     }
 
@@ -728,9 +755,11 @@ export class WebsiteIntelligenceService {
       optimization.trustSignals.push('Client logos or case studies shown')
     }
 
-    // Check for risk reduction
+    // Check for risk reduction - More specific detection
     const text = textContent.toLowerCase()
-    if (text.includes('guarantee') || text.includes('refund') || text.includes('risk-free')) {
+    if (text.includes('money-back guarantee') || text.includes('100% guarantee') || 
+        (text.includes('refund') && text.includes('guarantee')) ||
+        text.includes('satisfaction guarantee')) {
       optimization.riskReduction.push('Money-back guarantee offered')
     }
     if (text.includes('free consultation') || text.includes('free call') || text.includes('no obligation')) {
