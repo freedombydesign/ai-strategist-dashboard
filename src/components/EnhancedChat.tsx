@@ -698,7 +698,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       });
       
       console.log('[CHAT] 🚀 SENDING API REQUEST NOW!');
-      console.log('[CHAT] Request URL: /api/ai-strategist');
+      console.log('[CHAT] Request URL: /api/test-website-analysis');
       console.log('[CHAT] Request payload preview:', {
         user_id: userId,
         message: messageText.substring(0, 50) + '...',
@@ -949,7 +949,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         // Send to AI strategist API to get new response
         const editedMessageContent = editedMessage.content; // Use the saved content instead of editingContent
         console.log('[EDIT] Calling AI strategist with edited message:', editedMessageContent);
-        const response = await fetch('/api/ai-strategist', {
+        const response = await fetch('/api/test-website-analysis', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

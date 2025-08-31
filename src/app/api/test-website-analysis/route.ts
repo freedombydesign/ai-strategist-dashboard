@@ -9,7 +9,8 @@ export async function POST(request: NextRequest) {
   try {
     console.log('[TEST-ANALYSIS] Starting test analysis...')
     
-    const { user_id, message, website_intelligence } = await request.json()
+    const requestBody = await request.json()
+    const { user_id, message, website_intelligence, freedom_score, file_context, user_name, personality, completed_tasks, is_fresh_start } = requestBody
     
     console.log('[TEST-ANALYSIS] Received data:', {
       user_id,
@@ -59,13 +60,9 @@ Be specific and reference the actual data.`
     
     return NextResponse.json({
       message: aiResponse,
-      success: true,
-      analysis_data_received: {
-        has_page_structure: !!website_intelligence.analysis.pageStructureAnalysis,
-        has_messaging_gaps: !!website_intelligence.analysis.messagingGaps,
-        has_conversion_opt: !!website_intelligence.analysis.conversionOptimization,
-        has_audience_insights: !!website_intelligence.analysis.audienceInsights
-      }
+      error: undefined,
+      has_reply: true,
+      reply_preview: aiResponse.substring(0, 100) + "..."
     })
     
   } catch (error) {
