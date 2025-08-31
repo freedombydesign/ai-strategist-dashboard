@@ -596,38 +596,10 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         }
       }
       
-      // If no localStorage score, try to fetch from database
+      // If no localStorage score, skip database query to prevent hanging (temporary fix)
       if (!freedomScore) {
-        try {
-          console.log('[CHAT] No localStorage score, fetching from database...');
-          const diagnosticService = await import('../services/diagnosticService');
-          const userResponses = await diagnosticService.diagnosticService.getUserResponses(userId);
-          
-          console.log('[CHAT] Database query returned', userResponses.length, 'responses');
-          if (userResponses.length > 0) {
-            console.log('[CHAT] Most recent response:', userResponses[0]);
-          }
-          
-          if (userResponses.length > 0) {
-            const mostRecent = userResponses[0];
-            freedomScore = mostRecent.scoreResult;
-            console.log('[CHAT] Found Freedom Score in database:', {
-              percent: freedomScore?.percent,
-              totalScore: freedomScore?.totalScore,
-              hasRecommendedOrder: !!freedomScore?.recommendedOrder
-            });
-            
-            // Save to localStorage for future use
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('lastFreedomScore', JSON.stringify(freedomScore));
-              localStorage.setItem('scoreCompletedAt', mostRecent.created_at);
-            }
-          } else {
-            console.log('[CHAT] No Freedom Score found in database or localStorage');
-          }
-        } catch (dbError) {
-          console.error('[CHAT] Error fetching Freedom Score from database:', dbError);
-        }
+        console.log('[CHAT] No localStorage score, skipping database query to prevent hanging');
+        console.log('[CHAT] No Freedom Score found in database or localStorage');
       }
 
       // Process files first if any
