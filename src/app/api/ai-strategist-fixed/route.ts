@@ -29,21 +29,19 @@ Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.he
 CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
 Page content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 400) || 'Not found'}
 
-I'm going to quote Ruth's EXACT words and give her insights about specific phrases she chose. Like:
+I need to be BRUTALLY HONEST about Ruth's copy choices. Not gentle suggestions - real critiques that sting but help.
 
-"Ruth, when you say 'Remove Yourself Without Revenue Dipping' - that word 'remove' is doing something interesting..."
+Examples of the brutal honesty Ruth wants:
 
-or
+"Ruth, 'Remove Yourself Without Revenue Dipping' - the word 'remove' makes you sound like a tumor. Your prospects don't want to be removed, they want to be elevated."
 
-"Your CTA 'GET INSTANT ACCESS TO FREEDOM BY DESIGN' - the phrase 'instant access' creates urgency, but 'Freedom by Design' might be too abstract..."
+"'Everything Falling Apart' - you're literally painting a disaster scenario in your headline. This creates anxiety, not desire."
 
-or 
+"'GET INSTANT ACCESS TO FREEDOM BY DESIGN' - this is marketing word salad. What the hell does 'Freedom by Design' actually mean? Your prospects have no clue."
 
-"I see you wrote 'A buyer-led sales engine so you stop doing calls' - that phrase 'buyer-led' is smart because..."
+"'This isn't for beginners' - lazy exclusion. Every guru says this. Be more specific about who it IS for."
 
-I need to reference her SPECIFIC copy, not just general concepts. Talk like I'm looking at her page right now and pointing to exact words and phrases.
-
-NO generic advice. Only insights about HER specific word choices and copy.`
+I need to point out exactly WHERE her copy is failing and WHY it's costing her money. Be conversational but brutally direct about specific problems with her word choices.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -75,7 +73,7 @@ NO generic advice. Only insights about HER specific word choices and copy.`
       messages: [
         { 
           role: 'system', 
-          content: `I'm talking to Ruth about her sales page. I need to sound human, not like ChatGPT. NO NUMBERED LISTS. NO ASTERISKS. NO BULLET POINTS. Just normal conversation.` 
+          content: `I need to give Ruth brutal, specific feedback about her sales copy. No sugar-coating. Point out exactly what's wrong with her word choices and why it's costing her money. Be conversational but savage about the problems.` 
         },
         { role: 'user', content: message }
       ],
