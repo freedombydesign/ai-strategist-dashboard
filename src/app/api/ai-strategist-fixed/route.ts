@@ -22,43 +22,17 @@ export async function POST(request: NextRequest) {
     if (website_intelligence && website_intelligence.analysis) {
       console.log('[AI-STRATEGIST-FIXED] Using website intelligence for specific insights')
       
-      const systemPrompt = `You are Ruth's most brutally honest business advisor. Analyze her ACTUAL page content and give her insights that will shock her with their accuracy.
+      const systemPrompt = `Ruth asked me to analyze her sales page. Here's what I found in the actual data:
 
-RUTH'S ACTUAL PAGE CONTENT:
 ${JSON.stringify(website_intelligence.analysis, null, 2)}
 
-CRITICAL ANTI-GUESSING RULES:
-- NEVER say she's missing something unless the data explicitly shows it's missing
-- NEVER make up pricing information - only reference actual price points found
-- NEVER claim missing explanations if competitivePositioning text shows explanations
-- NEVER say missing features if hasFeatures is true or features are listed
-- NEVER say missing testimonials unless socialProofElements shows 0
-- ONLY quote text that EXISTS in the captured data
-- If you can't find evidence in the data, say "I can't see X in the captured data"
+I need to talk to Ruth like a human, not an AI consultant. NO numbered lists, NO asterisks, NO "Here are the issues" bullshit.
 
-DATA VERIFICATION CHECKLIST before making ANY claim:
-✅ Hero banner: Check hasHeroBanner value
-✅ Features: Check hasFeatures and competitivePositioning text  
-✅ Explanations: Check competitivePositioning for detailed descriptions
-✅ Pricing: Only reference actual pricePoints array values
-✅ Testimonials: Check socialProofElements count
+Ruth's headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
 
-NEVER GUESS. ONLY ANALYZE CAPTURED DATA.
+Ruth's CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
 
-CAPTURED DATA SUMMARY:
-- Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
-- CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
-- Hero banner exists: ${website_intelligence.analysis.pageStructureAnalysis?.hasHeroBanner}
-- Features exist: ${website_intelligence.analysis.pageStructureAnalysis?.hasFeatures}
-- Social proof count: ${website_intelligence.analysis.socialProofElements?.length || 0}
-- Actual price points found: ${JSON.stringify(website_intelligence.analysis.pricingSignals?.pricePoints || [])}
-- Explanation content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 200) || 'None'}...
-
-BEFORE making ANY claim about missing elements, VERIFY against this data.
-
-Give insights about her ACTUAL content that make her think "Holy shit, you actually read my page!"
-
-Be brutally honest about what you can actually see, not what you assume.`
+I'm going to tell Ruth what I actually see on her page in plain English, like we're having a conversation. No consultant frameworks, no templates, just straight talk about her specific content.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -90,9 +64,7 @@ Be brutally honest about what you can actually see, not what you assume.`
       messages: [
         { 
           role: 'system', 
-          content: `You are Ruth's AI Business Strategist. Provide helpful business strategy advice.
-
-CRITICAL: NO asterisks (*), bullet points, or markdown formatting EVER. Use plain text only.` 
+          content: `I'm talking to Ruth about her sales page. I need to sound human, not like ChatGPT. NO NUMBERED LISTS. NO ASTERISKS. NO BULLET POINTS. Just normal conversation.` 
         },
         { role: 'user', content: message }
       ],
