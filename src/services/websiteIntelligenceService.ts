@@ -618,9 +618,24 @@ export class WebsiteIntelligenceService {
       missingElements: [] as string[]
     }
 
-    // Check for hero banner
-    if ($('.hero, .banner, .jumbotron, .hero-section, .main-banner').length > 0 || 
-        ($('h1').length > 0 && $('h1').first().closest('section, div').find('p, .subtitle').length > 0)) {
+    // Check for hero banner - Enhanced detection for content patterns
+    const hasHeroClasses = $('.hero, .banner, .jumbotron, .hero-section, .main-banner').length > 0
+    
+    // Look for hero-like structure: prominent headline + supporting text
+    const hasMainHeadline = $('h1').length > 0
+    const h1Text = $('h1').first().text()
+    const hasSubheadline = $('h2, .subtitle, .subheading, p').first().text().length > 30
+    
+    // Check if first headlines form a hero pattern (main + supporting message)
+    const headlines = []
+    $('h1, h2').slice(0, 3).each((_, elem) => {
+      const text = $(elem).text().trim()
+      if (text.length > 10) headlines.push(text)
+    })
+    
+    const hasHeroPattern = headlines.length >= 2 && headlines[0].length > 20 && headlines[1].length > 20
+    
+    if (hasHeroClasses || (hasMainHeadline && hasSubheadline) || hasHeroPattern) {
       structure.hasHeroBanner = true
     }
 
