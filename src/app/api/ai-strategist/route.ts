@@ -667,22 +667,43 @@ export async function POST(request: NextRequest) {
   console.log('[AI-STRATEGIST] website_intelligence received:', !!website_intelligence);
   console.log('[AI-STRATEGIST] website_intelligence type:', typeof website_intelligence);
   
-  // DIAGNOSTIC: Check if we received website_intelligence data
-  if (website_intelligence) {
-    console.log('[AI-STRATEGIST] ✅✅✅ WEBSITE INTELLIGENCE DATA RECEIVED - SHOULD GIVE SPECIFIC INSIGHTS');
-    console.log('[AI-STRATEGIST] website_intelligence keys:', Object.keys(website_intelligence));
-    console.log('[AI-STRATEGIST] website_intelligence.analysis keys:', Object.keys(website_intelligence.analysis || {}));
-    console.log('[AI-STRATEGIST] Enhanced analysis check:', {
-      hasPageStructure: !!website_intelligence.analysis?.pageStructureAnalysis,
-      hasMessagingGaps: !!website_intelligence.analysis?.messagingGaps,
-      hasConversionOpt: !!website_intelligence.analysis?.conversionOptimization,
-      hasAudienceInsights: !!website_intelligence.analysis?.audienceInsights
-    });
+  // 🚨 CRITICAL FIX: Handle website intelligence immediately if present
+  if (website_intelligence && website_intelligence.analysis) {
+    console.log('[AI-STRATEGIST] ✅ WEBSITE INTELLIGENCE FOUND - BYPASSING DATABASE ISSUES');
+    
+    const websiteSystemPrompt = `You are Ruth's AI Business Strategist. You have detailed analysis of Ruth's website: ${website_intelligence.website_url}
+
+ACTUAL WEBSITE ANALYSIS DATA:
+${JSON.stringify(website_intelligence.analysis, null, 2)}
+
+Based on this ACTUAL analysis of Ruth's website, provide specific, actionable insights. Use the real data from the analysis to give concrete findings, not generic advice. Reference the actual findings from the analysis data.`
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: 'system', content: websiteSystemPrompt },
+          { role: 'user', content: message }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7,
+      });
+
+      const aiResponse = completion.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your request.';
+      
+      console.log('[AI-STRATEGIST] ✅ SUCCESS - Used website intelligence directly');
+      
+      return NextResponse.json({
+        message: aiResponse,
+        error: undefined
+      });
+      
+    } catch (websiteError) {
+      console.error('[AI-STRATEGIST] Error with website intelligence:', websiteError);
+      // Fall through to regular processing
+    }
   } else {
-    console.log('[AI-STRATEGIST] ❌❌❌ NO WEBSITE INTELLIGENCE DATA - This explains generic responses');
-    console.log('[AI-STRATEGIST] Available request body keys:', Object.keys(requestBody));
-    console.log('[AI-STRATEGIST] has_website_intelligence flag:', requestBody.has_website_intelligence);
-    console.log('[AI-STRATEGIST] website_url:', requestBody.website_url);
+    console.log('[AI-STRATEGIST] ❌ NO WEBSITE INTELLIGENCE DATA - Using regular processing');
   }
   
   try {
