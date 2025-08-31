@@ -27,7 +27,9 @@ export async function POST(request: NextRequest) {
 WEBSITE CONTENT ANALYSIS:
 ${JSON.stringify(website_intelligence.analysis, null, 2)}
 
-Provide specific, actionable insights using Ruth's actual page content. NO asterisks, bullet points, or markdown formatting.
+Provide specific, actionable insights using Ruth's actual page content. 
+
+CRITICAL: NO asterisks (*), bullet points, or markdown formatting EVER. Use plain text only.
 
 For each issue, provide:
 1. WHAT the specific problem is (using exact data from the analysis)
@@ -75,7 +77,9 @@ Be direct, specific, and actionable. No generic advice.`
       messages: [
         { 
           role: 'system', 
-          content: `You are Ruth's AI Business Strategist. Provide helpful business strategy advice.` 
+          content: `You are Ruth's AI Business Strategist. Provide helpful business strategy advice.
+
+CRITICAL: NO asterisks (*), bullet points, or markdown formatting EVER. Use plain text only.` 
         },
         { role: 'user', content: message }
       ],

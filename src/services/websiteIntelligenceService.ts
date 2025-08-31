@@ -637,8 +637,16 @@ export class WebsiteIntelligenceService {
       structure.hasTestimonials = true
     }
 
-    // Check for features
-    if ($('[class*="feature"], .benefits, .services, .offerings, .what-we-do').length > 0) {
+    // Check for features - Look for content patterns, not just CSS classes
+    const fullText = $('body').text().toLowerCase()
+    const hasFeatureKeywords = fullText.includes('features') || fullText.includes('benefits') || 
+                              fullText.includes('what you get') || fullText.includes('what you\'ll') ||
+                              fullText.includes('you\'ll walk away with') || fullText.includes('includes:') ||
+                              fullText.includes('you\'ll install') || fullText.includes('systems:')
+    
+    const hasFeatureElements = $('[class*="feature"], .benefits, .services, .offerings, .what-we-do').length > 0
+    
+    if (hasFeatureKeywords || hasFeatureElements) {
       structure.hasFeatures = true
     }
 
