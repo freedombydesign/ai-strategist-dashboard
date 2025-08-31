@@ -708,7 +708,8 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       
       let response;
       try {
-        response = await fetch('/api/ai-strategist', {
+        // TEMPORARY FIX: Use working test endpoint until main API is fixed
+        response = await fetch('/api/test-website-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
