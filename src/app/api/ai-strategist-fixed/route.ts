@@ -39,43 +39,30 @@ function removeFormattingAndAddSolutions(text: string): string {
   // Step 2: re-join paragraphs with double newlines
   let result = grouped.join('\n\n')
   
-  // Step 3: if we still have one giant paragraph, aggressively split on transition words and sentence groups
-  if (grouped.length === 1 && result.length > 200) {
-    // Split on many more transition patterns
-    const sentences = result.split(/(?<=[.!?])\s+/)
-    let paragraphs = []
-    let currentParagraph = []
+  // Step 3: Force paragraph breaks - split every 2-3 sentences regardless
+  const sentences = result.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0)
+  let paragraphs = []
+  
+  for (let i = 0; i < sentences.length; i += 2) {
+    // Take 2-3 sentences at a time
+    let paragraphSentences = []
+    let maxSentences = 2
     
-    for (let i = 0; i < sentences.length; i++) {
-      const sentence = sentences[i].trim()
-      if (!sentence) continue
-      
-      currentParagraph.push(sentence)
-      
-      // Create paragraph break on these conditions
-      const shouldBreak = (
-        // After 3-4 sentences
-        currentParagraph.length >= 3 ||
-        // When we hit transition words
-        /^(First|However|Another|Also|Your CTAs|The page content|Finally|Next|In terms of|For the|Consider|Instead of|Lastly|The section|While)/i.test(sentence) ||
-        // When current paragraph is getting long
-        (currentParagraph.length >= 2 && currentParagraph.join(' ').length > 200) ||
-        // At the end
-        i === sentences.length - 1
-      )
-      
-      if (shouldBreak && currentParagraph.length > 0) {
-        paragraphs.push(currentParagraph.join(' '))
-        currentParagraph = []
-      }
+    // Check if next sentence starts with transition word - if so, take 3 sentences
+    if (sentences[i + 2] && /^(However|First|Another|Also|Moving|Your|The|Consider|Instead|Lastly|Finally|Next)/i.test(sentences[i + 2])) {
+      maxSentences = 3
     }
     
-    if (currentParagraph.length > 0) {
-      paragraphs.push(currentParagraph.join(' '))
+    for (let j = 0; j < maxSentences && (i + j) < sentences.length; j++) {
+      paragraphSentences.push(sentences[i + j])
     }
     
-    result = paragraphs.filter(p => p.trim().length > 0).join('\n\n')
+    if (paragraphSentences.length > 0) {
+      paragraphs.push(paragraphSentences.join(' '))
+    }
   }
+  
+  result = paragraphs.join('\n\n')
   
   // Clean up spacing
   result = result.replace(/\s+/g, ' ')
@@ -152,7 +139,7 @@ SAVAGE MODE: ${isRewriteRequest || isFullPageRewrite ?
     'Ruth asked for a FULL PAGE REWRITE! Provide a complete rewritten sales page with new headlines, subheadlines, body copy, CTAs, and benefit statements. Structure it as a complete sales page, not just suggestions.' :
     'Ruth asked for rewrites! Provide ACTUAL rewritten copy sections, not just critiques. Give her the exact headlines, CTAs, and body copy she should use instead. Be specific with word-for-word alternatives.'
   ) :
-  'SAVAGE MODE MISSION: Bring out the SAVAGE in Ruth and her copy while keeping it EMPOWERING. Turn up edge, attitude, and urgency WITHOUT blaming or shaming the audience. Make prospects feel like a "fly on the wall" witnessing truth, not attacked or embarrassed. Create savage energy that empowers action, not victim energy that attracts blame-clients. Savage copy should make prospects think "damn, that\'s me - I\'m ready to level up" not "I suck and need saving." When Ruth\'s copy is good, AMPLIFY it with empowering savage energy.'
+  'SAVAGE MODE MISSION: Describe EXACT brutal reality without blame or shame. No cheerleader "empowering" words or consultant speak. Paint the precise picture of what their life looks like RIGHT NOW. Instead of "you can\'t let go of control" say "you\'re up at midnight double-checking your team\'s work because you don\'t trust they\'ll deliver correctly." Raw descriptive truth that makes them go "holy shit, that\'s exactly me." No fluff, no judgment - just brutal accuracy that makes them feel SEEN. When Ruth\'s copy is good, make it more descriptively savage.'
 }
 
 ${isRewriteRequest || isFullPageRewrite ? 
@@ -160,7 +147,7 @@ ${isRewriteRequest || isFullPageRewrite ?
     'Format as a COMPLETE SALES PAGE with sections clearly labeled: HEADLINE, SUBHEADLINE, OPENING, BENEFITS, CTAs, CLOSING, etc.' :
     'Format like: "Here\'s your rewritten headline: [EXACT NEW HEADLINE]. Here\'s your new CTA: [EXACT NEW CTA]. Here\'s the rewritten section: [EXACT NEW COPY]"'
   ) :
-  'Example empowering savage amplification: "Ruth, your headline works but let\'s add EMPOWERING savage energy. Instead of \'Remove Yourself Without Revenue Dipping\' - try \'Ready to Scale Beyond Your Personal Capacity?\' or \'Time to Build a Business That Runs Without You.\' Savage urgency that makes them think \'Hell yes, I\'m ready\' not \'I\'m failing.\' Fly-on-the-wall truth that empowers, doesn\'t shame."'
+  'Example brutal descriptive truth: "Ruth, your headline works but let\'s make it more descriptively savage. Instead of \'Remove Yourself\' - try \'You Check Slack at 11 PM Because You Can\'t Trust Your Business to Run Without You\' or \'Your Phone Buzzes During Family Dinner Because Your Team Needs Approval for Everything.\' Raw truth that makes them think \'Fuck, that\'s exactly my life.\' No fluff words, just brutal reality they recognize."'
 }
 
 ${isRewriteRequest ? '' : 'Always end with savage energy: "Want me to turn up the SAVAGE on this copy?" or "Ready to inject some real attitude into this section?"'}
@@ -229,7 +216,7 @@ Point out exactly WHERE her copy is failing and WHY it's costing her money. Alwa
           content: `CRITICAL: You are FORBIDDEN from using asterisks (*), numbered lists (1. 2. 3.), bullet points, bold formatting (**text**), or any formatting symbols. Write ONLY in natural conversational paragraphs.
           
           ${personality === 'savage' ? 
-            'SAVAGE MODE: Bring out EMPOWERING savage energy in Ruth\'s copy. Add edge and urgency WITHOUT blaming or shaming the audience. Make prospects feel like a fly-on-the-wall witnessing truth, not attacked. Create "damn, that\'s me - I\'m ready to level up" energy, not "I suck and need saving" victim energy. Savage copy should empower action, not attract blame-clients.' : 
+            'SAVAGE MODE: Describe brutal reality with zero fluff or cheerleader words. Paint the exact picture of their life RIGHT NOW. No "empowering" consultant speak like "Ready to Break Free!" Instead use raw descriptive truth: "You\'re checking emails during your kid\'s soccer game because you can\'t trust your team." Make them think "holy shit, that\'s exactly me." Brutal accuracy, not judgment.' : 
             personality === 'strategic' ? 
             'STRATEGIC MODE: Focus on business impact and ROI. Identify what\'s costing money and provide data-driven solutions. Write in natural paragraphs and always offer strategic rewrites.' :
             personality === 'creative' ? 
