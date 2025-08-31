@@ -657,37 +657,37 @@ function needsWebSearch(message: string): string | null {
 }
 
 export async function POST(request: NextRequest) {
+  const requestBody = await request.json();
+  const { user_id, message, freedom_score, is_fresh_start, file_context, user_name, personality = 'strategic', completed_tasks, website_intelligence } = requestBody;
+  
+  // 🚨 CRITICAL DIAGNOSTIC - EXECUTE FIRST BEFORE ANY DATABASE CALLS 🚨
+  console.log('\n\n🚨🚨🚨 AI-STRATEGIST API CALLED! 🚨🚨🚨');
+  console.log('[AI-STRATEGIST] ===== CRITICAL DIAGNOSTIC - EXECUTED FIRST =====');
+  console.log('[AI-STRATEGIST] Full request body keys:', Object.keys(requestBody));
+  console.log('[AI-STRATEGIST] website_intelligence received:', !!website_intelligence);
+  console.log('[AI-STRATEGIST] website_intelligence type:', typeof website_intelligence);
+  
+  // DIAGNOSTIC: Check if we received website_intelligence data
+  if (website_intelligence) {
+    console.log('[AI-STRATEGIST] ✅✅✅ WEBSITE INTELLIGENCE DATA RECEIVED - SHOULD GIVE SPECIFIC INSIGHTS');
+    console.log('[AI-STRATEGIST] website_intelligence keys:', Object.keys(website_intelligence));
+    console.log('[AI-STRATEGIST] website_intelligence.analysis keys:', Object.keys(website_intelligence.analysis || {}));
+    console.log('[AI-STRATEGIST] Enhanced analysis check:', {
+      hasPageStructure: !!website_intelligence.analysis?.pageStructureAnalysis,
+      hasMessagingGaps: !!website_intelligence.analysis?.messagingGaps,
+      hasConversionOpt: !!website_intelligence.analysis?.conversionOptimization,
+      hasAudienceInsights: !!website_intelligence.analysis?.audienceInsights
+    });
+  } else {
+    console.log('[AI-STRATEGIST] ❌❌❌ NO WEBSITE INTELLIGENCE DATA - This explains generic responses');
+    console.log('[AI-STRATEGIST] Available request body keys:', Object.keys(requestBody));
+    console.log('[AI-STRATEGIST] has_website_intelligence flag:', requestBody.has_website_intelligence);
+    console.log('[AI-STRATEGIST] website_url:', requestBody.website_url);
+  }
+  
   try {
-    console.log('\n\n🚨 AI-STRATEGIST API CALLED! 🚨');
-    console.log('🚨 TIME:', new Date().toISOString());
-    console.log('🚨 THIS IS THE API ENDPOINT BEING HIT');
     console.log('[AI-STRATEGIST] *** API WITH ENHANCED SPRINT STEP TRACKING ***');
-    console.log('[AI-STRATEGIST] ===== INCOMING REQUEST =====');
-    const requestBody = await request.json();
-    const { user_id, message, freedom_score, is_fresh_start, file_context, user_name, personality = 'strategic', completed_tasks, website_intelligence } = requestBody;
-    
-    console.log('[AI-STRATEGIST] ===== CRITICAL DIAGNOSTIC - MOVED TO TOP =====');
-    console.log('[AI-STRATEGIST] Full request body keys:', Object.keys(requestBody));
-    console.log('[AI-STRATEGIST] website_intelligence received:', !!website_intelligence);
-    console.log('[AI-STRATEGIST] website_intelligence type:', typeof website_intelligence);
-    
-    // DIAGNOSTIC: Check if we received website_intelligence data
-    if (website_intelligence) {
-      console.log('[AI-STRATEGIST] ✅ WEBSITE INTELLIGENCE DATA RECEIVED - SHOULD GIVE SPECIFIC INSIGHTS');
-      console.log('[AI-STRATEGIST] website_intelligence keys:', Object.keys(website_intelligence));
-      console.log('[AI-STRATEGIST] website_intelligence.analysis keys:', Object.keys(website_intelligence.analysis || {}));
-      console.log('[AI-STRATEGIST] Enhanced analysis check:', {
-        hasPageStructure: !!website_intelligence.analysis?.pageStructureAnalysis,
-        hasMessagingGaps: !!website_intelligence.analysis?.messagingGaps,
-        hasConversionOpt: !!website_intelligence.analysis?.conversionOptimization,
-        hasAudienceInsights: !!website_intelligence.analysis?.audienceInsights
-      });
-    } else {
-      console.log('[AI-STRATEGIST] ❌ NO WEBSITE INTELLIGENCE DATA - This explains generic responses');
-      console.log('[AI-STRATEGIST] Available request body keys:', Object.keys(requestBody));
-      console.log('[AI-STRATEGIST] has_website_intelligence flag:', requestBody.has_website_intelligence);
-      console.log('[AI-STRATEGIST] website_url:', requestBody.website_url);
-    }
+    console.log('[AI-STRATEGIST] ===== STARTING MAIN PROCESSING =====');
     
     // TEMPORARY: Manually inject completed task until frontend cache is resolved
     const manualCompletedTasks = user_id === 'f85eba27-6eb9-4933-9459-2517739ef846' ? ['140b8cda-0074-4ca0-a48a-5e310747c18b:profit-1-1'] : []
