@@ -670,14 +670,17 @@ export async function POST(request: NextRequest) {
     console.log('[AI-STRATEGIST] Full request body keys:', Object.keys(requestBody));
     console.log('[AI-STRATEGIST] website_intelligence received:', !!website_intelligence);
     console.log('[AI-STRATEGIST] website_intelligence type:', typeof website_intelligence);
+    
+    // DIAGNOSTIC: Check if we received website_intelligence data
     if (website_intelligence) {
+      console.log('[AI-STRATEGIST] ✅ WEBSITE INTELLIGENCE DATA RECEIVED');
       console.log('[AI-STRATEGIST] website_intelligence keys:', Object.keys(website_intelligence));
       console.log('[AI-STRATEGIST] website_intelligence.analysis keys:', Object.keys(website_intelligence.analysis || {}));
-      console.log('[AI-STRATEGIST] website_intelligence preview:', {
-        url: website_intelligence.website_url,
-        hasAnalysis: !!website_intelligence.analysis,
-        timestamp: website_intelligence.timestamp
-      });
+    } else {
+      console.log('[AI-STRATEGIST] ❌ NO WEBSITE INTELLIGENCE DATA - This is why we get generic responses');
+      console.log('[AI-STRATEGIST] Available request body keys:', Object.keys(requestBody));
+      console.log('[AI-STRATEGIST] has_website_intelligence flag:', requestBody.has_website_intelligence);
+      console.log('[AI-STRATEGIST] website_url:', requestBody.website_url);
     }
     
     // TEMPORARY: Manually inject completed task until frontend cache is resolved
