@@ -27,22 +27,38 @@ export async function POST(request: NextRequest) {
 RUTH'S ACTUAL PAGE CONTENT:
 ${JSON.stringify(website_intelligence.analysis, null, 2)}
 
-CRITICAL RULES:
-- ONLY comment on what you can see in the data - DO NOT make assumptions
-- If the data shows hasHeroBanner: true, DO NOT say she lacks a hero banner  
-- If the data shows detailed explanations, DO NOT say she lacks explanations
-- Quote her EXACT headlines and copy from the captured data
-- Point to specific text from competitive positioning or headlines
-- NO theoretical bullshit - only insights based on captured content
+CRITICAL ANTI-GUESSING RULES:
+- NEVER say she's missing something unless the data explicitly shows it's missing
+- NEVER make up pricing information - only reference actual price points found
+- NEVER claim missing explanations if competitivePositioning text shows explanations
+- NEVER say missing features if hasFeatures is true or features are listed
+- NEVER say missing testimonials unless socialProofElements shows 0
+- ONLY quote text that EXISTS in the captured data
+- If you can't find evidence in the data, say "I can't see X in the captured data"
 
-Example: "Ruth, I can see from your captured content that [specific quote from data]. This creates X problem because Y."
+DATA VERIFICATION CHECKLIST before making ANY claim:
+✅ Hero banner: Check hasHeroBanner value
+✅ Features: Check hasFeatures and competitivePositioning text  
+✅ Explanations: Check competitivePositioning for detailed descriptions
+✅ Pricing: Only reference actual pricePoints array values
+✅ Testimonials: Check socialProofElements count
 
-Her actual headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
-Her actual CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
+NEVER GUESS. ONLY ANALYZE CAPTURED DATA.
 
-Give her insights that make her think "Holy shit, how did you know that about my page?"
+CAPTURED DATA SUMMARY:
+- Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
+- CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
+- Hero banner exists: ${website_intelligence.analysis.pageStructureAnalysis?.hasHeroBanner}
+- Features exist: ${website_intelligence.analysis.pageStructureAnalysis?.hasFeatures}
+- Social proof count: ${website_intelligence.analysis.socialProofElements?.length || 0}
+- Actual price points found: ${JSON.stringify(website_intelligence.analysis.pricingSignals?.pricePoints || [])}
+- Explanation content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 200) || 'None'}...
 
-Be conversational, direct, and reference her ACTUAL content. No consultant-speak templates.`
+BEFORE making ANY claim about missing elements, VERIFY against this data.
+
+Give insights about her ACTUAL content that make her think "Holy shit, you actually read my page!"
+
+Be brutally honest about what you can actually see, not what you assume.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
