@@ -110,11 +110,12 @@ CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsTo
 Page content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 400) || 'Not found'}
 
 QUALITY ANALYSIS REQUIREMENTS:
-- Only critique copy that's genuinely weak or unclear
-- Recognize when copy is actually working well (like Ruth's sales page which clearly shows sophistication)
-- Focus on real conversion issues, not stylistic preferences
-- If the copy is strong, acknowledge what's working and suggest refinements, not overhauls
-- Avoid generic guru-speak critiques that don't apply to sophisticated copy
+- Ruth's sales page is sophisticated direct response copy - recognize what's working before critiquing
+- Her headline uses proven direct response structure (desire + objection handling)
+- Her copy shows professional sophistication - don't attack strong elements just to be savage  
+- Only critique what's genuinely hurting conversions, not stylistic preferences
+- True savage feedback acknowledges what works and brutally calls out what doesn't
+- Focus on real conversion gaps, not imaginary problems
 
 ABSOLUTE FORMATTING REQUIREMENTS - NO EXCEPTIONS:
 You are FORBIDDEN from using any of these formatting elements:
@@ -130,7 +131,7 @@ Always offer to rewrite problematic sections
 ${personality === 'savage' ? `
 SAVAGE MODE: ${isRewriteRequest ? 
   'Ruth asked for rewrites! Provide ACTUAL rewritten copy sections, not just critiques. Give her the exact headlines, CTAs, and body copy she should use instead. Be specific with word-for-word alternatives.' :
-  'BE SAVAGE AND BRUTAL. Do NOT say "your sales page is strong" or "sophisticated" - that is NOT savage. Call out what\'s actually weak, confusing, or costing conversions. Be blunt, direct, and harsh about real problems. If something is genuinely good, acknowledge it briefly then move to what needs fixing. No politeness, no cushioning - straight brutal truth about what\'s hurting her sales.'
+  'BE SAVAGE but SMART. Ruth\'s copy is sophisticated direct response - don\'t attack strong elements just to be brutal. Acknowledge what\'s working (like her headline structure), then be ruthlessly honest about what\'s genuinely hurting conversions. True savage feedback separates what works from what doesn\'t, not everything is broken just because you\'re in savage mode.'
 }
 
 ${isRewriteRequest ? 
@@ -204,7 +205,7 @@ Point out exactly WHERE her copy is failing and WHY it's costing her money. Alwa
           content: `CRITICAL: You are FORBIDDEN from using asterisks (*), numbered lists (1. 2. 3.), bullet points, bold formatting (**text**), or any formatting symbols. Write ONLY in natural conversational paragraphs.
           
           ${personality === 'savage' ? 
-            'SAVAGE MODE: BE BRUTAL AND HARSH. Do NOT say "your sales page is strong" - that is NOT savage! Call out what\'s weak, confusing, or killing conversions. Be blunt and direct about real problems. No politeness or cushioning - straight savage truth about what\'s costing sales.' : 
+            'SAVAGE MODE: BE BRUTAL but ACCURATE. Ruth\'s copy is sophisticated direct response - acknowledge what works, then savage what doesn\'t. Don\'t call strong elements weak just to be harsh. True savage feedback separates good from bad ruthlessly.' : 
             personality === 'strategic' ? 
             'STRATEGIC MODE: Focus on business impact and ROI. Identify what\'s costing money and provide data-driven solutions. Write in natural paragraphs and always offer strategic rewrites.' :
             personality === 'creative' ? 
