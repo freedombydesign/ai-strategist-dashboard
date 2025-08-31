@@ -5,6 +5,59 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+// Post-processing function to remove all formatting and add solutions
+function removeFormattingAndAddSolutions(text: string): string {
+  // Remove numbered lists (1., 2), 3-)
+  let cleaned = text.replace(/^\s*\d+[\.\)\-]\s*/gm, '')
+  
+  // Remove bullet points (*, -, •)
+  cleaned = cleaned.replace(/^\s*[\*\-\u2022]\s*/gm, '')
+  
+  // Remove bold formatting (**text**)
+  cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '$1')
+  
+  // Remove any remaining asterisks used for emphasis
+  cleaned = cleaned.replace(/\*/g, '')
+  
+  // Clean up section headers that use colons or dashes
+  cleaned = cleaned.replace(/^\s*\d+\.\s*\*\*(.*?)\*\*\s*[-:]?\s*/gm, '$1: ')
+  
+  // Convert remaining structured content to flowing paragraphs
+  const lines = cleaned.split('\n').map(line => line.trim()).filter(line => line.length > 0)
+  
+  // Join lines into paragraphs, but preserve paragraph breaks
+  let result = ''
+  let currentParagraph = ''
+  
+  for (const line of lines) {
+    if (line.length === 0) {
+      if (currentParagraph.trim()) {
+        result += currentParagraph.trim() + '\n\n'
+        currentParagraph = ''
+      }
+    } else {
+      currentParagraph += line + ' '
+    }
+  }
+  
+  if (currentParagraph.trim()) {
+    result += currentParagraph.trim()
+  }
+  
+  // Clean up spacing
+  result = result.replace(/\s+/g, ' ')
+  result = result.replace(/\s+([,.!?;:])/g, '$1')
+  result = result.replace(/\n{3,}/g, '\n\n')
+  
+  // Add solution prompt if it's critique without solutions
+  if (!result.toLowerCase().includes('try') && !result.toLowerCase().includes('instead') && 
+      !result.toLowerCase().includes('rewrite') && !result.toLowerCase().includes('consider')) {
+    result += '\n\nWant me to rewrite these sections with copy that actually converts? I can turn this weak messaging into something that drives sales.'
+  }
+  
+  return result.trim()
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('[AI-STRATEGIST-FIXED] API called')
@@ -22,42 +75,73 @@ export async function POST(request: NextRequest) {
     if (website_intelligence && website_intelligence.analysis) {
       console.log('[AI-STRATEGIST-FIXED] Using website intelligence for specific insights')
       
-      const systemPrompt = `I'm analyzing Ruth's sales page. I need to be SUPER SPECIFIC about her actual content.
+      const systemPrompt = `I'm analyzing Ruth's sales page. I need to be SUPER SPECIFIC about her actual content and provide solutions.
 
 RUTH'S ACTUAL CONTENT:
 Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
 CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
 Page content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 400) || 'Not found'}
 
-Ruth's personality setting: ${personality || 'strategic'}
+ABSOLUTE FORMATTING REQUIREMENTS - NO EXCEPTIONS:
+You are FORBIDDEN from using any of these formatting elements:
+- NO asterisks (*) anywhere in your response
+- NO numbered lists (1. 2. 3. etc.)
+- NO bullet points or dashes (- •)  
+- NO bold formatting (**text**)
+- NO section headers or titles
+Write ONLY in natural conversational paragraphs like you're talking to a friend
+Always provide specific solutions and alternatives
+Always offer to rewrite problematic sections
 
 ${personality === 'savage' ? `
-I need to be SAVAGE and BRUTAL about Ruth's copy choices. No holding back - real critiques that sting but help.
+SAVAGE MODE: Be brutally honest about what's wrong, explain why it's killing conversions, then provide specific solutions and rewrites. Write like a brutal friend who cares about results.
 
-Examples of SAVAGE mode:
-"Ruth, 'Remove Yourself' makes you sound like a tumor. Nobody wants to be 'removed' from their business."
-"'Everything Falling Apart' - you're literally selling panic. This creates anxiety, not desire."  
-"'Freedom by Design' is meaningless word salad. What does this actually mean? Your prospects have no clue."
-"'This isn't for beginners' - lazy guru speak. Every coach says this boring shit."
+Example approach: "Ruth, 'Remove Yourself' makes you sound like a tumor. Nobody wants to be 'removed' from their business. Try 'Step Back From Day-to-Day Operations' or 'Build Systems That Run Without You' instead."
 
-Be ruthlessly direct about what's wrong and why it's killing her conversions. No sugar-coating.
+Always end with: "Want me to rewrite this entire section for you? I can turn this weak copy into something that actually converts."
+` : personality === 'strategic' ? `
+STRATEGIC MODE: Focus on business impact, ROI, and competitive positioning. Identify what's costing money and provide data-driven solutions.
+
+Example approach: "Your headline 'Remove Yourself' is costing you conversions because it frames business ownership negatively. Strategic alternative: 'Scale Beyond Your Personal Capacity' positions growth as the goal."
+
+Always end with: "I can provide a complete strategic rewrite that positions you as the growth solution, not the escape route."
+` : personality === 'creative' ? `
+CREATIVE MODE: Focus on emotional engagement, storytelling, and compelling messaging. Make copy more vivid and engaging.
+
+Example approach: "Your copy lacks emotional punch. Instead of 'Remove Yourself,' paint a picture: 'Imagine sipping coffee on a Tuesday morning while your business runs smoothly without a single phone call from your team.'"
+
+Always end with: "I can rewrite this with engaging stories and emotional hooks that make prospects feel the transformation."
+` : personality === 'analytical' ? `
+ANALYTICAL MODE: Focus on conversion data, user psychology, and testing opportunities. Identify what elements hurt performance.
+
+Example approach: "Your headline 'Remove Yourself' likely reduces click-through rates because it triggers loss aversion. Testing shows aspirational headlines like 'Build Your Dream Business' outperform escape-focused messaging by 23%."
+
+Always end with: "I can rewrite this with conversion-optimized copy and suggest A/B tests to validate improvements."
 ` : `
-I need to analyze Ruth's copy with the ${personality || 'strategic'} personality approach while being specific about her actual content.
+SUPPORTIVE MODE: Provide gentle but honest feedback with encouragement. Focus on what's working and how to improve what isn't.
+
+Example approach: "I love your passion for helping business owners! Your 'Remove Yourself' headline might be pushing away people who actually enjoy their work but need better systems. Consider 'Build a Business That Thrives Without You' - it maintains the freedom benefit while honoring their love for what they do."
+
+Always end with: "I'd be happy to help you rewrite sections to keep your authentic voice while improving clarity and appeal."
 `}
 
-Point out exactly WHERE her copy is failing and WHY it's costing her money.`
+Point out exactly WHERE her copy is failing and WHY it's costing her money. Always provide specific solutions.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
+          { role: 'user', content: message },
+          { role: 'system', content: 'CRITICAL REMINDER: Write in natural paragraphs only. You are FORBIDDEN from using asterisks (*), numbered lists (1. 2. 3.), bullet points, or any formatting symbols. Talk like a human having a conversation.' }
         ],
         max_tokens: 1000,
         temperature: 0.7,
       })
 
-      const aiResponse = completion.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your request.'
+      const rawResponse = completion.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your request.'
+      
+      // Post-processing: Remove all formatting that GPT-4o loves to add
+      const aiResponse = removeFormattingAndAddSolutions(rawResponse)
       
       console.log('[AI-STRATEGIST-FIXED] Website intelligence response generated, length:', aiResponse.length)
       
@@ -77,18 +161,30 @@ Point out exactly WHERE her copy is failing and WHY it's costing her money.`
       messages: [
         { 
           role: 'system', 
-          content: `${personality === 'savage' ? 
-            'I need to be SAVAGE about Ruth\'s copy. Brutally honest, no holding back. Call out exactly what\'s wrong and why it\'s killing her conversions.' : 
-            `I need to give Ruth ${personality || 'strategic'} feedback about her sales copy while being specific about her actual content.`
+          content: `CRITICAL: You are FORBIDDEN from using asterisks (*), numbered lists (1. 2. 3.), bullet points, bold formatting (**text**), or any formatting symbols. Write ONLY in natural conversational paragraphs.
+          
+          ${personality === 'savage' ? 
+            'SAVAGE MODE: Be brutally honest about Ruth\'s copy. Call out exactly what\'s wrong, why it\'s killing conversions, then provide SPECIFIC solutions and rewrites. Write like a brutal friend who cares about results.' : 
+            personality === 'strategic' ? 
+            'STRATEGIC MODE: Focus on business impact and ROI. Identify what\'s costing money and provide data-driven solutions. Write in natural paragraphs and always offer strategic rewrites.' :
+            personality === 'creative' ? 
+            'CREATIVE MODE: Focus on emotional engagement and compelling messaging. Make copy more vivid and engaging. Write in natural paragraphs and always offer creative rewrites with stories and emotional hooks.' :
+            personality === 'analytical' ? 
+            'ANALYTICAL MODE: Focus on conversion data and user psychology. Identify performance issues and testing opportunities. Write in natural paragraphs and always offer conversion-optimized rewrites.' :
+            'SUPPORTIVE MODE: Provide gentle but honest feedback with encouragement. Focus on what works and how to improve. Write in natural paragraphs and always offer supportive rewrites that maintain authenticity.'
           }` 
         },
-        { role: 'user', content: message }
+        { role: 'user', content: message },
+        { role: 'system', content: 'REMINDER: No asterisks, no numbers, no formatting. Write like you\'re talking to a friend in natural paragraphs only.' }
       ],
       max_tokens: 800,
       temperature: 0.7,
     })
 
-    const aiResponse = completion.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your request.'
+    const rawResponse = completion.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your request.'
+    
+    // Post-processing: Remove all formatting that GPT-4o loves to add
+    const aiResponse = removeFormattingAndAddSolutions(rawResponse)
     
     console.log('[AI-STRATEGIST-FIXED] General response generated, length:', aiResponse.length)
     
