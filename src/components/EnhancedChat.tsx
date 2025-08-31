@@ -513,9 +513,12 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       return;
     }
 
-    // Check if user is asking about website analysis
+    // Check if user is asking about website analysis or entering a URL
     const websiteAnalysisKeywords = /website|site|analyze.*site|look.*website|brand.*voice|messaging|scrape.*site|pull.*from.*site|analyze.*web/i;
-    if (websiteAnalysisKeywords.test(messageText) && !showWebsiteAnalyzer) {
+    const urlPattern = /https?:\/\/[^\s]+/i;
+    const isWebsiteRelatedRequest = websiteAnalysisKeywords.test(messageText) || urlPattern.test(messageText);
+    
+    if (isWebsiteRelatedRequest && !showWebsiteAnalyzer) {
       // Check if we recently completed analysis or already have data
       const existingData = localStorage.getItem(`website_intelligence_${userId}`);
       const timeSinceLastAnalysis = Date.now() - lastAnalysisTime;
