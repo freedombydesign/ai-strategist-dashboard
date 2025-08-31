@@ -771,6 +771,11 @@ export class WebsiteIntelligenceService {
     if (hasAwarenessStage && hasDecisionStage) {
       gaps.strategicGaps.push('Mixing awareness and decision stage messaging confuses buying intent')
     }
+    
+    // Check for solution clarity
+    const solutionWords = ['solution', 'solve', 'fix', 'help', 'achieve', 'get results', 'transform']
+    const hasSolutionClarity = solutionWords.some(word => text.includes(word))
+    
     if (!hasSolutionClarity) {
       gaps.solutionClarification.push('Solution is not clearly articulated')
       gaps.solutionClarification.push('Add specific outcomes and transformations you provide')
