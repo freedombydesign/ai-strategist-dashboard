@@ -233,13 +233,20 @@ export class WebsiteIntelligenceService {
       }
     })
     
-    // Extract CTAs
-    $('button, .btn, .cta, a[href*="contact"], a[href*="signup"], a[href*="subscribe"], a[href*="buy"], a[href*="get-started"]').each((_, elem) => {
+    // Extract CTAs - Enhanced detection for various button types
+    $('button, .btn, .cta, [class*="button"], a[href*="contact"], a[href*="signup"], a[href*="subscribe"], a[href*="buy"], a[href*="get-started"], a[href*="purchase"], a[href*="access"]').each((_, elem) => {
       const text = $(elem).text().trim()
       if (text && text.length > 2 && text.length < 100) {
         callsToAction.push(text)
       }
     })
+    
+    // Also look for common CTA text patterns in the content
+    const ctaPatterns = /GET\s+(?:INSTANT\s+)?ACCESS|APPLY\s+NOW|GET\s+STARTED|BOOK\s+(?:A\s+)?CALL|SCHEDULE|CONTACT\s+(?:US|ME)|LEARN\s+MORE|SIGN\s+UP|JOIN\s+NOW/gi
+    const ctaMatches = $('body').text().match(ctaPatterns)
+    if (ctaMatches) {
+      ctaMatches.forEach(match => callsToAction.push(match.trim()))
+    }
     
     // Extract value propositions (common sections)
     $('.value-prop, .benefits, .why-us, .hero-subtitle, .description').each((_, elem) => {
@@ -662,8 +669,16 @@ export class WebsiteIntelligenceService {
       structure.hasPricing = true
     }
 
-    // Check for contact
-    if ($('[class*="contact"], .get-in-touch, .reach-out, form, input[type="email"]').length > 0) {
+    // Check for contact forms OR clear CTAs/next steps
+    const hasContactForm = $('[class*="contact"], .get-in-touch, .reach-out, form, input[type="email"]').length > 0
+    
+    const hasCtAs = $('button, .btn, .cta, a[href*="contact"], a[href*="signup"], a[href*="buy"], a[href*="get-started"], a[href*="purchase"]').length > 0
+    
+    const hasActionText = fullText.includes('get started') || fullText.includes('contact us') || 
+                         fullText.includes('book a call') || fullText.includes('schedule') ||
+                         fullText.includes('get access') || fullText.includes('apply now')
+    
+    if (hasContactForm || hasCtAs || hasActionText) {
       structure.hasContact = true
     }
 
