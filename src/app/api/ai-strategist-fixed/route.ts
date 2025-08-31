@@ -152,7 +152,7 @@ SAVAGE MODE: ${isRewriteRequest || isFullPageRewrite ?
     'Ruth asked for a FULL PAGE REWRITE! Provide a complete rewritten sales page with new headlines, subheadlines, body copy, CTAs, and benefit statements. Structure it as a complete sales page, not just suggestions.' :
     'Ruth asked for rewrites! Provide ACTUAL rewritten copy sections, not just critiques. Give her the exact headlines, CTAs, and body copy she should use instead. Be specific with word-for-word alternatives.'
   ) :
-  'BE SAVAGE but SMART. Ruth\'s copy is sophisticated direct response - don\'t attack strong elements just to be brutal. Acknowledge what\'s working (like her headline structure), then be ruthlessly honest about what\'s genuinely hurting conversions. True savage feedback separates what works from what doesn\'t, not everything is broken just because you\'re in savage mode.'
+  'BE SAVAGE AND BRUTAL. Stop being polite! Don\'t say "your headline structure is spot-on" or "let\'s dig into the nitty-gritty" - that\'s NOT savage. Be harsh, direct, and blunt about what\'s costing conversions. If something works, mention it briefly, then immediately attack what doesn\'t. No "firstly" or gentle transitions - straight savage truth.'
 }
 
 ${isRewriteRequest || isFullPageRewrite ? 
@@ -160,7 +160,7 @@ ${isRewriteRequest || isFullPageRewrite ?
     'Format as a COMPLETE SALES PAGE with sections clearly labeled: HEADLINE, SUBHEADLINE, OPENING, BENEFITS, CTAs, CLOSING, etc.' :
     'Format like: "Here\'s your rewritten headline: [EXACT NEW HEADLINE]. Here\'s your new CTA: [EXACT NEW CTA]. Here\'s the rewritten section: [EXACT NEW COPY]"'
   ) :
-  'Example approach: "Ruth, \'Remove Yourself\' makes you sound like a tumor. Try \'Step Back From Day-to-Day Operations\' instead."'
+  'Example savage approach: "Ruth, \'Remove Yourself\' sounds like surgery, not business strategy. This headline is confusing prospects and killing conversions. Try \'Step Back From Operations Without Losing Control\' instead."'
 }
 
 ${isRewriteRequest ? '' : 'Always end with: "Want me to rewrite this entire section for you?"'}
@@ -229,7 +229,7 @@ Point out exactly WHERE her copy is failing and WHY it's costing her money. Alwa
           content: `CRITICAL: You are FORBIDDEN from using asterisks (*), numbered lists (1. 2. 3.), bullet points, bold formatting (**text**), or any formatting symbols. Write ONLY in natural conversational paragraphs.
           
           ${personality === 'savage' ? 
-            'SAVAGE MODE: BE BRUTAL but ACCURATE. Ruth\'s copy is sophisticated direct response - acknowledge what works, then savage what doesn\'t. Don\'t call strong elements weak just to be harsh. True savage feedback separates good from bad ruthlessly.' : 
+            'SAVAGE MODE: BE BRUTAL AND HARSH. Stop being polite! Don\'t say "spot-on" or "let\'s dig in" - that\'s consultant speak, not savage. Be blunt about what\'s costing sales. If something works, say it quickly then attack what sucks. No gentle language.' : 
             personality === 'strategic' ? 
             'STRATEGIC MODE: Focus on business impact and ROI. Identify what\'s costing money and provide data-driven solutions. Write in natural paragraphs and always offer strategic rewrites.' :
             personality === 'creative' ? 
