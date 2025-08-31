@@ -51,7 +51,9 @@ Be specific and reference the actual data.`
       console.log('[AI-STRATEGIST-FIXED] Website intelligence response generated, length:', aiResponse.length)
       
       return NextResponse.json({
-        message: aiResponse,
+        reply: aiResponse,
+        has_reply: true,
+        reply_preview: aiResponse.substring(0, 100) + "...",
         error: undefined
       })
     }
@@ -77,7 +79,9 @@ Be specific and reference the actual data.`
     console.log('[AI-STRATEGIST-FIXED] General response generated, length:', aiResponse.length)
     
     return NextResponse.json({
-      message: aiResponse,
+      reply: aiResponse,
+      has_reply: true,
+      reply_preview: aiResponse.substring(0, 100) + "...",
       error: undefined
     })
     
@@ -85,7 +89,7 @@ Be specific and reference the actual data.`
     console.error('[AI-STRATEGIST-FIXED] Error:', error)
     
     return NextResponse.json({
-      message: 'I apologize, but I encountered an error processing your request. Please try again.',
+      reply: 'I apologize, but I encountered an error processing your request. Please try again.',
       error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
