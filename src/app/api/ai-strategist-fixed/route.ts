@@ -39,25 +39,42 @@ function removeFormattingAndAddSolutions(text: string): string {
   // Step 2: re-join paragraphs with double newlines
   let result = grouped.join('\n\n')
   
-  // Step 3: if we still have one giant paragraph, split on transition words
-  if (grouped.length === 1 && result.length > 300) {
-    // Split on common transition patterns while preserving sentence structure
-    const transitionPattern = /(First|However|Another|Your CTAs|The page content|Finally|Next)\s/g
-    let parts = result.split(transitionPattern)
-    let rebuilt = []
+  // Step 3: if we still have one giant paragraph, aggressively split on transition words and sentence groups
+  if (grouped.length === 1 && result.length > 200) {
+    // Split on many more transition patterns
+    const sentences = result.split(/(?<=[.!?])\s+/)
+    let paragraphs = []
+    let currentParagraph = []
     
-    for (let i = 0; i < parts.length; i++) {
-      if (i % 2 === 0 && parts[i].trim()) {
-        // Regular content
-        rebuilt.push(parts[i].trim())
-      } else if (i % 2 === 1 && parts[i + 1]) {
-        // Transition word + following content
-        rebuilt.push((parts[i] + parts[i + 1]).trim())
-        i++ // Skip the next part since we combined it
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i].trim()
+      if (!sentence) continue
+      
+      currentParagraph.push(sentence)
+      
+      // Create paragraph break on these conditions
+      const shouldBreak = (
+        // After 3-4 sentences
+        currentParagraph.length >= 3 ||
+        // When we hit transition words
+        /^(First|However|Another|Also|Your CTAs|The page content|Finally|Next|In terms of|For the|Consider|Instead of|Lastly|The section|While)/i.test(sentence) ||
+        // When current paragraph is getting long
+        (currentParagraph.length >= 2 && currentParagraph.join(' ').length > 200) ||
+        // At the end
+        i === sentences.length - 1
+      )
+      
+      if (shouldBreak && currentParagraph.length > 0) {
+        paragraphs.push(currentParagraph.join(' '))
+        currentParagraph = []
       }
     }
     
-    result = rebuilt.filter(part => part.length > 0).join('\n\n')
+    if (currentParagraph.length > 0) {
+      paragraphs.push(currentParagraph.join(' '))
+    }
+    
+    result = paragraphs.filter(p => p.trim().length > 0).join('\n\n')
   }
   
   // Clean up spacing
@@ -86,6 +103,12 @@ export async function POST(request: NextRequest) {
                            message.toLowerCase().includes('rewrite') ||
                            message.toLowerCase().includes('yes, rewrite') ||
                            message.toLowerCase().includes('do it')
+    
+    // Check if this is a full page rewrite request
+    const isFullPageRewrite = message.toLowerCase().includes('entire sales page') ||
+                            message.toLowerCase().includes('full sales page') ||
+                            message.toLowerCase().includes('whole sales page') ||
+                            message.toLowerCase().includes('complete sales page')
     
     console.log('[AI-STRATEGIST-FIXED] Request data:', {
       user_id,
@@ -124,13 +147,19 @@ Always provide specific solutions and alternatives
 Always offer to rewrite problematic sections
 
 ${personality === 'savage' ? `
-SAVAGE MODE: ${isRewriteRequest ? 
-  'Ruth asked for rewrites! Provide ACTUAL rewritten copy sections, not just critiques. Give her the exact headlines, CTAs, and body copy she should use instead. Be specific with word-for-word alternatives.' :
+SAVAGE MODE: ${isRewriteRequest || isFullPageRewrite ? 
+  (isFullPageRewrite ? 
+    'Ruth asked for a FULL PAGE REWRITE! Provide a complete rewritten sales page with new headlines, subheadlines, body copy, CTAs, and benefit statements. Structure it as a complete sales page, not just suggestions.' :
+    'Ruth asked for rewrites! Provide ACTUAL rewritten copy sections, not just critiques. Give her the exact headlines, CTAs, and body copy she should use instead. Be specific with word-for-word alternatives.'
+  ) :
   'BE SAVAGE but SMART. Ruth\'s copy is sophisticated direct response - don\'t attack strong elements just to be brutal. Acknowledge what\'s working (like her headline structure), then be ruthlessly honest about what\'s genuinely hurting conversions. True savage feedback separates what works from what doesn\'t, not everything is broken just because you\'re in savage mode.'
 }
 
-${isRewriteRequest ? 
-  'Format like: "Here\'s your rewritten headline: [EXACT NEW HEADLINE]. Here\'s your new CTA: [EXACT NEW CTA]. Here\'s the rewritten section: [EXACT NEW COPY]"' :
+${isRewriteRequest || isFullPageRewrite ? 
+  (isFullPageRewrite ?
+    'Format as a COMPLETE SALES PAGE with sections clearly labeled: HEADLINE, SUBHEADLINE, OPENING, BENEFITS, CTAs, CLOSING, etc.' :
+    'Format like: "Here\'s your rewritten headline: [EXACT NEW HEADLINE]. Here\'s your new CTA: [EXACT NEW CTA]. Here\'s the rewritten section: [EXACT NEW COPY]"'
+  ) :
   'Example approach: "Ruth, \'Remove Yourself\' makes you sound like a tumor. Try \'Step Back From Day-to-Day Operations\' instead."'
 }
 

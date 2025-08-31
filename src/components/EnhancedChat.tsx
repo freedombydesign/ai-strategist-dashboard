@@ -1066,7 +1066,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       { pattern: /(?:create|generate|build|develop|make|write).*(?:action.*plan|implementation.*plan)/i, type: 'action_plan', title: 'Action Plan' },
       { pattern: /(?:create|generate|build|develop|make|write).*(?:sop|standard.*operating.*procedure|process.*document)/i, type: 'sop', title: 'Standard Operating Procedure' },
       { pattern: /(?:create|generate|build|develop|make|write).*(?:strategy|strategic.*plan|business.*plan)/i, type: 'strategy_document', title: 'Strategy Document' },
-      { pattern: /(?:create|generate|build|develop|make|write).*(?:document|report|guide|manual|list)/i, type: 'document', title: 'Business Document' },
+      { pattern: /(?:create|generate|build|develop|make).*(?:document|report|guide|manual)(?:\s|$)/i, type: 'document', title: 'Business Document' },
       { pattern: /(?:can you|could you|would you).*(?:create|generate|build|make|write).*(?:document|list|guide|plan)/i, type: 'document', title: 'Business Document' },
       { pattern: /(?:create|make|generate).*(?:quick|simple).*document/i, type: 'document', title: 'Business Document' },
       { pattern: /document.*(?:of|with|about|for).*(?:objections|sales|challenges|processes)/i, type: 'document', title: 'Business Document' },
