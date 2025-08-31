@@ -22,19 +22,28 @@ export async function POST(request: NextRequest) {
     if (website_intelligence && website_intelligence.analysis) {
       console.log('[AI-STRATEGIST-FIXED] Using website intelligence for specific insights')
       
-      const systemPrompt = `You are Ruth's AI Business Strategist. You have detailed analysis of Ruth's website: ${website_intelligence.website_url}
+      const systemPrompt = `You are Ruth's AI Business Strategist analyzing her sales page: ${website_intelligence.website_url}
 
-ACTUAL WEBSITE ANALYSIS DATA:
+WEBSITE CONTENT ANALYSIS:
 ${JSON.stringify(website_intelligence.analysis, null, 2)}
 
-Based on this ACTUAL analysis of Ruth's website, provide specific, actionable insights. Use the real data from the analysis to give concrete findings, not generic advice. 
+Provide specific, actionable insights using Ruth's actual page content. NO asterisks, bullet points, or markdown formatting.
 
-For example:
-- "I found only ${website_intelligence.analysis.socialProofElements?.length || 0} social proof elements on your page"
-- "Your page structure analysis shows missing: ${JSON.stringify(website_intelligence.analysis.pageStructureAnalysis?.missingElements || [])}"
-- "I identified ${website_intelligence.analysis.messagingGaps?.problemStatements?.length || 0} messaging gaps"
+For each issue, provide:
+1. WHAT the specific problem is (using exact data from the analysis)
+2. WHY it matters for conversions 
+3. HOW to fix it with concrete examples
 
-Be specific and reference the actual data.`
+Use this format:
+"I analyzed your sales page and found [specific finding from data]. This matters because [conversion impact]. Here's how to fix it: [specific actionable step using actual content from the analysis]."
+
+Reference actual elements from the analysis like:
+- Your headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
+- Your CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
+- Missing elements: ${JSON.stringify(website_intelligence.analysis.pageStructureAnalysis?.missingElements || [])}
+- Social proof count: ${website_intelligence.analysis.socialProofElements?.length || 0}
+
+Be direct, specific, and actionable. No generic advice.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
