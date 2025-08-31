@@ -958,39 +958,21 @@ export async function POST(request: NextRequest) {
           audienceInsights: !!website_intelligence.analysis?.audienceInsights
         });
         console.log('[AI-STRATEGIST] Website intelligence loaded from request:', website_intelligence.website_url);
+        console.log('[AI-STRATEGIST] DIAGNOSTIC - Website intelligence structure:', {
+          hasAnalysis: !!website_intelligence.analysis,
+          analysisKeys: website_intelligence.analysis ? Object.keys(website_intelligence.analysis) : [],
+          hasPageStructure: !!website_intelligence.analysis?.pageStructureAnalysis,
+          hasMessagingGaps: !!website_intelligence.analysis?.messagingGaps,
+          hasConversionOpt: !!website_intelligence.analysis?.conversionOptimization,
+          hasAudienceInsights: !!website_intelligence.analysis?.audienceInsights
+        });
         
-        // Safely process enhanced analysis with error handling
-        if (website_intelligence.analysis) {
-          try {
-            // Ensure enhanced analysis fields exist and are properly formatted
-            const analysis = website_intelligence.analysis;
-            
-            // Validate and sanitize enhanced analysis data
-            if (analysis.pageStructureAnalysis) {
-              console.log('[AI-STRATEGIST] Page Structure Analysis: Available');
-            }
-            if (analysis.messagingGaps) {
-              console.log('[AI-STRATEGIST] Messaging Gaps: Available');
-            }
-            if (analysis.conversionOptimization) {
-              console.log('[AI-STRATEGIST] Conversion Optimization: Available');
-            }
-            if (analysis.audienceInsights) {
-              console.log('[AI-STRATEGIST] Audience Insights: Available');
-            }
-            
-            console.log('[AI-STRATEGIST] Enhanced analysis fields loaded successfully');
-          } catch (analysisError) {
-            console.error('[AI-STRATEGIST] Error processing enhanced analysis:', analysisError);
-            // Remove problematic enhanced fields if they cause errors
-            if (website_intelligence.analysis) {
-              delete website_intelligence.analysis.pageStructureAnalysis;
-              delete website_intelligence.analysis.messagingGaps;
-              delete website_intelligence.analysis.conversionOptimization;
-              delete website_intelligence.analysis.audienceInsights;
-            }
-            console.log('[AI-STRATEGIST] Enhanced analysis disabled due to processing error');
-          }
+        // DIAGNOSTIC: Log specific enhanced analysis content
+        if (website_intelligence.analysis?.pageStructureAnalysis) {
+          console.log('[AI-STRATEGIST] DIAGNOSTIC - Page Structure Sample:', JSON.stringify(website_intelligence.analysis.pageStructureAnalysis).substring(0, 200) + '...');
+        }
+        if (website_intelligence.analysis?.messagingGaps) {
+          console.log('[AI-STRATEGIST] DIAGNOSTIC - Messaging Gaps Sample:', JSON.stringify(website_intelligence.analysis.messagingGaps).substring(0, 200) + '...');
         }
       } else {
         // Fallback to database lookup if not provided in request
