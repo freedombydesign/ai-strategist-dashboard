@@ -27,14 +27,15 @@ export async function POST(request: NextRequest) {
 RUTH'S ACTUAL PAGE CONTENT:
 ${JSON.stringify(website_intelligence.analysis, null, 2)}
 
-RULES:
-- Reference Ruth's EXACT headlines, CTAs, and content 
-- NO generic consultant templates or numbered lists
-- NO theoretical bullshit - only insights based on HER page
-- Point out specific words, phrases, and positioning choices SHE made
-- Show exactly WHERE on her page the problems are
+CRITICAL RULES:
+- ONLY comment on what you can see in the data - DO NOT make assumptions
+- If the data shows hasHeroBanner: true, DO NOT say she lacks a hero banner  
+- If the data shows detailed explanations, DO NOT say she lacks explanations
+- Quote her EXACT headlines and copy from the captured data
+- Point to specific text from competitive positioning or headlines
+- NO theoretical bullshit - only insights based on captured content
 
-Example: "Ruth, your headline 'Remove Yourself Without Revenue Dipping' is doing X problem because Y. Here's the exact text that's killing conversions: [quote her actual copy]. This costs you money because Z."
+Example: "Ruth, I can see from your captured content that [specific quote from data]. This creates X problem because Y."
 
 Her actual headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
 Her actual CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}

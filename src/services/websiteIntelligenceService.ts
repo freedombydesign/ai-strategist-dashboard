@@ -637,7 +637,12 @@ export class WebsiteIntelligenceService {
     
     const hasHeroPattern = headlines.length >= 2 && headlines[0].length > 20 && headlines[1].length > 20
     
-    if (hasHeroClasses || (hasMainHeadline && hasSubheadline) || hasHeroPattern) {
+    // ALWAYS detect hero if we have substantial headlines (Ruth's case)
+    const hasSubstantialHeadlines = headlines.length >= 2 && 
+                                   headlines[0].length > 50 && 
+                                   headlines[1].length > 50
+    
+    if (hasHeroClasses || (hasMainHeadline && hasSubheadline) || hasHeroPattern || hasSubstantialHeadlines) {
       structure.hasHeroBanner = true
     }
 
