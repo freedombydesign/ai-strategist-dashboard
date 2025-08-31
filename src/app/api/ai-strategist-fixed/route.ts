@@ -13,8 +13,9 @@ function removeFormattingAndAddSolutions(text: string): string {
   // Remove bullet points (*, -, •)
   cleaned = cleaned.replace(/^\s*[\*\-\u2022]\s*/gm, '')
   
-  // Remove bold formatting (**text**)
+  // Remove bold formatting (**text**) - more aggressive approach
   cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '$1')
+  cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1')
   
   // Remove any remaining asterisks used for emphasis
   cleaned = cleaned.replace(/\*/g, '')
@@ -22,24 +23,36 @@ function removeFormattingAndAddSolutions(text: string): string {
   // Clean up section headers that use colons or dashes
   cleaned = cleaned.replace(/^\s*\d+\.\s*\*\*(.*?)\*\*\s*[-:]?\s*/gm, '$1: ')
   
-  // Convert remaining structured content to flowing paragraphs
-  const lines = cleaned.split('\n').map(line => line.trim()).filter(line => line.length > 0)
-  
-  // Join lines into paragraphs, but preserve paragraph breaks
+  // Split into sentences and create natural paragraph breaks
+  const sentences = cleaned.split(/(?<=[.!?])\s+/)
   let result = ''
   let currentParagraph = ''
+  let sentenceCount = 0
   
-  for (const line of lines) {
-    if (line.length === 0) {
-      if (currentParagraph.trim()) {
-        result += currentParagraph.trim() + '\n\n'
-        currentParagraph = ''
-      }
-    } else {
-      currentParagraph += line + ' '
+  for (const sentence of sentences) {
+    const trimmedSentence = sentence.trim()
+    if (!trimmedSentence) continue
+    
+    currentParagraph += trimmedSentence + ' '
+    sentenceCount++
+    
+    // Create paragraph break after 2-3 sentences or when we hit certain patterns
+    if (sentenceCount >= 2 && (
+      trimmedSentence.includes('Instead') ||
+      trimmedSentence.includes('Try') ||
+      trimmedSentence.includes('Consider') ||
+      trimmedSentence.includes('Your CTAs') ||
+      trimmedSentence.includes('The page content') ||
+      trimmedSentence.includes('There\'s also') ||
+      sentenceCount >= 3
+    )) {
+      result += currentParagraph.trim() + '\n\n'
+      currentParagraph = ''
+      sentenceCount = 0
     }
   }
   
+  // Add remaining content
   if (currentParagraph.trim()) {
     result += currentParagraph.trim()
   }
@@ -65,6 +78,12 @@ export async function POST(request: NextRequest) {
     const requestBody = await request.json()
     const { user_id, message, website_intelligence, personality } = requestBody
     
+    // Check if this is a rewrite request
+    const isRewriteRequest = message.toLowerCase().includes('please do') || 
+                           message.toLowerCase().includes('rewrite') ||
+                           message.toLowerCase().includes('yes, rewrite') ||
+                           message.toLowerCase().includes('do it')
+    
     console.log('[AI-STRATEGIST-FIXED] Request data:', {
       user_id,
       message: message?.substring(0, 50) + '...',
@@ -75,12 +94,19 @@ export async function POST(request: NextRequest) {
     if (website_intelligence && website_intelligence.analysis) {
       console.log('[AI-STRATEGIST-FIXED] Using website intelligence for specific insights')
       
-      const systemPrompt = `I'm analyzing Ruth's sales page. I need to be SUPER SPECIFIC about her actual content and provide solutions.
+      const systemPrompt = `I'm analyzing Ruth's sales page. I need to provide HIGH-QUALITY, INSIGHTFUL feedback that actually helps, not nitpicky critiques of strong copy.
 
 RUTH'S ACTUAL CONTENT:
 Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
 CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
 Page content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 400) || 'Not found'}
+
+QUALITY ANALYSIS REQUIREMENTS:
+- Only critique copy that's genuinely weak or unclear
+- Recognize when copy is actually working well (like Ruth's sales page which clearly shows sophistication)
+- Focus on real conversion issues, not stylistic preferences
+- If the copy is strong, acknowledge what's working and suggest refinements, not overhauls
+- Avoid generic guru-speak critiques that don't apply to sophisticated copy
 
 ABSOLUTE FORMATTING REQUIREMENTS - NO EXCEPTIONS:
 You are FORBIDDEN from using any of these formatting elements:
@@ -94,11 +120,17 @@ Always provide specific solutions and alternatives
 Always offer to rewrite problematic sections
 
 ${personality === 'savage' ? `
-SAVAGE MODE: Be brutally honest about what's wrong, explain why it's killing conversions, then provide specific solutions and rewrites. Write like a brutal friend who cares about results.
+SAVAGE MODE: ${isRewriteRequest ? 
+  'Ruth asked for rewrites! Provide ACTUAL rewritten copy sections, not just critiques. Give her the exact headlines, CTAs, and body copy she should use instead. Be specific with word-for-word alternatives.' :
+  'Be brutally honest about what\'s genuinely wrong, but recognize that Ruth\'s copy shows sophistication. Don\'t critique strong elements just for the sake of being savage. Focus on real conversion issues that are costing money, not stylistic preferences.'
+}
 
-Example approach: "Ruth, 'Remove Yourself' makes you sound like a tumor. Nobody wants to be 'removed' from their business. Try 'Step Back From Day-to-Day Operations' or 'Build Systems That Run Without You' instead."
+${isRewriteRequest ? 
+  'Format like: "Here\'s your rewritten headline: [EXACT NEW HEADLINE]. Here\'s your new CTA: [EXACT NEW CTA]. Here\'s the rewritten section: [EXACT NEW COPY]"' :
+  'Example approach: "Ruth, \'Remove Yourself\' makes you sound like a tumor. Try \'Step Back From Day-to-Day Operations\' instead."'
+}
 
-Always end with: "Want me to rewrite this entire section for you? I can turn this weak copy into something that actually converts."
+${isRewriteRequest ? '' : 'Always end with: "Want me to rewrite this entire section for you?"'}
 ` : personality === 'strategic' ? `
 STRATEGIC MODE: Focus on business impact, ROI, and competitive positioning. Identify what's costing money and provide data-driven solutions.
 
