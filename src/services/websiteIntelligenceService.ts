@@ -40,6 +40,8 @@ interface WebsiteAnalysis {
     solutionClarification: string[]
     benefitCommunication: string[]
     urgencyCreation: string[]
+    strategicGaps: string[]
+    positioningWeaknesses: string[]
   }
   conversionOptimization: {
     ctaStrength: 'weak' | 'moderate' | 'strong'
@@ -711,28 +713,59 @@ export class WebsiteIntelligenceService {
     return structure
   }
 
-  // Analyze messaging gaps
+  // Analyze messaging gaps - STRATEGIC LEVEL
   private async analyzeMessagingGaps($: cheerio.CheerioAPI, textContent: string): Promise<WebsiteAnalysis['messagingGaps']> {
     const gaps = {
       problemStatements: [],
       solutionClarification: [],
       benefitCommunication: [],
-      urgencyCreation: []
+      urgencyCreation: [],
+      strategicGaps: [],
+      positioningWeaknesses: []
     }
 
     const text = textContent.toLowerCase()
+    const headlines = []
+    $('h1, h2, h3').each((_, el) => headlines.push($(el).text().trim()))
     
-    // Check for problem statements
-    const problemWords = ['problem', 'challenge', 'struggle', 'difficult', 'frustrated', 'overwhelmed', 'stuck']
-    const hasProblemFocus = problemWords.some(word => text.includes(word))
-    if (!hasProblemFocus) {
-      gaps.problemStatements.push('No clear problem statement - visitors may not understand what you solve')
-      gaps.problemStatements.push('Consider adding "Are you struggling with..." or "Tired of..." language')
+    // STRATEGIC GAP ANALYSIS
+    
+    // 1. Pain Point Sophistication
+    const basicPainWords = ['problem', 'challenge', 'struggle', 'difficult', 'frustrated']
+    const sophisticatedPainWords = ['bottleneck', 'scaling', 'systematize', 'leverage', 'optimize']
+    const hasSophisticatedPain = sophisticatedPainWords.some(word => text.includes(word))
+    const hasBasicPain = basicPainWords.some(word => text.includes(word))
+    
+    if (hasBasicPain && !hasSophisticatedPain) {
+      gaps.strategicGaps.push('Pain messaging targets low-sophistication prospects instead of premium buyers')
     }
-
-    // Check for solution clarity
-    const solutionWords = ['solution', 'solve', 'fix', 'help', 'achieve', 'get results', 'transform']
-    const hasSolutionClarity = solutionWords.some(word => text.includes(word))
+    
+    // 2. Outcome Specificity Analysis
+    const vagueOutcomes = ['success', 'results', 'better', 'improve', 'grow']
+    const specificOutcomes = ['revenue', 'profit', 'time', 'hours', 'days', '%', '$', 'x', 'roi']
+    const hasVagueOnly = vagueOutcomes.some(word => text.includes(word)) && 
+                         !specificOutcomes.some(word => text.includes(word))
+    
+    if (hasVagueOnly) {
+      gaps.strategicGaps.push('Outcomes are too vague to justify premium pricing')
+    }
+    
+    // 3. Authority Positioning Gaps  
+    const authorityMarkers = ['proven', 'system', 'framework', 'methodology', 'proprietary']
+    const hasAuthorityPositioning = authorityMarkers.some(word => text.includes(word))
+    if (!hasAuthorityPositioning) {
+      gaps.positioningWeaknesses.push('Missing intellectual property positioning that commands premium fees')
+    }
+    
+    // 4. Buyer Journey Misalignment
+    const awarenessWords = ['learn', 'discover', 'find out', 'understand']  
+    const decisionWords = ['install', 'implement', 'get', 'start', 'begin']
+    const hasAwarenessStage = awarenessWords.some(word => text.includes(word))
+    const hasDecisionStage = decisionWords.some(word => text.includes(word))
+    
+    if (hasAwarenessStage && hasDecisionStage) {
+      gaps.strategicGaps.push('Mixing awareness and decision stage messaging confuses buying intent')
+    }
     if (!hasSolutionClarity) {
       gaps.solutionClarification.push('Solution is not clearly articulated')
       gaps.solutionClarification.push('Add specific outcomes and transformations you provide')

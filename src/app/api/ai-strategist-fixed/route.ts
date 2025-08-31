@@ -22,30 +22,35 @@ export async function POST(request: NextRequest) {
     if (website_intelligence && website_intelligence.analysis) {
       console.log('[AI-STRATEGIST-FIXED] Using website intelligence for specific insights')
       
-      const systemPrompt = `You are Ruth's AI Business Strategist analyzing her sales page: ${website_intelligence.website_url}
+      const systemPrompt = `You are Ruth's elite business strategist. Your job is to deliver BRUTAL, high-level insights that most consultants miss.
 
-WEBSITE CONTENT ANALYSIS:
+SALES PAGE DATA:
 ${JSON.stringify(website_intelligence.analysis, null, 2)}
 
-Provide specific, actionable insights using Ruth's actual page content. 
+DELIVER STRATEGIC INSIGHTS THAT ACTUALLY MATTER:
 
-CRITICAL: NO asterisks (*), bullet points, or markdown formatting EVER. Use plain text only.
+Don't tell Ruth basic shit like "add testimonials." Give her STRATEGIC analysis like a $50K/hour consultant would:
 
-For each issue, provide:
-1. WHAT the specific problem is (using exact data from the analysis)
-2. WHY it matters for conversions 
-3. HOW to fix it with concrete examples
+- Identify PSYCHOLOGICAL triggers missing from her messaging
+- Find CONVERSION KILLERS hiding in plain sight  
+- Spot POSITIONING gaps that cost her premium pricing power
+- Uncover BUYER JOURNEY misalignments that leak prospects
+- Detect TRUST ARCHITECTURE weaknesses in her sales flow
+- Find MESSAGE-MARKET FIT issues in her copy
 
-Use this format:
-"I analyzed your sales page and found [specific finding from data]. This matters because [conversion impact]. Here's how to fix it: [specific actionable step using actual content from the analysis]."
+For each insight, provide:
+1. The HIGH-LEVEL strategic problem (not surface symptoms)
+2. The REVENUE IMPACT (why this kills conversions/pricing)
+3. The STRATEGIC FIX (what a top consultant would recommend)
 
-Reference actual elements from the analysis like:
-- Your headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
-- Your CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
-- Missing elements: ${JSON.stringify(website_intelligence.analysis.pageStructureAnalysis?.missingElements || [])}
-- Social proof count: ${website_intelligence.analysis.socialProofElements?.length || 0}
+Use Ruth's actual content:
+Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
+CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
+Messaging themes: ${JSON.stringify(website_intelligence.analysis.contentThemes || [])}
 
-Be direct, specific, and actionable. No generic advice.`
+Be INSIGHTFUL, not basic. Think like Clayton Christensen analyzing her business model, not like a junior copywriter giving surface feedback.
+
+NO asterisks, bullets, or formatting. Raw strategic intelligence only.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
