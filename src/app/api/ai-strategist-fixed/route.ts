@@ -36,16 +36,24 @@ function removeFormattingAndAddSolutions(text: string): string {
     currentParagraph += trimmedSentence + ' '
     sentenceCount++
     
-    // Create paragraph break after 2-3 sentences or when we hit certain patterns
-    if (sentenceCount >= 2 && (
+    // Create paragraph break after 2-4 sentences or when we hit transition patterns
+    const shouldBreak = sentenceCount >= 2 && (
       trimmedSentence.includes('Instead') ||
       trimmedSentence.includes('Try') ||
       trimmedSentence.includes('Consider') ||
+      trimmedSentence.includes('Another') ||
+      trimmedSentence.includes('However') ||
       trimmedSentence.includes('Your CTAs') ||
       trimmedSentence.includes('The page content') ||
       trimmedSentence.includes('There\'s also') ||
-      sentenceCount >= 3
-    )) {
+      trimmedSentence.includes('Firstly') ||
+      trimmedSentence.includes('Next') ||
+      trimmedSentence.includes('Finally') ||
+      sentenceCount >= 4 ||
+      (sentenceCount >= 3 && currentParagraph.length > 200)
+    )
+    
+    if (shouldBreak) {
       result += currentParagraph.trim() + '\n\n'
       currentParagraph = ''
       sentenceCount = 0
@@ -122,7 +130,7 @@ Always offer to rewrite problematic sections
 ${personality === 'savage' ? `
 SAVAGE MODE: ${isRewriteRequest ? 
   'Ruth asked for rewrites! Provide ACTUAL rewritten copy sections, not just critiques. Give her the exact headlines, CTAs, and body copy she should use instead. Be specific with word-for-word alternatives.' :
-  'Be brutally honest about what\'s genuinely wrong, but recognize that Ruth\'s copy shows sophistication. Don\'t critique strong elements just for the sake of being savage. Focus on real conversion issues that are costing money, not stylistic preferences.'
+  'BE SAVAGE AND BRUTAL. Do NOT say "your sales page is strong" or "sophisticated" - that is NOT savage. Call out what\'s actually weak, confusing, or costing conversions. Be blunt, direct, and harsh about real problems. If something is genuinely good, acknowledge it briefly then move to what needs fixing. No politeness, no cushioning - straight brutal truth about what\'s hurting her sales.'
 }
 
 ${isRewriteRequest ? 
@@ -196,7 +204,7 @@ Point out exactly WHERE her copy is failing and WHY it's costing her money. Alwa
           content: `CRITICAL: You are FORBIDDEN from using asterisks (*), numbered lists (1. 2. 3.), bullet points, bold formatting (**text**), or any formatting symbols. Write ONLY in natural conversational paragraphs.
           
           ${personality === 'savage' ? 
-            'SAVAGE MODE: Be brutally honest about Ruth\'s copy. Call out exactly what\'s wrong, why it\'s killing conversions, then provide SPECIFIC solutions and rewrites. Write like a brutal friend who cares about results.' : 
+            'SAVAGE MODE: BE BRUTAL AND HARSH. Do NOT say "your sales page is strong" - that is NOT savage! Call out what\'s weak, confusing, or killing conversions. Be blunt and direct about real problems. No politeness or cushioning - straight savage truth about what\'s costing sales.' : 
             personality === 'strategic' ? 
             'STRATEGIC MODE: Focus on business impact and ROI. Identify what\'s costing money and provide data-driven solutions. Write in natural paragraphs and always offer strategic rewrites.' :
             personality === 'creative' ? 
