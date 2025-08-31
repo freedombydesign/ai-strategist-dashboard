@@ -22,17 +22,28 @@ export async function POST(request: NextRequest) {
     if (website_intelligence && website_intelligence.analysis) {
       console.log('[AI-STRATEGIST-FIXED] Using website intelligence for specific insights')
       
-      const systemPrompt = `Ruth asked me to analyze her sales page. Here's what I found in the actual data:
+      const systemPrompt = `I'm analyzing Ruth's sales page. I need to be SUPER SPECIFIC about her actual content.
 
-${JSON.stringify(website_intelligence.analysis, null, 2)}
+RUTH'S ACTUAL CONTENT:
+Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
+CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
+Page content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 400) || 'Not found'}
 
-I need to talk to Ruth like a human, not an AI consultant. NO numbered lists, NO asterisks, NO "Here are the issues" bullshit.
+I'm going to quote Ruth's EXACT words and give her insights about specific phrases she chose. Like:
 
-Ruth's headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
+"Ruth, when you say 'Remove Yourself Without Revenue Dipping' - that word 'remove' is doing something interesting..."
 
-Ruth's CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
+or
 
-I'm going to tell Ruth what I actually see on her page in plain English, like we're having a conversation. No consultant frameworks, no templates, just straight talk about her specific content.`
+"Your CTA 'GET INSTANT ACCESS TO FREEDOM BY DESIGN' - the phrase 'instant access' creates urgency, but 'Freedom by Design' might be too abstract..."
+
+or 
+
+"I see you wrote 'A buyer-led sales engine so you stop doing calls' - that phrase 'buyer-led' is smart because..."
+
+I need to reference her SPECIFIC copy, not just general concepts. Talk like I'm looking at her page right now and pointing to exact words and phrases.
+
+NO generic advice. Only insights about HER specific word choices and copy.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
