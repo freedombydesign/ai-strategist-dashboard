@@ -33,7 +33,7 @@ interface ChatSession {
   timestamp: Date;
 }
 
-type PersonalityType = 'strategic' | 'creative' | 'analytical' | 'supportive';
+type PersonalityType = 'strategic' | 'creative' | 'analytical' | 'supportive' | 'savage';
 
 interface Personality {
   key: PersonalityType;
@@ -1088,7 +1088,8 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
     { key: 'strategic', name: 'Strategic', icon: '🎯' },
     { key: 'creative', name: 'Creative', icon: '🎨' },
     { key: 'analytical', name: 'Analytical', icon: '📊' },
-    { key: 'supportive', name: 'Supportive', icon: '🤝' }
+    { key: 'supportive', name: 'Supportive', icon: '🤝' },
+    { key: 'savage', name: 'Savage', icon: '🔥' }
   ];
 
   return (

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     console.log('[AI-STRATEGIST-FIXED] API called')
     
     const requestBody = await request.json()
-    const { user_id, message, website_intelligence } = requestBody
+    const { user_id, message, website_intelligence, personality } = requestBody
     
     console.log('[AI-STRATEGIST-FIXED] Request data:', {
       user_id,
@@ -29,19 +29,23 @@ Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.he
 CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
 Page content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 400) || 'Not found'}
 
-I need to be BRUTALLY HONEST about Ruth's copy choices. Not gentle suggestions - real critiques that sting but help.
+Ruth's personality setting: ${personality || 'strategic'}
 
-Examples of the brutal honesty Ruth wants:
+${personality === 'savage' ? `
+I need to be SAVAGE and BRUTAL about Ruth's copy choices. No holding back - real critiques that sting but help.
 
-"Ruth, 'Remove Yourself Without Revenue Dipping' - the word 'remove' makes you sound like a tumor. Your prospects don't want to be removed, they want to be elevated."
+Examples of SAVAGE mode:
+"Ruth, 'Remove Yourself' makes you sound like a tumor. Nobody wants to be 'removed' from their business."
+"'Everything Falling Apart' - you're literally selling panic. This creates anxiety, not desire."  
+"'Freedom by Design' is meaningless word salad. What does this actually mean? Your prospects have no clue."
+"'This isn't for beginners' - lazy guru speak. Every coach says this boring shit."
 
-"'Everything Falling Apart' - you're literally painting a disaster scenario in your headline. This creates anxiety, not desire."
+Be ruthlessly direct about what's wrong and why it's killing her conversions. No sugar-coating.
+` : `
+I need to analyze Ruth's copy with the ${personality || 'strategic'} personality approach while being specific about her actual content.
+`}
 
-"'GET INSTANT ACCESS TO FREEDOM BY DESIGN' - this is marketing word salad. What the hell does 'Freedom by Design' actually mean? Your prospects have no clue."
-
-"'This isn't for beginners' - lazy exclusion. Every guru says this. Be more specific about who it IS for."
-
-I need to point out exactly WHERE her copy is failing and WHY it's costing her money. Be conversational but brutally direct about specific problems with her word choices.`
+Point out exactly WHERE her copy is failing and WHY it's costing her money.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -73,7 +77,10 @@ I need to point out exactly WHERE her copy is failing and WHY it's costing her m
       messages: [
         { 
           role: 'system', 
-          content: `I need to give Ruth brutal, specific feedback about her sales copy. No sugar-coating. Point out exactly what's wrong with her word choices and why it's costing her money. Be conversational but savage about the problems.` 
+          content: `${personality === 'savage' ? 
+            'I need to be SAVAGE about Ruth\'s copy. Brutally honest, no holding back. Call out exactly what\'s wrong and why it\'s killing her conversions.' : 
+            `I need to give Ruth ${personality || 'strategic'} feedback about her sales copy while being specific about her actual content.`
+          }` 
         },
         { role: 'user', content: message }
       ],
