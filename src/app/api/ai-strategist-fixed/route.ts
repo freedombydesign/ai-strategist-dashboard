@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { getFrameworkContext } from '../../../lib/strategicFrameworks'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -197,8 +198,27 @@ The more context you provide, the more surgically I can analyze what's working a
 }
 
 // SPECIALIZED PROMPTS FOR DIFFERENT CONTENT TYPES
-function getSpecializedPrompt(detection: { type: string; confidence: number; context: any }, personality: string, isRewriteRequest: boolean, isFullPageRewrite: boolean): string {
+function getSpecializedPrompt(detection: { type: string; confidence: number; context: any }, personality: string, isRewriteRequest: boolean, isFullPageRewrite: boolean, frameworkContext?: any): string {
   const baseRules = `FORBIDDEN FORMATTING: No asterisks, no bullet points, no numbered lists, no bold text. Just raw conversational paragraphs.`
+  
+  // Build strategic framework context from Ruth's methodology
+  let frameworkSection = ''
+  if (frameworkContext) {
+    const { userSprint, strategicGuidance, contextualInsights } = frameworkContext
+    
+    frameworkSection = `
+STRATEGIC FRAMEWORK - RUTH'S METHODOLOGY:
+${userSprint ? `Your priority focus: "${userSprint.full_title}" - ${userSprint.description}` : ''}
+
+${strategicGuidance.length > 0 ? `Key Strategic Guidance:
+${strategicGuidance.slice(0, 3).map(g => `- ${g.title}: ${g.content.substring(0, 200)}...`).join('\n')}` : ''}
+
+${contextualInsights.length > 0 ? `Strategic Context:
+${contextualInsights.join(' ')}` : ''}
+
+Apply Ruth's Freedom by Design methodology to this analysis. Focus on micro-specific solutions that address the user's actual business stage and challenges, not generic advice.
+`
+  }
   
   // Handle minimal content that needs more context
   if (detection.context?.needsContext && !isRewriteRequest) {
@@ -209,7 +229,7 @@ function getSpecializedPrompt(detection: { type: string; confidence: number; con
   switch (detection.type) {
     case 'email':
       return `${baseRules}
-
+${frameworkSection}
 EMAIL COPY ANALYSIS EXPERT - SURGICAL PRECISION:
 
 ${isRewriteRequest || isFullPageRewrite ? 
@@ -230,7 +250,7 @@ End with: "Want me to rewrite any specific sections or your entire email sequenc
 
     case 'ad':
       return `${baseRules}
-
+${frameworkSection}
 AD COPY ANALYSIS EXPERT - CONVERSION SURGEON:
 
 ${isRewriteRequest || isFullPageRewrite ? 
@@ -251,7 +271,7 @@ End with: "Want me to rewrite any specific sections or your entire ad campaign?"
 
     case 'script':
       return `${baseRules}
-
+${frameworkSection}
 SALES SCRIPT ANALYSIS EXPERT - CONVERSATION SURGEON:
 
 ${isRewriteRequest || isFullPageRewrite ? 
@@ -272,7 +292,7 @@ End with: "Want me to rewrite any specific sections or your entire script?"`
 
     case 'landing_page':
       return `${baseRules}
-
+${frameworkSection}
 LANDING PAGE ANALYSIS EXPERT - CONVERSION ARCHITECT:
 
 ${isRewriteRequest || isFullPageRewrite ? 
@@ -350,6 +370,15 @@ export async function POST(request: NextRequest) {
       content_type: contentDetection.type
     })
 
+    // Get strategic framework context from Supabase
+    const frameworkContext = await getFrameworkContext(message)
+    console.log('[FRAMEWORK] Context loaded:', {
+      hasUserSprint: !!frameworkContext.userSprint,
+      modulesCount: frameworkContext.relevantModules.length,
+      guidanceCount: frameworkContext.strategicGuidance.length,
+      insights: frameworkContext.contextualInsights.length
+    })
+
     // Handle different content types with specialized analysis
     // Use rewriteType if detected, otherwise use content detection
     const finalContentType = rewriteType || (contentDetection.confidence > 0.6 ? contentDetection.type : null)
@@ -362,7 +391,7 @@ export async function POST(request: NextRequest) {
         { type: rewriteType, confidence: 0.9, context: { isRewriteRequest: true } } : 
         contentDetection
       
-      const systemPrompt = getSpecializedPrompt(enhancedDetection, personality, isRewriteRequest, isFullPageRewrite)
+      const systemPrompt = getSpecializedPrompt(enhancedDetection, personality, isRewriteRequest, isFullPageRewrite, frameworkContext)
       
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -397,6 +426,17 @@ export async function POST(request: NextRequest) {
 Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
 CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
 Page content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 400) || 'Not found'}
+
+STRATEGIC FRAMEWORK - RUTH'S METHODOLOGY:
+${frameworkContext.userSprint ? `Your priority focus: "${frameworkContext.userSprint.full_title}" - ${frameworkContext.userSprint.description}` : ''}
+
+${frameworkContext.strategicGuidance.length > 0 ? `Key Strategic Guidance:
+${frameworkContext.strategicGuidance.slice(0, 3).map(g => `- ${g.title}: ${g.content.substring(0, 200)}...`).join('\n')}` : ''}
+
+${frameworkContext.contextualInsights.length > 0 ? `Strategic Context:
+${frameworkContext.contextualInsights.join(' ')}` : ''}
+
+Apply Ruth's Freedom by Design methodology to analyze this sales page. Focus on micro-specific solutions that address the user's actual business stage and challenges, not generic advice.
 
 FORBIDDEN FORMATTING: No asterisks, no bullet points, no numbered lists, no bold text. Just raw conversational paragraphs.`
       
@@ -467,6 +507,17 @@ Point out exactly WHERE her copy is failing and WHY it's costing her money. Alwa
         { 
           role: 'system', 
           content: `CRITICAL: You are FORBIDDEN from using asterisks (*), numbered lists (1. 2. 3.), bullet points, bold formatting (**text**), or any formatting symbols. Write ONLY in natural conversational paragraphs.
+
+STRATEGIC FRAMEWORK - RUTH'S METHODOLOGY:
+${frameworkContext.userSprint ? `Your priority focus: "${frameworkContext.userSprint.full_title}" - ${frameworkContext.userSprint.description}` : ''}
+
+${frameworkContext.strategicGuidance.length > 0 ? `Key Strategic Guidance:
+${frameworkContext.strategicGuidance.slice(0, 3).map(g => `- ${g.title}: ${g.content.substring(0, 200)}...`).join('\n')}` : ''}
+
+${frameworkContext.contextualInsights.length > 0 ? `Strategic Context:
+${frameworkContext.contextualInsights.join(' ')}` : ''}
+
+Apply Ruth's Freedom by Design methodology to this analysis. Focus on micro-specific solutions that address the user's actual business stage and challenges, not generic advice.
           
           ${personality === 'savage' ? 
             'SAVAGE MODE: Know SALES PAGE STRUCTURE. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = where brutal descriptive reality belongs. Don\'t suggest long descriptions as headlines. For body copy, paint exact brutal reality: "You\'re checking emails during your kid\'s soccer game because you can\'t trust your team." Make them think "holy shit, that\'s exactly me."' : 
