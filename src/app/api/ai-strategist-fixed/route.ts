@@ -195,7 +195,19 @@ export async function POST(request: NextRequest) {
     const isRewriteRequest = message.toLowerCase().includes('please do') || 
                            message.toLowerCase().includes('rewrite') ||
                            message.toLowerCase().includes('yes, rewrite') ||
-                           message.toLowerCase().includes('do it')
+                           message.toLowerCase().includes('do it') ||
+                           message.toLowerCase().includes('recreate') ||
+                           message.toLowerCase().includes('help me create') ||
+                           message.toLowerCase().includes('write an ad') ||
+                           message.toLowerCase().includes('write an email') ||
+                           message.toLowerCase().includes('can you write')
+    
+    // Detect rewrite request type from message
+    let rewriteType = null
+    if (message.toLowerCase().includes('email')) rewriteType = 'email'
+    if (message.toLowerCase().includes('ad')) rewriteType = 'ad'  
+    if (message.toLowerCase().includes('script')) rewriteType = 'script'
+    if (message.toLowerCase().includes('landing page')) rewriteType = 'landing_page'
     
     // Check if this is a full page rewrite request
     const isFullPageRewrite = message.toLowerCase().includes('entire sales page') ||
@@ -211,10 +223,18 @@ export async function POST(request: NextRequest) {
     })
 
     // Handle different content types with specialized analysis
-    if (contentDetection.type !== 'website' && contentDetection.confidence > 0.6) {
-      console.log(`[AI-STRATEGIST-FIXED] Using specialized ${contentDetection.type.toUpperCase()} analysis`)
+    // Use rewriteType if detected, otherwise use content detection
+    const finalContentType = rewriteType || (contentDetection.confidence > 0.6 ? contentDetection.type : null)
+    
+    if (finalContentType && finalContentType !== 'website') {
+      console.log(`[AI-STRATEGIST-FIXED] Using specialized ${finalContentType.toUpperCase()} analysis (rewrite: ${!!rewriteType})`)
       
-      const systemPrompt = getSpecializedPrompt(contentDetection, personality, isRewriteRequest, isFullPageRewrite)
+      // Create enhanced detection object
+      const enhancedDetection = rewriteType ? 
+        { type: rewriteType, confidence: 0.9, context: { isRewriteRequest: true } } : 
+        contentDetection
+      
+      const systemPrompt = getSpecializedPrompt(enhancedDetection, personality, isRewriteRequest, isFullPageRewrite)
       
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -230,13 +250,13 @@ export async function POST(request: NextRequest) {
       const rawResponse = completion.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your request.'
       const aiResponse = removeFormattingAndAddSolutions(rawResponse)
       
-      console.log(`[AI-STRATEGIST-FIXED] ${contentDetection.type.toUpperCase()} analysis response generated, length:`, aiResponse.length)
+      console.log(`[AI-STRATEGIST-FIXED] ${finalContentType.toUpperCase()} analysis response generated, length:`, aiResponse.length)
       
       return NextResponse.json({
         reply: aiResponse,
         has_reply: true,
         reply_preview: aiResponse.substring(0, 100) + "...",
-        content_type: contentDetection.type,
+        content_type: finalContentType,
         error: undefined
       })
     }
