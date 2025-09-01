@@ -1063,8 +1063,8 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
 
   const detectDocumentGeneration = (content: string) => {
     const documentTriggers = [
-      { pattern: /(?:create|generate|build|develop|make|write).*(?:action.*plan|implementation.*plan)/i, type: 'action_plan', title: 'Action Plan' },
-      { pattern: /(?:create|generate|build|develop|make|write).*(?:sop|standard.*operating.*procedure|process.*document)/i, type: 'sop', title: 'Standard Operating Procedure' },
+      { pattern: /(?:create|generate|build|develop).*(?:action plan|implementation plan)/i, type: 'action_plan', title: 'Action Plan' },
+      { pattern: /(?:create|generate|build|develop|make|write).*(?:\bsop\b|standard.*operating.*procedure|process.*document)/i, type: 'sop', title: 'Standard Operating Procedure' },
       { pattern: /(?:create|generate|build|develop|make|write).*(?:strategy|strategic.*plan|business.*plan)/i, type: 'strategy_document', title: 'Strategy Document' },
       { pattern: /(?:create|generate|build|develop|make).*(?:document|report|guide|manual)(?:\s|$)/i, type: 'document', title: 'Business Document' },
       { pattern: /(?:can you|could you|would you).*(?:create|generate|build|make|write).*(?:document|list|guide|plan)/i, type: 'document', title: 'Business Document' },

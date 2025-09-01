@@ -5,82 +5,39 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-// Post-processing function to remove all formatting and add solutions
+// NUCLEAR SIMPLE POST-PROCESSING - NO COMPLEX LOGIC
 function removeFormattingAndAddSolutions(text: string): string {
-  // Remove numbered lists (1., 2), 3-)
-  let cleaned = text.replace(/^\s*\d+[\.\)\-]\s*/gm, '')
+  console.log('[POST-PROCESS] Original text length:', text.length)
   
-  // Remove bullet points (*, -, •)
-  cleaned = cleaned.replace(/^\s*[\*\-\u2022]\s*/gm, '')
+  // Remove asterisks and formatting
+  let cleaned = text.replace(/\*+/g, '')
+  cleaned = cleaned.replace(/^\s*\d+[\.\)\-]\s*/gm, '')
+  cleaned = cleaned.replace(/^\s*[\-\u2022]\s*/gm, '')
   
-  // Remove bold formatting (**text**) - more aggressive approach
-  cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '$1')
-  cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1')
+  // Split into sentences and group by 2
+  const sentences = cleaned.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0)
+  console.log('[POST-PROCESS] Found sentences:', sentences.length)
   
-  // Remove any remaining asterisks used for emphasis
-  cleaned = cleaned.replace(/\*/g, '')
-  
-  // Clean up section headers that use colons or dashes
-  cleaned = cleaned.replace(/^\s*\d+\.\s*\*\*(.*?)\*\*\s*[-:]?\s*/gm, '$1: ')
-  
-  // Use ChatGPT's grouped paragraph approach
-  // Step 1: split by double newlines = paragraph boundaries
-  const rawParagraphs = cleaned.split(/\n\s*\n/)
-  const grouped = []
-  
-  for (const para of rawParagraphs) {
-    // collapse line breaks inside a paragraph
-    const lines = para.split('\n').map(line => line.trim()).filter(line => line.length > 0)
-    if (lines.length > 0) {
-      grouped.push(lines.join(' '))
-    }
-  }
-  
-  // Step 2: re-join paragraphs with double newlines
-  let result = grouped.join('\n\n')
-  
-  // Step 3: Force paragraph breaks - split every 2-3 sentences regardless
-  const sentences = result.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0)
-  let paragraphs = []
+  const paragraphs = []
   
   for (let i = 0; i < sentences.length; i += 2) {
-    // Take 2-3 sentences at a time
-    let paragraphSentences = []
-    let maxSentences = 2
-    
-    // Check if next sentence starts with transition word - if so, take 3 sentences
-    if (sentences[i + 2] && /^(However|First|Another|Also|Moving|Your|The|Consider|Instead|Lastly|Finally|Next)/i.test(sentences[i + 2])) {
-      maxSentences = 3
+    let para = sentences[i]
+    if (sentences[i + 1]) {
+      para += ' ' + sentences[i + 1]
     }
-    
-    for (let j = 0; j < maxSentences && (i + j) < sentences.length; j++) {
-      paragraphSentences.push(sentences[i + j])
-    }
-    
-    if (paragraphSentences.length > 0) {
-      paragraphs.push(paragraphSentences.join(' '))
-    }
+    paragraphs.push(para.trim())
   }
   
-  result = paragraphs.join('\n\n')
+  const result = paragraphs.join('\n\n').trim()
+  console.log('[POST-PROCESS] Final result has newlines:', result.includes('\n\n'))
+  console.log('[POST-PROCESS] Final paragraphs:', paragraphs.length)
   
-  // Clean up spacing
-  result = result.replace(/\s+/g, ' ')
-  result = result.replace(/\s+([,.!?;:])/g, '$1')
-  result = result.replace(/\n{3,}/g, '\n\n')
-  
-  // Add solution prompt if it's critique without solutions
-  if (!result.toLowerCase().includes('try') && !result.toLowerCase().includes('instead') && 
-      !result.toLowerCase().includes('rewrite') && !result.toLowerCase().includes('consider')) {
-    result += '\n\nWant me to rewrite these sections with copy that actually converts? I can turn this weak messaging into something that drives sales.'
-  }
-  
-  return result.trim()
+  return result
 }
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('[AI-STRATEGIST-FIXED] API called')
+    console.log('[AI-STRATEGIST-FIXED] API called - VERSION 2.0 - TIMESTAMP:', new Date().toISOString())
     
     const requestBody = await request.json()
     const { user_id, message, website_intelligence, personality } = requestBody
@@ -107,75 +64,42 @@ export async function POST(request: NextRequest) {
     if (website_intelligence && website_intelligence.analysis) {
       console.log('[AI-STRATEGIST-FIXED] Using website intelligence for specific insights')
       
-      const systemPrompt = `I'm analyzing Ruth's sales page. I need to provide HIGH-QUALITY, INSIGHTFUL feedback that actually helps, not nitpicky critiques of strong copy.
-
-RUTH'S ACTUAL CONTENT:
+      let systemPrompt = `RUTH'S SALES PAGE CONTENT:
 Headlines: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.headlines || [])}
 CTAs: ${JSON.stringify(website_intelligence.analysis.extractedMessaging?.callsToAction || [])}
 Page content: ${website_intelligence.analysis.competitivePositioning?.substring(0, 400) || 'Not found'}
 
-QUALITY ANALYSIS REQUIREMENTS:
-- Ruth's sales page is sophisticated direct response copy - recognize what's working before critiquing
-- Her headline uses proven direct response structure (desire + objection handling)
-- Her copy shows professional sophistication - don't attack strong elements just to be savage  
-- Only critique what's genuinely hurting conversions, not stylistic preferences
-- True savage feedback acknowledges what works and brutally calls out what doesn't
-- Focus on real conversion gaps, not imaginary problems
+FORBIDDEN FORMATTING: No asterisks, no bullet points, no numbered lists, no bold text. Just raw conversational paragraphs.`
+      
+      if (personality === 'savage') {
+        systemPrompt += `
 
-ABSOLUTE FORMATTING REQUIREMENTS - NO EXCEPTIONS:
-You are FORBIDDEN from using any of these formatting elements:
-- NO asterisks (*) anywhere in your response
-- NO numbered lists (1. 2. 3. etc.)
-- NO bullet points or dashes (- •)  
-- NO bold formatting (**text**)
-- NO section headers or titles
-Write ONLY in natural conversational paragraphs like you're talking to a friend
-Always provide specific solutions and alternatives
-Always offer to rewrite problematic sections
-
-${personality === 'savage' ? `
-SAVAGE MODE: ${isRewriteRequest || isFullPageRewrite ? 
-  (isFullPageRewrite ? 
-    'Ruth asked for a FULL PAGE REWRITE! Provide a complete rewritten sales page with new headlines, subheadlines, body copy, CTAs, and benefit statements. Structure it as a complete sales page, not just suggestions.' :
-    'Ruth asked for rewrites! Provide ACTUAL rewritten copy sections, not just critiques. Give her the exact headlines, CTAs, and body copy she should use instead. Be specific with word-for-word alternatives.'
-  ) :
-  'SAVAGE MODE MISSION: Describe EXACT brutal reality without blame or shame. No cheerleader "empowering" words or consultant speak. Paint the precise picture of what their life looks like RIGHT NOW. Instead of "you can\'t let go of control" say "you\'re up at midnight double-checking your team\'s work because you don\'t trust they\'ll deliver correctly." Raw descriptive truth that makes them go "holy shit, that\'s exactly me." No fluff, no judgment - just brutal accuracy that makes them feel SEEN. When Ruth\'s copy is good, make it more descriptively savage.'
-}
+DESCRIPTIVE ANALYSIS MODE - FLY-ON-THE-WALL NEUTRAL OBSERVER:
 
 ${isRewriteRequest || isFullPageRewrite ? 
-  (isFullPageRewrite ?
-    'Format as a COMPLETE SALES PAGE with sections clearly labeled: HEADLINE, SUBHEADLINE, OPENING, BENEFITS, CTAs, CLOSING, etc.' :
-    'Format like: "Here\'s your rewritten headline: [EXACT NEW HEADLINE]. Here\'s your new CTA: [EXACT NEW CTA]. Here\'s the rewritten section: [EXACT NEW COPY]"'
-  ) :
-  'Example brutal descriptive truth: "Ruth, your headline works but let\'s make it more descriptively savage. Instead of \'Remove Yourself\' - try \'You Check Slack at 11 PM Because You Can\'t Trust Your Business to Run Without You\' or \'Your Phone Buzzes During Family Dinner Because Your Team Needs Approval for Everything.\' Raw truth that makes them think \'Fuck, that\'s exactly my life.\' No fluff words, just brutal reality they recognize."'
-}
+          'Ruth wants REWRITES. Provide exact copy alternatives without commentary.' :
+          'Your job is to be a neutral, factual observer describing what you see. No compliments, no criticism - just descriptive observations. Paint precise pictures of the reader\'s current reality without emotion or judgment. Headlines should be 6-12 words max, punchy benefits. CTAs should be 2-4 words max, button text. Body copy is where you describe the detailed reality. Describe what is, not what should be. Be factual and descriptive like a documentary narrator.'}
 
-${isRewriteRequest ? '' : 'Always end with savage energy: "Want me to turn up the SAVAGE on this copy?" or "Ready to inject some real attitude into this section?"'}
-` : personality === 'strategic' ? `
-STRATEGIC MODE: Focus on business impact, ROI, and competitive positioning. Identify what's costing money and provide data-driven solutions.
+End with: "These observations are based on current copy elements."`
+      } else if (personality === 'strategic') {
+        systemPrompt += `
 
-Example approach: "Your headline 'Remove Yourself' is costing you conversions because it frames business ownership negatively. Strategic alternative: 'Scale Beyond Your Personal Capacity' positions growth as the goal."
+STRATEGIC MODE: Know SALES PAGE STRUCTURE first. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = detailed ROI explanations. Focus on business impact and competitive positioning. Example approach: "For your HEADLINE, try 'Scale Beyond Personal Capacity' (punchy benefit). For BODY COPY, explain the ROI impact and competitive advantage. For CTAs, use 'Get Started' (short button text)." Always end with: "I can provide a complete strategic rewrite with proper structure for each element."`
+      } else if (personality === 'creative') {
+        systemPrompt += `
 
-Always end with: "I can provide a complete strategic rewrite that positions you as the growth solution, not the escape route."
-` : personality === 'creative' ? `
-CREATIVE MODE: Focus on emotional engagement, storytelling, and compelling messaging. Make copy more vivid and engaging.
+CREATIVE MODE: Know SALES PAGE STRUCTURE first. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = detailed stories and emotional hooks. Focus on emotional engagement and compelling messaging with proper structure for each element. Example approach: "For your HEADLINE, try 'Build Your Dream Business' (punchy benefit). For BODY COPY, paint vivid pictures: 'Imagine sipping coffee on a Tuesday morning while your business runs smoothly without a single phone call from your team.' For CTAs, use 'Get Started' (short button text)." Always end with: "I can rewrite this with engaging stories and emotional hooks that make prospects feel the transformation."`
+      } else if (personality === 'analytical') {
+        systemPrompt += `
 
-Example approach: "Your copy lacks emotional punch. Instead of 'Remove Yourself,' paint a picture: 'Imagine sipping coffee on a Tuesday morning while your business runs smoothly without a single phone call from your team.'"
+ANALYTICAL MODE: Know SALES PAGE STRUCTURE first. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = detailed analysis and data. Focus on conversion data, user psychology, and testing opportunities with proper structure for each element. Example approach: "For your HEADLINE, 'Remove Yourself' likely reduces click-through rates because it triggers loss aversion. Try 'Build Your Dream Business' (aspirational headlines outperform escape-focused messaging by 23%). For BODY COPY, include conversion data and psychological triggers. For CTAs, use 'Get Started' (short button text)." Always end with: "I can rewrite this with conversion-optimized copy and suggest A/B tests to validate improvements."`
+      } else {
+        systemPrompt += `
 
-Always end with: "I can rewrite this with engaging stories and emotional hooks that make prospects feel the transformation."
-` : personality === 'analytical' ? `
-ANALYTICAL MODE: Focus on conversion data, user psychology, and testing opportunities. Identify what elements hurt performance.
-
-Example approach: "Your headline 'Remove Yourself' likely reduces click-through rates because it triggers loss aversion. Testing shows aspirational headlines like 'Build Your Dream Business' outperform escape-focused messaging by 23%."
-
-Always end with: "I can rewrite this with conversion-optimized copy and suggest A/B tests to validate improvements."
-` : `
-SUPPORTIVE MODE: Provide gentle but honest feedback with encouragement. Focus on what's working and how to improve what isn't.
-
-Example approach: "I love your passion for helping business owners! Your 'Remove Yourself' headline might be pushing away people who actually enjoy their work but need better systems. Consider 'Build a Business That Thrives Without You' - it maintains the freedom benefit while honoring their love for what they do."
-
-Always end with: "I'd be happy to help you rewrite sections to keep your authentic voice while improving clarity and appeal."
-`}
+SUPPORTIVE MODE: Know SALES PAGE STRUCTURE first. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = encouraging explanations and support. Provide gentle but honest feedback with encouragement, focusing on what's working and how to improve what isn't with proper structure for each element. Example approach: "I love your passion for helping business owners! For your HEADLINE, 'Remove Yourself' might push away people who enjoy their work but need better systems. Try 'Build a Business That Thrives Without You' (maintains freedom benefit while honoring their love). For BODY COPY, expand on the benefits with encouragement. For CTAs, use 'Get Started' (short button text)." Always end with: "I'd be happy to help you rewrite sections to keep your authentic voice while improving clarity and appeal."`
+      }
+      
+      systemPrompt += `
 
 Point out exactly WHERE her copy is failing and WHY it's costing her money. Always provide specific solutions.`
 
@@ -216,14 +140,14 @@ Point out exactly WHERE her copy is failing and WHY it's costing her money. Alwa
           content: `CRITICAL: You are FORBIDDEN from using asterisks (*), numbered lists (1. 2. 3.), bullet points, bold formatting (**text**), or any formatting symbols. Write ONLY in natural conversational paragraphs.
           
           ${personality === 'savage' ? 
-            'SAVAGE MODE: Describe brutal reality with zero fluff or cheerleader words. Paint the exact picture of their life RIGHT NOW. No "empowering" consultant speak like "Ready to Break Free!" Instead use raw descriptive truth: "You\'re checking emails during your kid\'s soccer game because you can\'t trust your team." Make them think "holy shit, that\'s exactly me." Brutal accuracy, not judgment.' : 
+            'SAVAGE MODE: Know SALES PAGE STRUCTURE. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = where brutal descriptive reality belongs. Don\'t suggest long descriptions as headlines. For body copy, paint exact brutal reality: "You\'re checking emails during your kid\'s soccer game because you can\'t trust your team." Make them think "holy shit, that\'s exactly me."' : 
             personality === 'strategic' ? 
-            'STRATEGIC MODE: Focus on business impact and ROI. Identify what\'s costing money and provide data-driven solutions. Write in natural paragraphs and always offer strategic rewrites.' :
+            'STRATEGIC MODE: Know SALES PAGE STRUCTURE. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = detailed explanations. Focus on business impact and ROI. Identify what\'s costing money and provide data-driven solutions with proper structure.' :
             personality === 'creative' ? 
-            'CREATIVE MODE: Focus on emotional engagement and compelling messaging. Make copy more vivid and engaging. Write in natural paragraphs and always offer creative rewrites with stories and emotional hooks.' :
+            'CREATIVE MODE: Know SALES PAGE STRUCTURE. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = stories and emotional hooks. Focus on emotional engagement and compelling messaging with proper structure for each element.' :
             personality === 'analytical' ? 
-            'ANALYTICAL MODE: Focus on conversion data and user psychology. Identify performance issues and testing opportunities. Write in natural paragraphs and always offer conversion-optimized rewrites.' :
-            'SUPPORTIVE MODE: Provide gentle but honest feedback with encouragement. Focus on what works and how to improve. Write in natural paragraphs and always offer supportive rewrites that maintain authenticity.'
+            'ANALYTICAL MODE: Know SALES PAGE STRUCTURE. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = detailed analysis. Focus on conversion data and user psychology with proper structure for each element.' :
+            'SUPPORTIVE MODE: Know SALES PAGE STRUCTURE. Headlines = short punchy benefits (6-12 words). CTAs = short button text (2-4 words). Body copy = encouraging explanations. Provide gentle but honest feedback with proper structure for each element.'
           }` 
         },
         { role: 'user', content: message },
