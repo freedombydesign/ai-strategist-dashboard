@@ -8,31 +8,73 @@ const openai = new OpenAI({
 // SMART CONTENT DETECTION - IDENTIFY CONTENT TYPE
 function detectContentType(message: string): { type: string; confidence: number; context: any } {
   const content = message.toLowerCase()
+  const wordCount = content.split(/\s+/).length
+  
+  // Check for minimal content that needs more context
+  const needsContext = wordCount < 15 && (
+    content.includes('subject:') ||
+    content.includes('headline:') || 
+    content.includes('hi ') ||
+    content.includes('script') ||
+    content.match(/limited.*time|get.*off|call.*about/)
+  )
   
   // Email detection patterns
   if (content.includes('subject:') || content.includes('from:') || content.includes('dear ') || 
       content.includes('hi ') || content.includes('hello ') || content.match(/email sequence|email series|newsletter/)) {
-    return { type: 'email', confidence: 0.9, context: { hasSubject: content.includes('subject:') } }
+    return { 
+      type: 'email', 
+      confidence: 0.9, 
+      context: { 
+        hasSubject: content.includes('subject:'),
+        needsContext,
+        wordCount
+      } 
+    }
   }
   
   // Ad copy detection patterns  
   if (content.match(/headline:|ad copy|facebook ad|google ad|instagram ad/) || 
       content.match(/\$\d+.*off|save \$|discount|limited time|act now/) ||
       content.match(/get \d+%|save up to|\d+% off/)) {
-    return { type: 'ad', confidence: 0.85, context: { platform: content.includes('facebook') ? 'facebook' : content.includes('google') ? 'google' : 'unknown' } }
+    return { 
+      type: 'ad', 
+      confidence: 0.85, 
+      context: { 
+        platform: content.includes('facebook') ? 'facebook' : content.includes('google') ? 'google' : 'unknown',
+        needsContext,
+        wordCount
+      } 
+    }
   }
   
   // Sales script detection
   if (content.match(/script|call script|sales call|phone|objection/) ||
       content.match(/prospect:|client:|caller:|script:/) ||
       content.includes('cold call') || content.includes('sales pitch')) {
-    return { type: 'script', confidence: 0.8, context: { scriptType: content.includes('cold') ? 'cold_call' : 'sales_call' } }
+    return { 
+      type: 'script', 
+      confidence: 0.8, 
+      context: { 
+        scriptType: content.includes('cold') ? 'cold_call' : 'sales_call',
+        needsContext,
+        wordCount
+      } 
+    }
   }
   
   // Landing page detection
   if (content.match(/landing page|sales page|squeeze page/) ||
       content.length > 500 && content.match(/headline.*cta|call to action|sign up|get started/)) {
-    return { type: 'landing_page', confidence: 0.75, context: { length: content.length } }
+    return { 
+      type: 'landing_page', 
+      confidence: 0.75, 
+      context: { 
+        length: content.length,
+        needsContext: content.length < 200,
+        wordCount
+      } 
+    }
   }
   
   // Website URL detection (existing)
@@ -41,7 +83,7 @@ function detectContentType(message: string): { type: string; confidence: number;
   }
   
   // Default to general copy analysis
-  return { type: 'copy', confidence: 0.5, context: { length: content.length } }
+  return { type: 'copy', confidence: 0.5, context: { length: content.length, wordCount } }
 }
 
 // NUCLEAR SIMPLE POST-PROCESSING - NO COMPLEX LOGIC
@@ -74,9 +116,95 @@ function removeFormattingAndAddSolutions(text: string): string {
   return result
 }
 
+// CONTEXT PROBING FOR MINIMAL CONTENT
+function getContextProbePrompt(contentType: string): string {
+  switch (contentType) {
+    case 'email':
+      return `EMAIL CONTEXT PROBE - GATHER STRATEGIC INTEL:
+
+I can see you've shared the beginning of an email, but I need more context to provide surgical analysis.
+
+Before I can give you the precise diagnosis this email needs, tell me:
+
+Who is this email going to? (Business owners? Agency owners? Specific industry?)
+What's the goal? (Book a call? Sell a product? Nurture relationship?)
+What's the context? (Cold outreach? Follow-up sequence? Newsletter?)
+Where are they in your funnel? (Cold prospect? Warm lead? Existing client?)
+
+The more specific you are about your audience and objective, the more precisely I can dissect what's working and what's costing you opens, clicks, and conversions.
+
+Paste the full email and context, and I'll show you exactly where it's failing and how to fix it.`
+
+    case 'ad':
+      return `AD COPY CONTEXT PROBE - GATHER TARGETING INTEL:
+
+I can see you've shared ad copy, but I need strategic context for precision analysis.
+
+Before I can diagnose what's killing your click-through rates, tell me:
+
+What platform? (Facebook? Google? Instagram? LinkedIn?)
+Who's your target? (Service providers? Agency owners? Specific industry?)
+What's the offer? (Free consultation? Course? Service?)
+What's your budget range? (This affects strategy)
+What stage are they? (Cold traffic? Retargeting? Lookalike?)
+
+Ad performance is all about audience-message match. Give me the full context and complete ad copy, and I'll pinpoint exactly why it's not converting and how to fix it.`
+
+    case 'script':
+      return `SALES SCRIPT CONTEXT PROBE - GATHER CONVERSATION INTEL:
+
+I can see you've shared part of a script, but I need more context for surgical analysis.
+
+Before I can diagnose what's causing hang-ups and objections, tell me:
+
+What type of call? (Cold calling? Inbound? Discovery? Closing?)
+Who are you calling? (Business owners? Decision makers? Specific industry?)
+What's the offer? (Consultation? Service? Product?)
+How did they get in your pipeline? (Lead magnet? Referral? Cold outreach?)
+What's your typical objection pattern?
+
+Script success depends on context and timing. Share the full script and background, and I'll show you exactly where prospects are mentally checking out and how to keep them engaged.`
+
+    case 'landing_page':
+      return `LANDING PAGE CONTEXT PROBE - GATHER CONVERSION INTEL:
+
+I can see you've shared landing page copy, but I need more context for conversion analysis.
+
+Before I can diagnose what's causing visitors to bounce, tell me:
+
+What's driving traffic? (Ads? SEO? Email? Social?)
+What's the offer? (Lead magnet? Course? Service? Product?)
+Who's your target? (Service providers? Specific industry? Experience level?)
+What's the desired action? (Email opt-in? Purchase? Book call?)
+What's your current conversion rate? (If you know it)
+
+Landing page optimization is about traffic-to-conversion alignment. Give me the full page copy and context, and I'll pinpoint exactly what's preventing visitors from taking action.`
+
+    default:
+      return `COPY CONTEXT PROBE - GATHER STRATEGIC INTEL:
+
+I can see you've shared copy, but I need more context for precision analysis.
+
+Tell me:
+
+What type of copy is this? (Email? Ad? Sales page? Script?)
+Who's your target audience?
+What's the desired outcome?
+Where will this be used?
+
+The more context you provide, the more surgically I can analyze what's working and what needs fixing.`
+  }
+}
+
 // SPECIALIZED PROMPTS FOR DIFFERENT CONTENT TYPES
 function getSpecializedPrompt(detection: { type: string; confidence: number; context: any }, personality: string, isRewriteRequest: boolean, isFullPageRewrite: boolean): string {
   const baseRules = `FORBIDDEN FORMATTING: No asterisks, no bullet points, no numbered lists, no bold text. Just raw conversational paragraphs.`
+  
+  // Handle minimal content that needs more context
+  if (detection.context?.needsContext && !isRewriteRequest) {
+    const contextProbe = getContextProbePrompt(detection.type)
+    return `${baseRules}\n\n${contextProbe}`
+  }
   
   switch (detection.type) {
     case 'email':
