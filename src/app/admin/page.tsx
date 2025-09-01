@@ -202,6 +202,12 @@ export default function AdminFrameworks() {
               >
                 Debug Import Errors
               </a>
+              <a
+                href="/admin/fix-import"
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:ring-2 focus:ring-purple-500"
+              >
+                Fix Import Errors
+              </a>
             </div>
           </div>
         </div>
