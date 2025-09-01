@@ -183,12 +183,20 @@ export default function AdminFrameworks() {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Framework Administration</h1>
               <p className="text-gray-600">Update your AI strategist frameworks and methodology without code</p>
             </div>
-            <a
-              href="/admin/diagnose"
-              className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:ring-2 focus:ring-orange-500"
-            >
-              Diagnose Airtable Data
-            </a>
+            <div className="flex gap-3">
+              <a
+                href="/admin/diagnose"
+                className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:ring-2 focus:ring-orange-500"
+              >
+                Diagnose Airtable Data
+              </a>
+              <a
+                href="/admin/import"
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-green-500"
+              >
+                Import Airtable Data
+              </a>
+            </div>
           </div>
         </div>
 
