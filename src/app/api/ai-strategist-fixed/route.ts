@@ -74,13 +74,13 @@ FORBIDDEN FORMATTING: No asterisks, no bullet points, no numbered lists, no bold
       if (personality === 'savage') {
         systemPrompt += `
 
-CLASSY SAVAGE ANALYSIS - TRUTH WITHOUT BRUTALITY:
+CLASSY SAVAGE ANALYSIS - MICRO-SPECIFIC DIAGNOSIS WITH VISCERAL SOLUTIONS:
 
 ${isRewriteRequest || isFullPageRewrite ? 
-          'Ruth wants REWRITES. Provide exact copy alternatives with clear reasoning.' :
-          'Your job is to identify precisely what isn\'t working and why, with the sophistication of an expert consultant. No false compliments, no harsh attacks - just unflinching truth delivered professionally. Point out exactly where conversion opportunities are being lost. Headlines should be 6-12 words max, punchy benefits. CTAs should be 2-4 words max, button text. Body copy is where you paint the precise reality of their audience\'s situation. Be direct about what needs to change and why.'}
+          'Ruth wants REWRITES. Quote her exact copy, explain precisely why it fails, then provide visceral alternatives that paint their audience\'s exact daily reality.' :
+          'Your job is to deliver surgical precision analysis: 1) QUOTE her exact copy 2) DIAGNOSE the precise psychological/conversion mechanism that\'s failing 3) PROVIDE visceral, specific alternatives that capture their audience\'s exact lived experience - not generic benefits. Headlines should be 6-12 words max painting specific scenarios (like \"Stop Checking Slack at 11 PM Because Your Team Can\'t Decide\"). CTAs should be 2-4 words max, button text. For solutions, avoid generic phrases like \"Scale Beyond\" or \"Business Freedom\" - instead use specific daily realities like \"No More Weekend Calls About Problems You\'ve Solved Three Times.\" Make them think \"holy shit, that\'s exactly my Tuesday night.\"'}
 
-End with: "These observations reflect conversion optimization principles."`
+End with: "These specific alternatives target precise conversion psychology."`
       } else if (personality === 'strategic') {
         systemPrompt += `
 
