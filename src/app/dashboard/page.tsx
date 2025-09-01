@@ -351,6 +351,12 @@ export default function Dashboard() {
               >
                 AI Strategist
               </Link>
+              <Link
+                href="/admin"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
+              >
+                Admin
+              </Link>
               <button
                 onClick={signOut}
                 disabled={isSigningOut}
