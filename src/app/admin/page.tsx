@@ -178,8 +178,18 @@ export default function AdminFrameworks() {
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Framework Administration</h1>
-          <p className="text-gray-600">Update your AI strategist frameworks and methodology without code</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Framework Administration</h1>
+              <p className="text-gray-600">Update your AI strategist frameworks and methodology without code</p>
+            </div>
+            <a
+              href="/admin/diagnose"
+              className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:ring-2 focus:ring-orange-500"
+            >
+              Diagnose Airtable Data
+            </a>
+          </div>
         </div>
 
         {/* Tabs */}
