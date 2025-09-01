@@ -21,12 +21,23 @@ interface StrategicGuidance {
   priority: number
 }
 
+interface Personality {
+  id: number
+  personality_key: 'savage' | 'strategic' | 'creative' | 'analytical' | 'supportive'
+  name: string
+  description: string
+  system_prompt: string
+  style_guidelines: string
+  example_response: string
+}
+
 export default function AdminFrameworks() {
   const [sprints, setSprints] = useState<Sprint[]>([])
   const [guidance, setGuidance] = useState<StrategicGuidance[]>([])
+  const [personalities, setPersonalities] = useState<Personality[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'sprints' | 'guidance'>('sprints')
+  const [activeTab, setActiveTab] = useState<'sprints' | 'guidance' | 'personalities'>('sprints')
 
   useEffect(() => {
     loadData()
@@ -35,13 +46,15 @@ export default function AdminFrameworks() {
   async function loadData() {
     setLoading(true)
     try {
-      const [sprintsResult, guidanceResult] = await Promise.all([
+      const [sprintsResult, guidanceResult, personalitiesResult] = await Promise.all([
         supabase.from('sprints').select('*').order('sprint_key'),
-        supabase.from('strategic_guidance').select('*').order('priority')
+        supabase.from('strategic_guidance').select('*').order('priority'),
+        supabase.from('ai_personalities').select('*').order('personality_key')
       ])
       
       if (sprintsResult.data) setSprints(sprintsResult.data)
       if (guidanceResult.data) setGuidance(guidanceResult.data)
+      if (personalitiesResult.data) setPersonalities(personalitiesResult.data)
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -124,6 +137,30 @@ export default function AdminFrameworks() {
     }
   }
 
+  async function updatePersonality(personality: Personality) {
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('ai_personalities')
+        .update({
+          name: personality.name,
+          description: personality.description,
+          system_prompt: personality.system_prompt,
+          style_guidelines: personality.style_guidelines,
+          example_response: personality.example_response
+        })
+        .eq('id', personality.id)
+      
+      if (error) throw error
+      alert('Personality updated successfully!')
+    } catch (error) {
+      console.error('Error updating personality:', error)
+      alert('Error updating personality')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-8">
@@ -167,6 +204,16 @@ export default function AdminFrameworks() {
               }`}
             >
               Strategic Guidance ({guidance.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('personalities')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'personalities'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              AI Personalities ({personalities.length})
             </button>
           </nav>
         </div>
@@ -350,6 +397,106 @@ export default function AdminFrameworks() {
                   >
                     {saving ? 'Saving...' : 'Update Guidance'}
                   </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* AI Personalities Tab */}
+        {activeTab === 'personalities' && (
+          <div className="space-y-6">
+            {personalities.map((personality) => (
+              <div key={personality.id} className="bg-white rounded-lg shadow p-6">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      {personality.personality_key.toUpperCase()} MODE
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Customize how your AI behaves in {personality.personality_key} mode
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <input
+                      type="text"
+                      value={personality.name}
+                      onChange={(e) => setPersonalities(personalities.map(p => 
+                        p.id === personality.id ? { ...p, name: e.target.value } : p
+                      ))}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                      value={personality.description}
+                      onChange={(e) => setPersonalities(personalities.map(p => 
+                        p.id === personality.id ? { ...p, description: e.target.value } : p
+                      ))}
+                      rows={2}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Brief description of this personality mode"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      System Prompt
+                    </label>
+                    <textarea
+                      value={personality.system_prompt}
+                      onChange={(e) => setPersonalities(personalities.map(p => 
+                        p.id === personality.id ? { ...p, system_prompt: e.target.value } : p
+                      ))}
+                      rows={6}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="The core system prompt that defines how this personality responds..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Style Guidelines
+                    </label>
+                    <textarea
+                      value={personality.style_guidelines}
+                      onChange={(e) => setPersonalities(personalities.map(p => 
+                        p.id === personality.id ? { ...p, style_guidelines: e.target.value } : p
+                      ))}
+                      rows={4}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Specific style rules, tone guidelines, formatting preferences..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Example Response
+                    </label>
+                    <textarea
+                      value={personality.example_response}
+                      onChange={(e) => setPersonalities(personalities.map(p => 
+                        p.id === personality.id ? { ...p, example_response: e.target.value } : p
+                      ))}
+                      rows={4}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Example of how this personality should respond to show the style..."
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <button
+                      onClick={() => updatePersonality(personality)}
+                      disabled={saving}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                    >
+                      {saving ? 'Saving...' : 'Update Personality'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
