@@ -326,11 +326,15 @@ Transform generic responses into personalized ones using ${ctx.business_name || 
         const currentStepIndex = sprintProgress.step_number ? sprintProgress.step_number - 1 : 0;
         const currentStep = sprintSteps[currentStepIndex] || sprintSteps[0];
         
+        // Check if we have enhanced steps (from Airtable) or regular steps
+        const isEnhancedStep = currentStep.step_name; // Enhanced steps have step_name, regular steps have title
+        
         stepDetails = `
-🎯 CURRENT ACTION STEP: ${currentStepIndex + 1} of ${sprintSteps.length} - "${currentStep.title}"
-📝 STEP DESCRIPTION: ${currentStep.description}
-⏱️ ESTIMATED TIME: ${currentStep.estimated_minutes} minutes
-📅 DAY: ${currentStep.day_number}
+🎯 CURRENT ACTION STEP: ${currentStepIndex + 1} of ${sprintSteps.length} - "${isEnhancedStep ? currentStep.step_name : currentStep.title}"
+📝 STEP DESCRIPTION: ${isEnhancedStep ? currentStep.task_description : currentStep.description}
+⏱️ ${isEnhancedStep && currentStep.deliverable ? 'DELIVERABLE:' : 'ESTIMATED TIME:'} ${isEnhancedStep && currentStep.deliverable ? currentStep.deliverable : (currentStep.estimated_minutes + ' minutes')}
+${isEnhancedStep && currentStep.resource_link ? '🔗 RESOURCE: ' + currentStep.resource_link : '📅 DAY: ' + currentStep.day_number}
+${isEnhancedStep && currentStep.connected_ai_prompt ? '🤖 AI PROMPT: ' + currentStep.connected_ai_prompt : ''}
 📊 PROGRESS: ${Math.round(((currentStepIndex + 1) / sprintSteps.length) * 100)}% through this sprint`;
         
         // Show next steps for context
@@ -338,7 +342,8 @@ Transform generic responses into personalized ones using ${ctx.business_name || 
           stepDetails += `\n\n🔮 NEXT STEPS COMING UP:`;
           for (let i = currentStepIndex + 1; i < Math.min(currentStepIndex + 3, sprintSteps.length); i++) {
             const step = sprintSteps[i];
-            stepDetails += `\n- Step ${i + 1}: ${step.title} (${step.estimated_minutes}min, Day ${step.day_number})`;
+            const isEnhancedNext = step.step_name;
+            stepDetails += `\n- Step ${i + 1}: ${isEnhancedNext ? step.step_name : step.title} ${isEnhancedNext ? '(' + step.deliverable + ')' : '(' + step.estimated_minutes + 'min, Day ' + step.day_number + ')'}`;
           }
         } else {
           stepDetails += `\n\n🏁 FINAL STEP: You're on the last step of this sprint!`;
@@ -349,7 +354,8 @@ Transform generic responses into personalized ones using ${ctx.business_name || 
           stepDetails += `\n\n✅ RECENTLY COMPLETED:`;
           for (let i = Math.max(0, currentStepIndex - 2); i < currentStepIndex; i++) {
             const completedStep = sprintSteps[i];
-            stepDetails += `\n- ✓ Step ${i + 1}: ${completedStep.title}`;
+            const isEnhancedCompleted = completedStep.step_name;
+            stepDetails += `\n- ✓ Step ${i + 1}: ${isEnhancedCompleted ? completedStep.step_name : completedStep.title}`;
           }
         }
         
@@ -1072,8 +1078,64 @@ Based on this ACTUAL analysis of Ruth's website, provide specific, actionable in
     let sprintProgress = null;
     let sprintSteps = null;
     try {
-      console.log('[AI-STRATEGIST] ========== SPRINT PROGRESS DEBUGGING ==========');
-      console.log('[AI-STRATEGIST] Fetching sprint progress for user:', user_id);
+      console.log('[AI-STRATEGIST] ========== ENHANCED SPRINT PROGRESS DEBUGGING ==========');
+      console.log('[AI-STRATEGIST] Fetching enhanced sprint progress for user:', user_id);
+      
+      // FIRST: Try to get enhanced sprint steps from Airtable data
+      try {
+        const { data: enhancedStepsData, error: enhancedError } = await supabase
+          .from('enhanced_steps')
+          .select('*')
+          .order('step_number', { ascending: true });
+          
+        if (enhancedStepsData && enhancedStepsData.length > 0) {
+          console.log('[AI-STRATEGIST] 🚀 Found', enhancedStepsData.length, 'enhanced steps from Airtable');
+          
+          // Get the user's current step from user_steps
+          const { data: userStepData, error: userStepError } = await supabase
+            .from('user_steps')
+            .select('*')
+            .eq('user_id', user_id)
+            .order('created_at', { ascending: false })
+            .limit(1);
+            
+          if (userStepData && userStepData.length > 0) {
+            const currentUserStep = userStepData[0];
+            console.log('[AI-STRATEGIST] 🎯 User current step:', currentUserStep.step_title, 'Step #' + currentUserStep.step_number);
+            
+            // Find enhanced steps that are relevant to the user's current sprint
+            const relevantSteps = enhancedStepsData.filter(step => {
+              // Check if step number matches or is close to user's current step
+              const stepDiff = Math.abs(step.step_number - (currentUserStep.step_number || 1));
+              return stepDiff <= 2; // Show steps within 2 steps of current
+            });
+            
+            if (relevantSteps.length > 0) {
+              sprintSteps = relevantSteps;
+              sprintProgress = {
+                ...currentUserStep,
+                step_title: currentUserStep.step_title,
+                step_number: currentUserStep.step_number,
+                status: currentUserStep.status,
+                sprints: {
+                  name: 'enhanced_sprint',
+                  client_facing_title: 'Enhanced Sprint Progress'
+                }
+              };
+              
+              console.log('[AI-STRATEGIST] ✅ SUCCESS - Enhanced sprint data loaded');
+              console.log('[AI-STRATEGIST] Current step:', sprintProgress.step_number, '-', sprintProgress.step_title);
+              console.log('[AI-STRATEGIST] Relevant enhanced steps:', relevantSteps.map(s => `${s.step_number}: ${s.step_name}`));
+            }
+          }
+        }
+      } catch (enhancedError) {
+        console.log('[AI-STRATEGIST] Enhanced steps not available, falling back to regular system');
+      }
+      
+      // FALLBACK: If no enhanced data found, use original system
+      if (!sprintProgress) {
+        console.log('[AI-STRATEGIST] Using original sprint progress system');
       
       // First, let's see ALL user steps for this user
       const { data: allUserSteps, error: allStepsError } = await supabase
@@ -1290,6 +1352,7 @@ Based on this ACTUAL analysis of Ruth's website, provide specific, actionable in
           console.log('[AI-STRATEGIST] ❌ No sprint data found at all for user');
         }
       }
+      } // Close the if (!sprintProgress) block
     } catch (error) {
       console.error('[AI-STRATEGIST] Error fetching sprint progress:', error);
     }

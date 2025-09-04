@@ -189,25 +189,26 @@ export default function BusinessContextOnboarding({ onComplete, onSkip, existing
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">
-          Let's Get Your AI Strategist Up to Speed
-        </h2>
-        <p className="text-gray-600">
-          The more I know about your business, the better I can help you grow
-        </p>
-        
-        {/* Progress Bar */}
-        <div className="mt-6 max-w-md mx-auto">
-          <div className="flex justify-between text-sm text-gray-500 mb-2">
-            <span>Step {currentStep} of 5</span>
-            <span>{Math.round((currentStep / 5) * 100)}% Complete</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+    <div className="max-w-4xl mx-auto">
+      <div className="card-editorial p-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="display-2 gradient-text mb-4">
+            Let's Get Your AI Strategist Up to Speed
+          </h2>
+          <p className="subhead text-muted max-w-2xl mx-auto">
+            The more I know about your business, the better I can help you grow
+          </p>
+          
+          {/* Progress Bar */}
+          <div className="mt-8 max-w-md mx-auto">
+            <div className="flex justify-between caption text-muted mb-3">
+              <span>Step {currentStep} of 5</span>
+              <span>{Math.round((currentStep / 5) * 100)}% Complete</span>
+            </div>
+            <div className="w-full bg-surface border border-slate-600/30 rounded-full h-3 overflow-hidden">
+              <div 
+                className="bg-gradient-copper h-full rounded-full transition-all duration-500"
               style={{ width: `${(currentStep / 5) * 100}%` }}
             ></div>
           </div>
@@ -691,6 +692,7 @@ export default function BusinessContextOnboarding({ onComplete, onSkip, existing
           )}
         </div>
       </div>
+    </div>
     </div>
   )
 }

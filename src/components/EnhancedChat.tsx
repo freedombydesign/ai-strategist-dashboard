@@ -596,10 +596,29 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         }
       }
       
-      // If no localStorage score, skip database query to prevent hanging (temporary fix)
+      // If no localStorage score, try to fetch from database
       if (!freedomScore) {
-        console.log('[CHAT] No localStorage score, skipping database query to prevent hanging');
-        console.log('[CHAT] No Freedom Score found in database or localStorage');
+        console.log('[CHAT] No localStorage score, trying database fallback');
+        try {
+          const diagnosticService = await import('../services/diagnosticService');
+          const userResponses = await diagnosticService.diagnosticService.getUserResponses(userId);
+          
+          if (userResponses.length > 0) {
+            const mostRecent = userResponses[0];
+            freedomScore = mostRecent.scoreResult;
+            console.log('[CHAT] Found Freedom Score in database:', freedomScore.percent + '%');
+            
+            // Save to localStorage for future use
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('lastFreedomScore', JSON.stringify(freedomScore));
+              localStorage.setItem('scoreCompletedAt', mostRecent.created_at);
+            }
+          } else {
+            console.log('[CHAT] No Freedom Score found in database');
+          }
+        } catch (error) {
+          console.error('[CHAT] Error fetching Freedom Score from database:', error);
+        }
       }
 
       // Process files first if any
@@ -673,7 +692,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       });
       
       console.log('[CHAT] 🚀 SENDING API REQUEST NOW!');
-      console.log('[CHAT] Request URL: /api/ai-strategist-fixed');
+      console.log('[CHAT] Request URL: /api/ai-strategist'); // Fixed endpoint
       console.log('[CHAT] Request payload preview:', {
         user_id: userId,
         message: messageText.substring(0, 50) + '...',
@@ -684,7 +703,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
       let response;
       try {
         // FIXED: Use clean working endpoint  
-        response = await fetch('/api/ai-strategist-fixed', {
+        response = await fetch('/api/ai-strategist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -924,7 +943,7 @@ export default function EnhancedChat({ userId }: EnhancedChatProps) {
         // Send to AI strategist API to get new response
         const editedMessageContent = editedMessage.content; // Use the saved content instead of editingContent
         console.log('[EDIT] Calling AI strategist with edited message:', editedMessageContent);
-        const response = await fetch('/api/ai-strategist-fixed', {
+        const response = await fetch('/api/ai-strategist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

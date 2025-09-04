@@ -1,16 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function DiagnosticStart() {
   const [isReady, setIsReady] = useState(false)
+  const router = useRouter()
 
-  if (isReady) {
-    // This would redirect to your actual WorkingFreedomScore component
-    window.location.href = '/assessment'
-    return null
-  }
+  useEffect(() => {
+    if (isReady) {
+      router.push('/assessment')
+    }
+  }, [isReady, router])
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">

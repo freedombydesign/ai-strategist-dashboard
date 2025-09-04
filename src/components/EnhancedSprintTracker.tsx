@@ -51,12 +51,50 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
   const [sprintSteps, setSprintSteps] = useState<SprintStep[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
+    console.log('[SPRINT-TRACKER] Component mounted with:', {
+      hasUser: !!user?.id,
+      hasFreedomScore: !!freedomScore,
+      hasRecommendedOrder: !!freedomScore?.recommendedOrder,
+      recommendedOrderLength: freedomScore?.recommendedOrder?.length || 0
+    })
+    
     if (user?.id && freedomScore?.recommendedOrder) {
       loadCurrentProgress()
     }
   }, [user?.id, freedomScore])
+
+  // Listen for localStorage changes to refresh progress
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && e.key.includes('completed_tasks_') && user?.id) {
+        console.log('[SPRINT-TRACKER] Detected localStorage task completion change, refreshing...')
+        setRefreshTrigger(prev => prev + 1)
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [user?.id])
+
+  // Periodic refresh to catch same-tab localStorage changes  
+  useEffect(() => {
+    if (!user?.id || !currentProgress?.sprint_id) return
+
+    const interval = setInterval(() => {
+      // Just trigger a re-render to recalculate progress from localStorage
+      setRefreshTrigger(prev => prev + 1)
+    }, 5000) // Refresh every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [user?.id, currentProgress?.sprint_id])
+
+  // Re-render when refreshTrigger changes (for localStorage-based progress calculation)
+  useEffect(() => {
+    // This just triggers a re-render, the actual progress calculation happens in the render
+  }, [refreshTrigger])
 
   const loadCurrentProgress = async () => {
     try {
@@ -70,12 +108,44 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
         const currentProgress = progressData.data[0]
         setCurrentProgress(currentProgress)
         
-        // Load steps for current sprint
+        // Load enhanced steps for current sprint
         if (currentProgress.sprint_id) {
-          const stepsResponse = await fetch(`/api/sprint-steps?sprintId=${currentProgress.sprint_id}`)
-          const stepsData = await stepsResponse.json()
-          if (stepsData.success) {
-            setSprintSteps(stepsData.data)
+          console.log('[SPRINT-TRACKER] Loading enhanced steps for sprint:', currentProgress.sprints.name)
+          
+          try {
+            // Import sprintService dynamically to get enhanced steps
+            const { sprintService } = await import('../services/sprintService')
+            const enhancedSteps = await sprintService.getEnhancedStepsForOldSprint(currentProgress.sprints.name)
+            
+            if (enhancedSteps.length > 0) {
+              console.log('[SPRINT-TRACKER] Found enhanced steps:', enhancedSteps.length)
+              // Convert enhanced steps to SprintStep format
+              const convertedSteps = enhancedSteps.map((step, index) => ({
+                id: parseInt(step.id.toString()),
+                title: step.step_name,
+                description: step.task_description || '',
+                day_number: Math.ceil((index + 1) / 3), // Group steps by day
+                order_index: index,
+                estimated_minutes: 30 // Default
+              }))
+              setSprintSteps(convertedSteps)
+            } else {
+              console.log('[SPRINT-TRACKER] No enhanced steps, falling back to API')
+              // Fallback to old API
+              const stepsResponse = await fetch(`/api/sprint-steps?sprintId=${currentProgress.sprint_id}`)
+              const stepsData = await stepsResponse.json()
+              if (stepsData.success) {
+                setSprintSteps(stepsData.data)
+              }
+            }
+          } catch (error) {
+            console.error('[SPRINT-TRACKER] Error loading enhanced steps:', error)
+            // Fallback to old API
+            const stepsResponse = await fetch(`/api/sprint-steps?sprintId=${currentProgress.sprint_id}`)
+            const stepsData = await stepsResponse.json()
+            if (stepsData.success) {
+              setSprintSteps(stepsData.data)
+            }
           }
         }
       } else if (freedomScore?.recommendedOrder && freedomScore.recommendedOrder.length > 0) {
@@ -179,7 +249,34 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
 
   const totalSteps = sprintSteps.length
   const currentStepNumber = currentProgress?.step_number || 1
-  const progressPercent = totalSteps > 0 ? Math.round((currentStepNumber / totalSteps) * 100) : 0
+  
+  // Calculate progress using localStorage completion data (like the sprint detail pages)
+  let progressPercent = 0
+  if (totalSteps > 0 && currentProgress?.sprint_id && user?.id) {
+    const key = `completed_tasks_${user.id}_${currentProgress.sprint_id}`
+    const savedTasks = typeof window !== 'undefined' ? localStorage.getItem(key) : null
+    
+    if (savedTasks) {
+      try {
+        const completedTasks = JSON.parse(savedTasks)
+        const completed = completedTasks.length
+        progressPercent = Math.round((completed / totalSteps) * 100)
+        console.log('[SPRINT-TRACKER] Progress calculated from localStorage:', {
+          totalSteps,
+          completed,
+          progressPercent,
+          sprintId: currentProgress.sprint_id,
+          completedTasks
+        })
+      } catch (error) {
+        console.error('[SPRINT-TRACKER] Error parsing localStorage tasks:', error)
+        progressPercent = totalSteps > 0 ? Math.round((currentStepNumber / totalSteps) * 100) : 0
+      }
+    } else {
+      // Fallback to step-number based calculation
+      progressPercent = totalSteps > 0 ? Math.round((currentStepNumber / totalSteps) * 100) : 0
+    }
+  }
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>

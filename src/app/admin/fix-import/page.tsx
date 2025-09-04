@@ -121,17 +121,100 @@ export default function FixImport() {
             </ul>
           </div>
 
-          <button
-            onClick={fixImport}
-            disabled={fixing || !apiKey || !baseId || selectedTables.length === 0}
-            className={`px-6 py-3 rounded-md font-semibold ${
-              fixing 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-red-600 hover:bg-red-700'
-            } text-white focus:ring-2 focus:ring-red-500 disabled:opacity-50`}
-          >
-            {fixing ? 'Fixing Import...' : `Fix ${selectedTables.length} Tables`}
-          </button>
+          <div className="space-x-4">
+            <button
+              onClick={async () => {
+                setFixing(true)
+                setError(null)
+                try {
+                  const response = await fetch('/api/simple-import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ airtableApiKey: apiKey, baseId })
+                  })
+                  const data = await response.json()
+                  if (!response.ok) throw new Error(data.error || 'Test failed')
+                  setResults(data)
+                } catch (err: any) {
+                  setError(err.message)
+                } finally {
+                  setFixing(false)
+                }
+              }}
+              disabled={fixing || !apiKey || !baseId}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium"
+            >
+              Test Simple Import (2 records each)
+            </button>
+            
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/check-imported-data')
+                  const data = await response.json()
+                  console.log('📊 IMPORTED DATA ANALYSIS:', data)
+                  alert(`Data Check Complete!\n\nSprints: ${data.imported_data.sprints.count}\nSOPs: ${data.imported_data.sop_library.count}\nTemplates: ${data.imported_data.template_library.count}\nFrameworks: ${data.imported_data.business_frameworks.count}\nQuestions: ${data.imported_data.freedom_diagnostic_questions.count}\nModules: ${data.imported_data.framework_modules.count}\nGuidance: ${data.imported_data.strategic_guidance.count}\n\nDecision Call Data: ${data.summary.has_decision_call_data ? 'Found!' : 'Not found'}\n\nCheck console for full details.`)
+                } catch (err) {
+                  console.error('Error checking data:', err)
+                  alert('Error checking imported data')
+                }
+              }}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium"
+            >
+              Check Imported Data
+            </button>
+            
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/show-template-data')
+                  const data = await response.json()
+                  console.log('📋 TEMPLATE ANALYSIS:', data)
+                  
+                  if (data.success) {
+                    let alertMsg = 'DATA ANALYSIS:\n\n'
+                    
+                    if (data.steps_analysis) {
+                      const steps = data.steps_analysis
+                      alertMsg += `STEPS TABLE:\n- Count: ${steps.total_count}\n- Columns: ${steps.columns.join(', ')}\n- Sample Resource Links: ${steps.sample_steps[0]?.resource_links}\n\n`
+                    } else {
+                      alertMsg += 'STEPS TABLE: Not found\n\n'
+                    }
+                    
+                    if (data.template_analysis) {
+                      const templates = data.template_analysis
+                      alertMsg += `TEMPLATES TABLE:\n- Count: ${templates.total_count}\n- Columns: ${templates.available_columns.join(', ')}\n- Has Attachments: ${templates.sample_templates[0]?.has_attachments}\n\n`
+                    } else {
+                      alertMsg += 'TEMPLATES TABLE: Not found\n\n'
+                    }
+                    
+                    alertMsg += 'Check console for full raw data!'
+                    alert(alertMsg)
+                  } else {
+                    alert(`No data found: ${data.message}`)
+                  }
+                } catch (err) {
+                  console.error('Error checking templates:', err)
+                  alert('Error checking template data')
+                }
+              }}
+              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md font-medium"
+            >
+              Show Template Details
+            </button>
+            
+            <button
+              onClick={fixImport}
+              disabled={fixing || !apiKey || !baseId || selectedTables.length === 0}
+              className={`px-6 py-3 rounded-md font-semibold ${
+                fixing 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-red-600 hover:bg-red-700'
+              } text-white focus:ring-2 focus:ring-red-500 disabled:opacity-50`}
+            >
+              {fixing ? 'Fixing Import...' : `Fix ${selectedTables.length} Tables`}
+            </button>
+          </div>
         </div>
 
         {error && (

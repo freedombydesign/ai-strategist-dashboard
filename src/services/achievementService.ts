@@ -1,0 +1,446 @@
+import { supabase } from '../lib/supabase'
+import { implementationService } from './implementationService'
+import { businessMetricsService } from './businessMetricsService'
+import { emailService } from './emailService'
+
+export interface Achievement {
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: 'streak' | 'completion' | 'business' | 'consistency' | 'milestone'
+  requirement: number
+  points: number
+  rarity: 'common' | 'rare' | 'epic' | 'legendary'
+  unlocked?: boolean
+  unlockedAt?: string
+  progress?: number
+}
+
+export interface UserAchievement {
+  id: string
+  user_id: string
+  achievement_id: string
+  unlocked_at: string
+  progress: number
+  created_at: string
+}
+
+export interface MomentumScore {
+  current: number
+  trend: 'up' | 'down' | 'stable'
+  multiplier: number
+  factors: {
+    streakBonus: number
+    consistencyBonus: number
+    businessImpactBonus: number
+    achievementBonus: number
+  }
+}
+
+class AchievementService {
+  // Define all achievements
+  private achievements: Achievement[] = [
+    // Streak Achievements
+    {
+      id: 'first_steps',
+      name: 'First Steps',
+      description: 'Complete your first daily check-in',
+      icon: '🚀',
+      category: 'streak',
+      requirement: 1,
+      points: 10,
+      rarity: 'common'
+    },
+    {
+      id: 'getting_started',
+      name: 'Getting Started',
+      description: 'Maintain a 3-day check-in streak',
+      icon: '🔥',
+      category: 'streak',
+      requirement: 3,
+      points: 25,
+      rarity: 'common'
+    },
+    {
+      id: 'week_warrior',
+      name: 'Week Warrior',
+      description: 'Maintain a 7-day check-in streak',
+      icon: '⚔️',
+      category: 'streak',
+      requirement: 7,
+      points: 50,
+      rarity: 'rare'
+    },
+    {
+      id: 'unstoppable',
+      name: 'Unstoppable',
+      description: 'Maintain a 30-day check-in streak',
+      icon: '💎',
+      category: 'streak',
+      requirement: 30,
+      points: 150,
+      rarity: 'epic'
+    },
+    {
+      id: 'legendary_consistency',
+      name: 'Legendary Consistency',
+      description: 'Maintain a 90-day check-in streak',
+      icon: '🏆',
+      category: 'streak',
+      requirement: 90,
+      points: 500,
+      rarity: 'legendary'
+    },
+
+    // Completion Achievements
+    {
+      id: 'task_master',
+      name: 'Task Master',
+      description: 'Complete 50 total tasks',
+      icon: '✅',
+      category: 'completion',
+      requirement: 50,
+      points: 75,
+      rarity: 'rare'
+    },
+    {
+      id: 'productivity_king',
+      name: 'Productivity King',
+      description: 'Complete 200 total tasks',
+      icon: '👑',
+      category: 'completion',
+      requirement: 200,
+      points: 200,
+      rarity: 'epic'
+    },
+    {
+      id: 'implementation_legend',
+      name: 'Implementation Legend',
+      description: 'Complete 500 total tasks',
+      icon: '🌟',
+      category: 'completion',
+      requirement: 500,
+      points: 1000,
+      rarity: 'legendary'
+    },
+
+    // Business Achievements
+    {
+      id: 'profit_tracker',
+      name: 'Profit Tracker',
+      description: 'Track business metrics for 3 consecutive months',
+      icon: '📈',
+      category: 'business',
+      requirement: 3,
+      points: 100,
+      rarity: 'rare'
+    },
+    {
+      id: 'growth_hacker',
+      name: 'Growth Hacker',
+      description: 'Achieve 3 consecutive months of profit growth',
+      icon: '🚀',
+      category: 'business',
+      requirement: 3,
+      points: 250,
+      rarity: 'epic'
+    },
+    {
+      id: 'business_champion',
+      name: 'Business Champion',
+      description: 'Maintain profitable growth for 6+ months',
+      icon: '🏅',
+      category: 'business',
+      requirement: 6,
+      points: 750,
+      rarity: 'legendary'
+    },
+
+    // Consistency Achievements
+    {
+      id: 'early_bird',
+      name: 'Early Bird',
+      description: 'Complete 10 check-ins before 9 AM',
+      icon: '🌅',
+      category: 'consistency',
+      requirement: 10,
+      points: 50,
+      rarity: 'rare'
+    },
+    {
+      id: 'energy_champion',
+      name: 'Energy Champion',
+      description: 'Maintain 8+ average energy for 2 weeks',
+      icon: '⚡',
+      category: 'consistency',
+      requirement: 14,
+      points: 100,
+      rarity: 'epic'
+    },
+    {
+      id: 'momentum_master',
+      name: 'Momentum Master',
+      description: 'Achieve 500+ momentum score',
+      icon: '🎯',
+      category: 'consistency',
+      requirement: 500,
+      points: 300,
+      rarity: 'epic'
+    },
+
+    // Milestone Achievements
+    {
+      id: 'sprint_finisher',
+      name: 'Sprint Finisher',
+      description: 'Complete your first sprint 100%',
+      icon: '🏁',
+      category: 'milestone',
+      requirement: 1,
+      points: 200,
+      rarity: 'epic'
+    },
+    {
+      id: 'serial_implementer',
+      name: 'Serial Implementer',
+      description: 'Complete 3 sprints 100%',
+      icon: '🔄',
+      category: 'milestone',
+      requirement: 3,
+      points: 500,
+      rarity: 'legendary'
+    },
+    {
+      id: 'transformation_master',
+      name: 'Transformation Master',
+      description: 'Complete 10 sprints 100%',
+      icon: '🦋',
+      category: 'milestone',
+      requirement: 10,
+      points: 2000,
+      rarity: 'legendary'
+    }
+  ]
+
+  async getUserAchievements(userId: string): Promise<Achievement[]> {
+    try {
+      const { data, error } = await supabase
+        .from('user_achievements')
+        .select('*')
+        .eq('user_id', userId)
+
+      if (error) throw error
+
+      const userAchievements = data || []
+      
+      // Calculate current progress for each achievement
+      const achievementsWithProgress = await Promise.all(
+        this.achievements.map(async (achievement) => {
+          const userAchievement = userAchievements.find(ua => ua.achievement_id === achievement.id)
+          
+          if (userAchievement) {
+            return {
+              ...achievement,
+              unlocked: true,
+              unlockedAt: userAchievement.unlocked_at,
+              progress: achievement.requirement
+            }
+          } else {
+            const progress = await this.calculateProgress(userId, achievement)
+            return {
+              ...achievement,
+              unlocked: false,
+              progress
+            }
+          }
+        })
+      )
+
+      return achievementsWithProgress
+
+    } catch (error) {
+      console.error('[ACHIEVEMENTS] Error fetching user achievements:', error)
+      return []
+    }
+  }
+
+  private async calculateProgress(userId: string, achievement: Achievement): Promise<number> {
+    try {
+      switch (achievement.category) {
+        case 'streak':
+          const streak = await implementationService.calculateStreakDays(userId)
+          return Math.min(streak, achievement.requirement)
+
+        case 'completion':
+          const analytics = await implementationService.getImplementationAnalytics(userId)
+          const totalTasks = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0)
+          return Math.min(totalTasks, achievement.requirement)
+
+        case 'business':
+          const businessData = await businessMetricsService.getBusinessAnalytics(userId)
+          if (achievement.id === 'profit_tracker') {
+            return Math.min(businessData.totalSnapshots, achievement.requirement)
+          }
+          // For growth achievements, would need more complex logic
+          return 0
+
+        case 'consistency':
+          if (achievement.id === 'early_bird') {
+            // Would need to track check-in times - simplified for now
+            return 0
+          } else if (achievement.id === 'energy_champion') {
+            const recentCheckins = await implementationService.getRecentCheckins(userId, 14)
+            const highEnergyDays = recentCheckins.filter(c => (c.energy_level || 0) >= 8).length
+            return Math.min(highEnergyDays, achievement.requirement)
+          } else if (achievement.id === 'momentum_master') {
+            const currentAnalytics = await implementationService.getImplementationAnalytics(userId)
+            const momentum = await this.calculateMomentumScore(userId)
+            return Math.min(momentum.current, achievement.requirement)
+          }
+          return 0
+
+        case 'milestone':
+          // Would need sprint completion tracking - simplified for now
+          return 0
+
+        default:
+          return 0
+      }
+    } catch (error) {
+      console.error('[ACHIEVEMENTS] Error calculating progress:', error)
+      return 0
+    }
+  }
+
+  async checkAndUnlockAchievements(userId: string): Promise<Achievement[]> {
+    try {
+      const achievements = await this.getUserAchievements(userId)
+      const newlyUnlocked: Achievement[] = []
+
+      for (const achievement of achievements) {
+        if (!achievement.unlocked && achievement.progress! >= achievement.requirement) {
+          // Unlock achievement
+          const { error } = await supabase
+            .from('user_achievements')
+            .insert({
+              user_id: userId,
+              achievement_id: achievement.id,
+              progress: achievement.requirement,
+              unlocked_at: new Date().toISOString()
+            })
+
+          if (!error) {
+            const unlockedAchievement = { ...achievement, unlocked: true, unlockedAt: new Date().toISOString() }
+            newlyUnlocked.push(unlockedAchievement)
+
+            // Schedule milestone celebration email
+            try {
+              await emailService.scheduleMilestoneCelebrationEmail(userId, {
+                achievement: unlockedAchievement,
+                totalPoints: achievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0) + achievement.points,
+                unlockedAt: new Date().toISOString()
+              });
+            } catch (emailError) {
+              console.error('[ACHIEVEMENTS] Error scheduling celebration email:', emailError);
+              // Don't fail achievement unlock for email issues
+            }
+          }
+        }
+      }
+
+      return newlyUnlocked
+
+    } catch (error) {
+      console.error('[ACHIEVEMENTS] Error checking achievements:', error)
+      return []
+    }
+  }
+
+  async calculateMomentumScore(userId: string): Promise<MomentumScore> {
+    try {
+      const [analytics, streak, businessData] = await Promise.all([
+        implementationService.getImplementationAnalytics(userId),
+        implementationService.calculateStreakDays(userId),
+        businessMetricsService.getBusinessAnalytics(userId)
+      ])
+
+      // Base momentum from task completion
+      const avgDailyTasks = analytics.completionTrend.length > 0
+        ? analytics.completionTrend.reduce((a: number, b: number) => a + b, 0) / analytics.completionTrend.length
+        : 0
+
+      const baseScore = Math.min(avgDailyTasks * 20, 200) // Max 200 from tasks
+
+      // Bonus calculations
+      const streakBonus = Math.min(streak * 5, 100) // Max 100 from streak
+      const consistencyBonus = analytics.averageEnergyLevel >= 7 ? 50 : 0 // 50 for high energy
+      const businessImpactBonus = businessData.recentTrend === 'up' ? 75 : 0 // 75 for business growth
+      
+      // Achievement bonus (5 points per unlocked achievement)
+      const achievements = await this.getUserAchievements(userId)
+      const achievementBonus = achievements.filter(a => a.unlocked).length * 5
+
+      const totalScore = baseScore + streakBonus + consistencyBonus + businessImpactBonus + achievementBonus
+
+      // Calculate trend based on recent performance
+      const recentAvg = analytics.completionTrend.slice(-3).reduce((a: number, b: number) => a + b, 0) / 3
+      const olderAvg = analytics.completionTrend.slice(0, -3).reduce((a: number, b: number) => a + b, 0) / 
+                      Math.max(analytics.completionTrend.length - 3, 1)
+      
+      let trend: 'up' | 'down' | 'stable' = 'stable'
+      if (recentAvg > olderAvg * 1.1) trend = 'up'
+      else if (recentAvg < olderAvg * 0.9) trend = 'down'
+
+      // Multiplier based on streak and consistency
+      const multiplier = 1 + (streak * 0.02) + (analytics.averageEnergyLevel >= 8 ? 0.1 : 0)
+
+      return {
+        current: Math.round(totalScore * multiplier),
+        trend,
+        multiplier: Math.round(multiplier * 100) / 100,
+        factors: {
+          streakBonus,
+          consistencyBonus,
+          businessImpactBonus,
+          achievementBonus
+        }
+      }
+
+    } catch (error) {
+      console.error('[ACHIEVEMENTS] Error calculating momentum:', error)
+      return {
+        current: 0,
+        trend: 'stable',
+        multiplier: 1,
+        factors: {
+          streakBonus: 0,
+          consistencyBonus: 0,
+          businessImpactBonus: 0,
+          achievementBonus: 0
+        }
+      }
+    }
+  }
+
+  getAchievementsByCategory(): Record<string, Achievement[]> {
+    return this.achievements.reduce((acc, achievement) => {
+      if (!acc[achievement.category]) {
+        acc[achievement.category] = []
+      }
+      acc[achievement.category].push(achievement)
+      return acc
+    }, {} as Record<string, Achievement[]>)
+  }
+
+  getRarityColor(rarity: Achievement['rarity']): string {
+    switch (rarity) {
+      case 'common': return 'text-gray-600 bg-gray-100'
+      case 'rare': return 'text-blue-600 bg-blue-100'
+      case 'epic': return 'text-purple-600 bg-purple-100'
+      case 'legendary': return 'text-yellow-600 bg-yellow-100'
+      default: return 'text-gray-600 bg-gray-100'
+    }
+  }
+}
+
+export const achievementService = new AchievementService()

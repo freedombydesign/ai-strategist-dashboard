@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { scoreAndRecommend, DiagnosticAnswers, FreedomScoreResult } from '../utils/freedomScoring'
+import { emailService } from './emailService'
 
 // Define types to match your freedom_diagnostic_questions table structure
 interface FreedomDiagnosticQuestion {
@@ -101,6 +102,20 @@ export const diagnosticService = {
       if (saveError) {
         console.error('Error saving responses:', saveError);
         // Continue anyway - we can still return the calculated score
+      }
+
+      // Schedule diagnostic results email if user is authenticated
+      if (userId && responseData?.id) {
+        try {
+          await emailService.scheduleDiagnosticResultsEmail(userId, {
+            scoreResult,
+            assessmentId: responseData.id,
+            completedAt: new Date().toISOString()
+          });
+        } catch (emailError) {
+          console.error('[DIAGNOSTIC] Error scheduling results email:', emailError);
+          // Don't fail the main operation for email issues
+        }
       }
 
       return {

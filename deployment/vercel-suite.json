@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "name": "freedom-suite",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/cash-flow/(.*)",
+      "dest": "/api/cash-flow/$1"
+    },
+    {
+      "src": "/api/profit-pulse/(.*)",
+      "dest": "/api/profit-pulse/$1"
+    },
+    {
+      "src": "/api/journey-builder/(.*)",
+      "dest": "/api/journey-builder/$1"
+    },
+    {
+      "src": "/api/system-stack/(.*)",
+      "dest": "/api/system-stack/$1"
+    },
+    {
+      "src": "/api/convert-flow/(.*)",
+      "dest": "/api/convert-flow/$1"
+    },
+    {
+      "src": "/api/deliver-ease/(.*)",
+      "dest": "/api/deliver-ease/$1"
+    },
+    {
+      "src": "/api/launch-loop/(.*)",
+      "dest": "/api/launch-loop/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/freedom-suite"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_SUITE_DOMAIN": "suite.yourdomain.com",
+    "NEXT_PUBLIC_ENABLE_FREEDOM_SUITE": "true"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
+  ]
+}

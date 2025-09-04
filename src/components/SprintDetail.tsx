@@ -16,43 +16,132 @@ export default function SprintDetail({ sprint, onBack }: SprintDetailProps) {
   const [userStepProgress, setUserStepProgress] = useState<UserStepProgress[]>([])
   const [loading, setLoading] = useState(true)
   const [completingStep, setCompletingStep] = useState<string | null>(null)
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set())
+  const [usingEnhancedSteps, setUsingEnhancedSteps] = useState(false)
 
   useEffect(() => {
     if (user?.id) {
       loadSprintDetails()
+      
+      // Set this sprint as the active one for dashboard tracking
+      const activeSprintKey = `active_sprint_${user.id}`
+      localStorage.setItem(activeSprintKey, JSON.stringify(sprint.id))
+      console.log('[SPRINT-DETAIL-COMPONENT] Set active sprint for dashboard:', sprint.id)
     }
   }, [user?.id, sprint.id])
 
   const loadSprintDetails = async () => {
     try {
       setLoading(true)
+      console.log('[SPRINT-DETAIL-COMPONENT] Loading enhanced steps for sprint:', sprint.name)
       
-      const [sprintSteps, stepProgress] = await Promise.all([
-        sprintService.getSprintSteps(sprint.id),
-        sprintService.getUserStepProgress(user!.id, sprint.id)
-      ])
+      // Try to load enhanced steps first (from Airtable data)
+      const enhancedSteps = await sprintService.getEnhancedStepsForOldSprint(sprint.name)
+      
+      if (enhancedSteps.length > 0) {
+        console.log('[SPRINT-DETAIL-COMPONENT] Using enhanced steps:', enhancedSteps.length)
+        // Convert enhanced steps to the old Step format for compatibility
+        const convertedSteps = enhancedSteps.map(step => ({
+          id: step.id.toString(),
+          title: step.step_name,
+          description: step.task_description || '',
+          sprint_id: sprint.id,
+          order_number: step.step_number,
+          estimated_minutes: 30, // Default
+          resource_links: step.resource_link ? [step.resource_link] : [],
+          deliverable: step.deliverable
+        }))
+        setSteps(convertedSteps)
+        setUsingEnhancedSteps(true)
+        
+        // Load actual progress from localStorage instead of database
+        loadCompletedTasksFromLocalStorage()
+      } else {
+        console.log('[SPRINT-DETAIL-COMPONENT] Falling back to old system')
+        // Fallback to old system
+        const [sprintSteps, stepProgress] = await Promise.all([
+          sprintService.getSprintSteps(sprint.id),
+          sprintService.getUserStepProgress(user!.id, sprint.id)
+        ])
 
-      setSteps(sprintSteps)
-      setUserStepProgress(stepProgress)
+        setSteps(sprintSteps)
+        setUserStepProgress(stepProgress)
+      }
     } catch (error) {
-      console.error('Error loading sprint details:', error)
+      console.error('[SPRINT-DETAIL-COMPONENT] Error loading sprint details:', error)
     } finally {
       setLoading(false)
     }
   }
 
+  const loadCompletedTasksFromLocalStorage = () => {
+    if (typeof window !== 'undefined' && user?.id) {
+      const key = `completed_tasks_${user.id}_${sprint.id}`
+      const saved = localStorage.getItem(key)
+      
+      // Start with pre-completed steps from Airtable data
+      const preCompletedTasks = new Set<string>()
+      
+      // For true fresh starts, don't load any pre-completed steps from Airtable
+      // Only use what's actually saved in localStorage
+      console.log('[SPRINT-DETAIL-COMPONENT] Loading only localStorage data - no pre-completed steps')
+      
+      if (saved) {
+        try {
+          const taskIds = JSON.parse(saved)
+          console.log('[SPRINT-DETAIL-COMPONENT] Loaded completed tasks from localStorage:', taskIds)
+          
+          // Combine localStorage data with pre-completed tasks
+          const combinedCompleted = new Set([...preCompletedTasks, ...taskIds])
+          setCompletedTasks(combinedCompleted)
+        } catch (error) {
+          console.error('[SPRINT-DETAIL-COMPONENT] Error parsing completed tasks:', error)
+          setCompletedTasks(preCompletedTasks) // Use just pre-completed if parsing fails
+        }
+      } else {
+        // No saved data, just use pre-completed tasks
+        setCompletedTasks(preCompletedTasks)
+      }
+    }
+  }
+
+  const saveCompletedTasks = (taskIds: Set<string>) => {
+    if (typeof window !== 'undefined' && user?.id) {
+      const key = `completed_tasks_${user.id}_${sprint.id}`
+      const array = Array.from(taskIds)
+      localStorage.setItem(key, JSON.stringify(array))
+      console.log('[SPRINT-DETAIL-COMPONENT] Saved completed tasks:', array)
+    }
+  }
+
   const getStepStatus = (stepId: string): 'completed' | 'current' | 'upcoming' => {
-    const progress = userStepProgress.find(p => p.step_id === stepId)
-    if (progress?.status === 'completed') return 'completed'
-    
-    // Find the first uncompleted step to mark as current
-    const currentStepIndex = steps.findIndex(step => {
-      const stepProgress = userStepProgress.find(p => p.step_id === step.id)
-      return !stepProgress || stepProgress.status !== 'completed'
-    })
-    
-    const stepIndex = steps.findIndex(step => step.id === stepId)
-    return stepIndex === currentStepIndex ? 'current' : 'upcoming'
+    if (usingEnhancedSteps) {
+      // For enhanced steps, use localStorage completion status
+      const taskId = `enhanced-step-${stepId}`
+      if (completedTasks.has(taskId)) return 'completed'
+      
+      // Find the first uncompleted step to mark as current
+      const currentStepIndex = steps.findIndex(step => {
+        const taskId = `enhanced-step-${step.id}`
+        return !completedTasks.has(taskId)
+      })
+      
+      const stepIndex = steps.findIndex(step => step.id === stepId)
+      return stepIndex === currentStepIndex ? 'current' : 'upcoming'
+    } else {
+      // Original logic for old system
+      const progress = userStepProgress.find(p => p.step_id === stepId)
+      if (progress?.status === 'completed') return 'completed'
+      
+      // Find the first uncompleted step to mark as current
+      const currentStepIndex = steps.findIndex(step => {
+        const stepProgress = userStepProgress.find(p => p.step_id === step.id)
+        return !stepProgress || stepProgress.status !== 'completed'
+      })
+      
+      const stepIndex = steps.findIndex(step => step.id === stepId)
+      return stepIndex === currentStepIndex ? 'current' : 'upcoming'
+    }
   }
 
   const handleCompleteStep = async (step: Step) => {
@@ -61,15 +150,78 @@ export default function SprintDetail({ sprint, onBack }: SprintDetailProps) {
     try {
       setCompletingStep(step.id)
       
-      const success = await sprintService.completeStep(user.id, step.id, sprint.id)
-      
-      if (success) {
-        await loadSprintDetails() // Reload to update progress
+      if (usingEnhancedSteps) {
+        // For enhanced steps, toggle localStorage completion
+        const taskId = `enhanced-step-${step.id}`
+        const newCompletedTasks = new Set(completedTasks)
+        
+        if (newCompletedTasks.has(taskId)) {
+          newCompletedTasks.delete(taskId)
+        } else {
+          newCompletedTasks.add(taskId)
+        }
+        
+        setCompletedTasks(newCompletedTasks)
+        saveCompletedTasks(newCompletedTasks)
+      } else {
+        // Original logic for old system
+        const success = await sprintService.completeStep(user.id, step.id, sprint.id)
+        
+        if (success) {
+          await loadSprintDetails() // Reload to update progress
+        }
       }
     } catch (error) {
       console.error('Error completing step:', error)
     } finally {
       setCompletingStep(null)
+    }
+  }
+
+  const handleResetSprint = () => {
+    if (!user?.id) return
+    
+    const confirmReset = window.confirm(
+      'Are you sure you want to reset this sprint? This will clear all completed tasks and cannot be undone.'
+    )
+    
+    if (confirmReset) {
+      console.log('[SPRINT-DETAIL-COMPONENT] Resetting sprint:', sprint.id)
+      
+      // Clear all completed tasks for this sprint
+      const key = `completed_tasks_${user.id}_${sprint.id}`
+      localStorage.removeItem(key)
+      
+      // Also remove from completed sprints if it was marked complete
+      const completedSprintsKey = `completed_sprints_${user.id}`
+      const completedSprintsData = localStorage.getItem(completedSprintsKey)
+      if (completedSprintsData) {
+        try {
+          const completedSprints = JSON.parse(completedSprintsData)
+          const updatedCompleted = completedSprints.filter((id: string) => id !== sprint.id)
+          localStorage.setItem(completedSprintsKey, JSON.stringify(updatedCompleted))
+        } catch (error) {
+          console.error('[SPRINT-DETAIL-COMPONENT] Error updating completed sprints:', error)
+        }
+      }
+      
+      // Remove from started sprints to reset button state
+      const startedSprintsKey = `started_sprints_${user.id}`
+      const startedSprintsData = localStorage.getItem(startedSprintsKey)
+      if (startedSprintsData) {
+        try {
+          const startedSprints = JSON.parse(startedSprintsData)
+          const updatedStarted = startedSprints.filter((id: string) => id !== sprint.id)
+          localStorage.setItem(startedSprintsKey, JSON.stringify(updatedStarted))
+        } catch (error) {
+          console.error('[SPRINT-DETAIL-COMPONENT] Error updating started sprints:', error)
+        }
+      }
+      
+      // Reset local state
+      setCompletedTasks(new Set())
+      
+      console.log('[SPRINT-DETAIL-COMPONENT] Sprint reset successfully')
     }
   }
 
@@ -88,10 +240,28 @@ export default function SprintDetail({ sprint, onBack }: SprintDetailProps) {
 
   const getCompletionStats = () => {
     const totalSteps = steps.length
-    const completedSteps = userStepProgress.filter(p => p.status === 'completed').length
-    const percentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
     
-    return { totalSteps, completedSteps, percentage }
+    if (usingEnhancedSteps) {
+      // Count completed tasks from localStorage for enhanced steps
+      const validEnhancedStepIds = new Set(steps.map(step => `enhanced-step-${step.id}`))
+      const completedSteps = Array.from(completedTasks).filter(taskId => validEnhancedStepIds.has(taskId)).length
+      const percentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
+      
+      console.log('[SPRINT-DETAIL-COMPONENT] Enhanced completion stats:', {
+        totalSteps,
+        completedSteps,
+        percentage,
+        validEnhancedStepIds: Array.from(validEnhancedStepIds),
+        completedTasks: Array.from(completedTasks)
+      })
+      
+      return { totalSteps, completedSteps, percentage }
+    } else {
+      // Original logic for old system
+      const completedSteps = userStepProgress.filter(p => p.status === 'completed').length
+      const percentage = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
+      return { totalSteps, completedSteps, percentage }
+    }
   }
 
   if (loading) {
@@ -120,14 +290,24 @@ export default function SprintDetail({ sprint, onBack }: SprintDetailProps) {
     <div className="bg-white rounded-lg shadow-sm border p-6">
       {/* Header */}
       <div className="mb-6">
-        {onBack && (
+        <div className="flex items-center justify-between mb-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+            >
+              ← Back to Sprint Overview
+            </button>
+          )}
+          
           <button
-            onClick={onBack}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium mb-3 flex items-center"
+            onClick={handleResetSprint}
+            className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center"
+            title="Reset all progress for this sprint"
           >
-            ← Back to Sprint Overview
+            🔄 Reset Sprint
           </button>
-        )}
+        </div>
         
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           {sprint.client_facing_title}

@@ -1,82 +1,99 @@
-'use client'
-
 import Link from 'next/link'
+import { ChartBarIcon, RocketLaunchIcon, SparklesIcon } from '@heroicons/react/24/outline'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      <div className="max-w-6xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            AI Strategist Dashboard
+          <h1 className="text-4xl font-bold text-gray-900 mb-6">
+            Freedom by Design
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Remove yourself as the bottleneck. Get focused Sprints, AI-generated 
-            assets, and step-by-step guidance to scale your service business.
+          <p className="text-xl text-gray-600 mb-8">
+            Transform your business with AI-powered strategic guidance
           </p>
         </div>
 
         {/* Main CTA Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 mb-12 text-center">
+        <div className="bg-white rounded-lg shadow-sm border p-12 mb-16 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 rounded-xl bg-blue-600 flex items-center justify-center">
+              <SparklesIcon className="w-8 h-8 text-white" />
+            </div>
+          </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-6">
-            Ready to Remove Your Biggest Bottleneck?
+            Ready to Unlock Your Business Freedom?
           </h2>
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Take the Freedom Score™ diagnostic to identify your constraint and get your personalized Sprint plan.
+            Take the Freedom Score diagnostic to identify your constraints and get personalized strategies.
           </p>
           
-          <Link 
-            href="/diagnostic"
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold px-8 py-4 rounded-lg transition-colors"
-          >
-            Start Freedom Score™ Diagnostic
-          </Link>
-          
-          <div className="mt-6 space-x-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link 
+              href="/assessment"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg inline-flex items-center gap-3"
+            >
+              <ChartBarIcon className="w-6 h-6" />
+              Start Freedom Score Assessment
+            </Link>
+            
             <Link 
               href="/login"
-              className="text-blue-600 hover:text-blue-800 font-medium"
+              className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-8 py-4 rounded-lg inline-flex items-center gap-3"
+            >
+              <RocketLaunchIcon className="w-6 h-6" />
+              Access Dashboard
+            </Link>
+          </div>
+          
+          <div className="mt-8 flex justify-center items-center gap-4">
+            <div className="text-sm text-gray-500">Already have an account?</div>
+            <Link 
+              href="/login"
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
             >
               Sign In
             </Link>
-            <span className="text-gray-400">|</span>
+            <div className="w-px h-4 bg-gray-300"></div>
             <Link 
               href="/signup"
-              className="text-blue-600 hover:text-blue-800 font-medium"
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
             >
               Create Account
-            </Link>
-            <span className="text-gray-400">|</span>
-            <Link 
-              href="/dashboard"
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Dashboard →
             </Link>
           </div>
         </div>
 
         {/* Features Grid */}
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Freedom Score Assessment</h3>
+          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+            <div className="w-12 h-12 rounded-lg bg-blue-100 mb-4 flex items-center justify-center mx-auto">
+              <ChartBarIcon className="w-6 h-6 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Freedom Score Assessment</h3>
             <p className="text-gray-600">
-              12-question diagnostic to identify your biggest business bottlenecks
+              Strategic diagnostic to identify your business constraints and unlock growth potential
             </p>
           </div>
           
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h3 className="text-xl font-semibold mb-4">Personalized Sprints</h3>
+          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+            <div className="w-12 h-12 rounded-lg bg-purple-100 mb-4 flex items-center justify-center mx-auto">
+              <RocketLaunchIcon className="w-6 h-6 text-purple-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Sprint Planning</h3>
             <p className="text-gray-600">
-              7-10 day action plans with daily 10-minute tasks to remove bottlenecks
+              Strategic sprints with guidance to systematically improve your business
             </p>
           </div>
           
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h3 className="text-xl font-semibold mb-4">AI Strategist</h3>
+          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+            <div className="w-12 h-12 rounded-lg bg-green-100 mb-4 flex items-center justify-center mx-auto">
+              <SparklesIcon className="w-6 h-6 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">AI Business Strategist</h3>
             <p className="text-gray-600">
-              24/7 business coach trained on proven frameworks to guide your growth
+              AI advisor trained on business frameworks to accelerate your growth
             </p>
           </div>
         </div>

@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
     
     console.log('[FIX-IMPORT] Starting targeted fixes...')
     
+    
     const results = []
     
     // Fix sprints table
@@ -66,40 +67,48 @@ async function fixSprints(apiKey: string, baseId: string) {
   }
   
   try {
+    // First, let's check what columns actually exist in the sprints table
+    const { data: schemaCheck } = await supabase
+      .from('sprints')
+      .select('*')
+      .limit(1)
+    
+    console.log('[FIX-IMPORT] Available sprint columns:', schemaCheck ? Object.keys(schemaCheck[0] || {}) : 'No existing records to check schema')
+    
     const records = await fetchAirtableRecords(apiKey, baseId, 'tbl24cSX2YX60xZec')
     
     for (const record of records) {
       try {
-        const sprintKey = `S${record.fields['Week Number'] || result.recordsImported + 1}`
-        
-        // Check if already exists
+        // Check if already exists by name
         const { data: existing } = await supabase
           .from('sprints')
-          .select('sprint_key')
-          .eq('sprint_key', sprintKey)
+          .select('name')
+          .eq('name', record.fields['Name'])
           .single()
         
         if (existing) {
-          console.log(`[FIX-IMPORT] Sprint ${sprintKey} already exists, skipping`)
+          console.log(`[FIX-IMPORT] Sprint "${record.fields['Name']}" already exists, skipping`)
           continue
         }
         
-        const sprintData = {
-          sprint_key: sprintKey,
+        // Create sprint data with required client_facing_title
+        const sprintData: any = {
           name: record.fields['Name'] || 'Unnamed Sprint',
-          full_title: record.fields['Name'] || 'Unnamed Sprint',
-          description: record.fields['Description'] || '',
-          methodology: record.fields['Goal'] || 'Sprint methodology',
-          week_number: record.fields['Week Number'] || null,
-          objectives: JSON.stringify([record.fields['Goal'] || '']),
-          key_strategies: JSON.stringify([record.fields['Steps copy'] || '']),
-          common_challenges: JSON.stringify([]),
-          success_indicators: JSON.stringify([`Save ${record.fields['Time Saved/Week (hrs)'] || 0} hours per week`])
+          client_facing_title: record.fields['Name'] || 'Unnamed Sprint' // Use name as client_facing_title
+        }
+        
+        // Only add fields that we know exist
+        if (record.fields['Description']) {
+          sprintData.description = record.fields['Description']
+        }
+        
+        if (record.fields['Week Number']) {
+          sprintData.week_number = record.fields['Week Number']
         }
 
         const { error } = await supabase
           .from('sprints')
-          .insert(sprintData)
+          .insert([sprintData])
 
         if (error) {
           console.error('[FIX-IMPORT] Sprint insert error:', error)
@@ -185,28 +194,22 @@ async function fixQuestions(apiKey: string, baseId: string) {
     
     for (const record of records) {
       try {
-        const questionId = record.fields['Question ID'] || `Q${result.recordsImported + 1}`
-        
-        // Check if already exists
+        // Check if already exists by question text
         const { data: existing } = await supabase
           .from('freedom_diagnostic_questions')
-          .select('question_id')
-          .eq('question_id', questionId)
+          .select('question_text')
+          .eq('question_text', record.fields['Question'])
           .single()
         
         if (existing) {
-          console.log(`[FIX-IMPORT] Question ${questionId} already exists, skipping`)
+          console.log(`[FIX-IMPORT] Question "${record.fields['Question']}" already exists, skipping`)
           continue
         }
         
         const questionData = {
-          question_id: questionId,
-          module: record.fields['Module'] || '',
-          sprint_title: record.fields['Sprint Title'] || '',
-          field_name: record.fields['Field Name'] || '',
           question_text: record.fields['Question'] || '',
-          options_text: record.fields['Options'] || '',
-          category: Array.isArray(record.fields['Category']) ? record.fields['Category'][0] : record.fields['Category'] || null
+          category: Array.isArray(record.fields['Category']) ? record.fields['Category'][0] : record.fields['Category'] || null,
+          order_index: result.recordsImported + 1 // Add sequential order index
         }
 
         const { error } = await supabase
@@ -215,14 +218,14 @@ async function fixQuestions(apiKey: string, baseId: string) {
 
         if (error) {
           console.error('[FIX-IMPORT] Question insert error:', error)
-          result.errors.push(`${questionId}: ${error.message}`)
+          result.errors.push(`${record.fields['Question'] || 'Unknown'}: ${error.message}`)
         } else {
           result.recordsImported++
         }
 
       } catch (err) {
-        const questionId = record.fields['Question ID'] || 'Unknown'
-        result.errors.push(`${questionId}: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        const questionText = record.fields['Question'] || 'Unknown'
+        result.errors.push(`${questionText}: ${err instanceof Error ? err.message : 'Unknown error'}`)
       }
     }
   } catch (error) {

@@ -5,8 +5,10 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { sprintService } from '@/services/sprintService'
-import { CheckCircle2, Circle, Clock, ArrowLeft, Target } from 'lucide-react'
+import { sprintService, type EnhancedStep } from '@/services/sprintService'
+import EnhancedProgressTracker from '@/components/EnhancedProgressTracker'
+import SprintCheckinPrompt from '@/components/SprintCheckinPrompt'
+import { CheckCircle2, Circle, Clock, ArrowLeft, Target, ExternalLink } from 'lucide-react'
 
 interface Sprint {
   id: string
@@ -240,12 +242,18 @@ export default function SprintDetailPage() {
   const params = useParams()
   const { user } = useAuth()
   const [sprint, setSprint] = useState<Sprint | null>(null)
+  const [enhancedSteps, setEnhancedSteps] = useState<EnhancedStep[]>([])
   const [loading, setLoading] = useState(true)
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (params.id && user?.id) {
       loadSprint()
+      
+      // Set this sprint as the active one for dashboard tracking
+      const activeSprintKey = `active_sprint_${user.id}`
+      localStorage.setItem(activeSprintKey, JSON.stringify(params.id))
+      console.log('[SPRINT-DETAIL] Set active sprint for dashboard:', params.id)
     }
   }, [params.id, user?.id])
   
@@ -254,36 +262,43 @@ export default function SprintDetailPage() {
     if (sprint && user?.id && params.id) {
       loadCompletedTasks()
     }
-  }, [sprint, user?.id, params.id])
+  }, [sprint, user?.id, params.id, enhancedSteps.length]) // Add enhancedSteps.length as dependency
 
   const loadSprint = async () => {
     try {
       setLoading(true)
-      console.log('[SPRINT-DETAIL] Loading sprint:', params.id)
+      console.log('[SPRINT-DETAIL] Loading enhanced sprint and steps:', params.id)
       
-      // Quick timeout for database calls
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database timeout')), 5000)
-      )
-      
+      // First try to load from enhanced sprint data
       try {
-        const sprintData = await Promise.race([
-          sprintService.getSprintById(params.id as string),
-          timeoutPromise
-        ])
-        console.log('[SPRINT-DETAIL] Sprint data:', sprintData)
-        setSprint(sprintData as any)
+        const enhancedSprints = await sprintService.getEnhancedSprintData()
+        const sprintData = enhancedSprints.find(s => s.id === params.id)
+        
+        if (sprintData) {
+          console.log('[SPRINT-DETAIL] Found enhanced sprint data:', sprintData)
+          setSprint(sprintData)
+          
+          // Load the actual Airtable steps for this sprint
+          const steps = await sprintService.getEnhancedStepsForOldSprint(sprintData.name)
+          console.log('[SPRINT-DETAIL] Loaded enhanced steps:', steps)
+          setEnhancedSteps(steps)
+        } else {
+          console.log('[SPRINT-DETAIL] No enhanced sprint found, trying regular sprint')
+          const fallbackSprint = await sprintService.getSprintById(params.id as string)
+          if (fallbackSprint) {
+            setSprint(fallbackSprint as any)
+          }
+        }
       } catch (dbError) {
-        console.error('[SPRINT-DETAIL] Database timeout, using fallback sprint')
-        // Fallback sprint data
-        setSprint({
-          id: params.id as string,
-          name: 'profitable_service',
-          client_facing_title: 'Lock In Your Most Profitable Service Zone',
-          description: 'Focus your business on the service that generates the most profit and satisfaction.',
-          goal: 'Identify and systematize your most profitable service delivery process.',
-          time_saved_hours: 5
-        })
+        console.error('[SPRINT-DETAIL] Error loading enhanced data:', dbError)
+        
+        // Fallback to regular sprint loading
+        try {
+          const fallbackSprint = await sprintService.getSprintById(params.id as string)
+          setSprint(fallbackSprint as any)
+        } catch (fallbackError) {
+          console.error('[SPRINT-DETAIL] All loading attempts failed')
+        }
       }
     } catch (error) {
       console.error('[SPRINT-DETAIL] Error loading sprint:', error)
@@ -296,34 +311,48 @@ export default function SprintDetailPage() {
     if (typeof window !== 'undefined' && user?.id && params.id) {
       const key = `completed_tasks_${user.id}_${params.id}`
       const saved = localStorage.getItem(key)
+      
+      // Start with pre-completed steps from Airtable data
+      const preCompletedTasks = new Set<string>()
+      
+      // Never load pre-completed steps from Airtable - only use localStorage
+      console.log('[SPRINT-DETAIL] Using only localStorage completion data - ignoring Airtable completion_status')
+      
       if (saved) {
         try {
           const taskIds = JSON.parse(saved)
-          console.log('[SPRINT-DETAIL] Loaded completed tasks:', taskIds)
+          console.log('[SPRINT-DETAIL] Loaded completed tasks from localStorage:', taskIds)
           
-          // Get current valid task IDs for this sprint
-          const currentSprintTasks = getSprintTasks(sprint!.name || 'profitable_service')
-          const validTaskIds = new Set<string>()
-          currentSprintTasks.forEach(day => {
-            day.tasks.forEach(task => {
-              validTaskIds.add(task.id)
+          // If we have enhanced steps, validate against those IDs
+          if (enhancedSteps.length > 0) {
+            const validStepIds = new Set(enhancedSteps.map(step => `enhanced-step-${step.id}`))
+            const filteredTaskIds = taskIds.filter((id: string) => validStepIds.has(id))
+            console.log('[SPRINT-DETAIL] Filtered to valid enhanced steps:', filteredTaskIds, 'from', taskIds)
+            
+            // Combine localStorage data with pre-completed tasks
+            const combinedCompleted = new Set([...preCompletedTasks, ...filteredTaskIds])
+            setCompletedTasks(combinedCompleted)
+          } else {
+            // Fallback to old system
+            const currentSprintTasks = getSprintTasks(sprint?.name || 'profitable_service')
+            const validTaskIds = new Set<string>()
+            currentSprintTasks.forEach(day => {
+              day.tasks.forEach(task => {
+                validTaskIds.add(task.id)
+              })
             })
-          })
-          
-          // Filter saved tasks to only include valid ones
-          const filteredTaskIds = taskIds.filter((id: string) => validTaskIds.has(id))
-          console.log('[SPRINT-DETAIL] Filtered to valid tasks:', filteredTaskIds, 'from', taskIds)
-          
-          setCompletedTasks(new Set(filteredTaskIds))
-          
-          // Update localStorage if we filtered out invalid tasks
-          if (filteredTaskIds.length !== taskIds.length) {
-            localStorage.setItem(key, JSON.stringify(filteredTaskIds))
-            console.log('[SPRINT-DETAIL] Cleaned up localStorage with valid tasks only')
+            
+            const filteredTaskIds = taskIds.filter((id: string) => validTaskIds.has(id))
+            console.log('[SPRINT-DETAIL] Filtered to valid tasks (fallback):', filteredTaskIds, 'from', taskIds)
+            setCompletedTasks(new Set(filteredTaskIds))
           }
         } catch (error) {
           console.error('[SPRINT-DETAIL] Error parsing completed tasks:', error)
+          setCompletedTasks(preCompletedTasks) // Use just pre-completed if parsing fails
         }
+      } else {
+        // No saved data, just use pre-completed tasks
+        setCompletedTasks(preCompletedTasks)
       }
     }
   }
@@ -350,13 +379,89 @@ export default function SprintDetailPage() {
     })
   }
 
-  const getCompletionStats = () => {
-    const sprintTasks = getSprintTasks(sprint?.name || 'profitable_service')
-    const totalTasks = sprintTasks.reduce((sum, day) => sum + day.tasks.length, 0)
-    const completed = completedTasks.size
-    const percentage = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0
+  const handleResetSprint = () => {
+    const confirmReset = window.confirm(
+      'Are you sure you want to reset this sprint? This will clear all completed tasks and cannot be undone.'
+    )
     
-    return { totalTasks, completed, percentage }
+    if (confirmReset) {
+      console.log('[SPRINT-DETAIL] Resetting sprint:', params.id)
+      
+      // Clear all completed tasks for this sprint
+      const key = `completed_tasks_${user?.id}_${params.id}`
+      localStorage.removeItem(key)
+      
+      // Also remove from completed sprints if it was marked complete
+      if (user?.id) {
+        const completedSprintsKey = `completed_sprints_${user.id}`
+        const completedSprintsData = localStorage.getItem(completedSprintsKey)
+        if (completedSprintsData) {
+          try {
+            const completedSprints = JSON.parse(completedSprintsData)
+            const updatedCompleted = completedSprints.filter((id: string) => id !== params.id)
+            localStorage.setItem(completedSprintsKey, JSON.stringify(updatedCompleted))
+          } catch (error) {
+            console.error('[SPRINT-DETAIL] Error updating completed sprints:', error)
+          }
+        }
+      }
+      
+      // Remove from started sprints to reset button state
+      const startedSprintsKey = `started_sprints_${user.id}`
+      const startedSprintsData = localStorage.getItem(startedSprintsKey)
+      if (startedSprintsData) {
+        try {
+          const startedSprints = JSON.parse(startedSprintsData)
+          const updatedStarted = startedSprints.filter((id: string) => id !== params.id)
+          localStorage.setItem(startedSprintsKey, JSON.stringify(updatedStarted))
+        } catch (error) {
+          console.error('[SPRINT-DETAIL] Error updating started sprints:', error)
+        }
+      }
+      
+      // Reset local state
+      setCompletedTasks(new Set())
+      
+      console.log('[SPRINT-DETAIL] Sprint reset successfully')
+    }
+  }
+
+  const getCompletionStats = () => {
+    // Use enhanced steps if available, otherwise fallback to old system
+    if (enhancedSteps.length > 0) {
+      const totalTasks = enhancedSteps.length
+      // Count only valid enhanced step completions
+      const validEnhancedStepIds = new Set(enhancedSteps.map(step => `enhanced-step-${step.id}`))
+      const completed = Array.from(completedTasks).filter(taskId => validEnhancedStepIds.has(taskId)).length
+      const percentage = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0
+      
+      console.log('[SPRINT-DETAIL] Completion stats calculation:', {
+        totalTasks,
+        completed,
+        percentage,
+        enhancedStepsCount: enhancedSteps.length,
+        completedTasksSize: completedTasks.size,
+        validEnhancedStepIds: Array.from(validEnhancedStepIds),
+        allCompletedTasks: Array.from(completedTasks)
+      })
+      
+      return { totalTasks, completed, percentage }
+    } else {
+      const sprintTasks = getSprintTasks(sprint?.name || 'profitable_service')
+      const totalTasks = sprintTasks.reduce((sum, day) => sum + day.tasks.length, 0)
+      const completed = completedTasks.size
+      const percentage = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0
+      
+      console.log('[SPRINT-DETAIL] Fallback stats calculation:', {
+        totalTasks,
+        completed,
+        percentage,
+        sprintName: sprint?.name,
+        completedTasksSize: completedTasks.size
+      })
+      
+      return { totalTasks, completed, percentage }
+    }
   }
 
   if (loading) {
@@ -423,22 +528,24 @@ export default function SprintDetailPage() {
               </p>
             )}
 
-            {/* Progress Bar */}
-            <div className="bg-white rounded-lg p-6 mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Sprint Progress</h2>
-                <span className="text-sm text-gray-600">{stats.completed} of {stats.totalTasks} tasks completed</span>
-              </div>
+            {/* Enhanced Progress Tracker */}
+            <div className="mb-6">
+              <EnhancedProgressTracker
+                sprintId={params.id as string}
+                sprintName={sprint.client_facing_title || sprint.name}
+                totalTasks={stats.totalTasks}
+                completedTasks={stats.completed}
+              />
               
-              <div className="bg-gray-200 rounded-full h-3 mb-2">
-                <div 
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${stats.percentage}%` }}
-                />
-              </div>
-              
-              <div className="text-center text-2xl font-bold text-blue-600 mt-2">
-                {stats.percentage}% Complete
+              {/* Reset Button */}
+              <div className="mt-4 text-right">
+                <button
+                  onClick={handleResetSprint}
+                  className="text-red-600 hover:text-red-800 text-sm font-medium px-4 py-2 rounded-lg border border-red-300 hover:bg-red-50 transition-colors"
+                  title="Reset all progress for this sprint"
+                >
+                  🔄 Reset Sprint Progress
+                </button>
               </div>
             </div>
 
@@ -462,29 +569,39 @@ export default function SprintDetailPage() {
             )}
           </div>
 
-          {/* Daily Tasks */}
+          {/* Sprint Check-in Prompt */}
+          <SprintCheckinPrompt
+            sprintId={params.id as string}
+            sprintName={sprint.client_facing_title || sprint.name}
+            completedTasks={stats.completed}
+            totalTasks={stats.totalTasks}
+            className="mb-6"
+          />
+
+          {/* Sprint Steps */}
           <div className="space-y-6">
-            {getSprintTasks(sprint?.name || 'profitable_service').map((dayData) => (
-              <div key={dayData.day} className="bg-white rounded-lg shadow-sm border">
-                <div className="bg-gray-50 px-6 py-4 border-b">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Day {dayData.day}
-                  </h3>
-                </div>
+            {enhancedSteps.length > 0 ? (
+              // Display Ruth's actual Airtable steps
+              enhancedSteps.map((step) => {
+                const stepId = `enhanced-step-${step.id}`
+                const isCompleted = completedTasks.has(stepId)
                 
-                <div className="p-6 space-y-4">
-                  {dayData.tasks.map((task) => {
-                    const isCompleted = completedTasks.has(task.id)
+                return (
+                  <div key={step.id} className="bg-white rounded-lg shadow-sm border">
+                    <div className="bg-gray-50 px-6 py-4 border-b">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Step {step.step_number}: {step.step_name}
+                      </h3>
+                    </div>
                     
-                    return (
+                    <div className="p-6">
                       <div 
-                        key={task.id}
                         className={`rounded-lg border p-4 transition-all cursor-pointer ${
                           isCompleted 
                             ? 'bg-green-50 border-green-200' 
                             : 'bg-gray-50 border-gray-200 hover:border-blue-300'
                         }`}
-                        onClick={() => handleCompleteTask(task.id)}
+                        onClick={() => handleCompleteTask(stepId)}
                       >
                         <div className="flex items-start">
                           <div className="mr-3 mt-1">
@@ -499,32 +616,117 @@ export default function SprintDetailPage() {
                             <h4 className={`font-medium mb-2 ${
                               isCompleted ? 'text-green-900 line-through' : 'text-gray-900'
                             }`}>
-                              {task.title}
+                              {step.step_name}
                             </h4>
                             
                             <p className={`text-sm mb-3 ${
                               isCompleted ? 'text-green-700' : 'text-gray-600'
                             }`}>
-                              {task.description}
+                              {step.task_description}
                             </p>
-                            
-                            <div className="flex items-center text-xs text-gray-500 space-x-3">
-                              <div className="flex items-center">
-                                <Clock size={12} className="mr-1" />
-                                {task.estimatedMinutes} minutes
+
+                            <div className={`text-sm mb-3 font-medium ${
+                              isCompleted ? 'text-green-800' : 'text-blue-800'
+                            }`}>
+                              <strong>Deliverable:</strong> {step.deliverable}
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center text-xs text-gray-500 space-x-3">
+                                {step.connected_ai_prompt && (
+                                  <div className="px-2 py-1 bg-purple-100 rounded text-xs text-purple-700">
+                                    AI: {step.connected_ai_prompt}
+                                  </div>
+                                )}
+                                <div className="px-2 py-1 bg-blue-100 rounded text-xs text-blue-700">
+                                  {step.sprint_category}
+                                </div>
                               </div>
-                              <div className="px-2 py-1 bg-gray-100 rounded text-xs">
-                                {task.category}
-                              </div>
+
+                              {step.resource_link && (
+                                <a
+                                  href={step.resource_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center text-xs text-blue-600 hover:text-blue-800"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ExternalLink size={12} className="mr-1" />
+                                  Resource Link
+                                </a>
+                              )}
                             </div>
                           </div>
                         </div>
                       </div>
-                    )
-                  })}
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              // Fallback to old system if no enhanced steps
+              getSprintTasks(sprint?.name || 'profitable_service').map((dayData) => (
+                <div key={dayData.day} className="bg-white rounded-lg shadow-sm border">
+                  <div className="bg-gray-50 px-6 py-4 border-b">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Day {dayData.day}
+                    </h3>
+                  </div>
+                  
+                  <div className="p-6 space-y-4">
+                    {dayData.tasks.map((task) => {
+                      const isCompleted = completedTasks.has(task.id)
+                      
+                      return (
+                        <div 
+                          key={task.id}
+                          className={`rounded-lg border p-4 transition-all cursor-pointer ${
+                            isCompleted 
+                              ? 'bg-green-50 border-green-200' 
+                              : 'bg-gray-50 border-gray-200 hover:border-blue-300'
+                          }`}
+                          onClick={() => handleCompleteTask(task.id)}
+                        >
+                          <div className="flex items-start">
+                            <div className="mr-3 mt-1">
+                              {isCompleted ? (
+                                <CheckCircle2 size={20} className="text-green-600" />
+                              ) : (
+                                <Circle size={20} className="text-gray-400" />
+                              )}
+                            </div>
+                            
+                            <div className="flex-1">
+                              <h4 className={`font-medium mb-2 ${
+                                isCompleted ? 'text-green-900 line-through' : 'text-gray-900'
+                              }`}>
+                                {task.title}
+                              </h4>
+                              
+                              <p className={`text-sm mb-3 ${
+                                isCompleted ? 'text-green-700' : 'text-gray-600'
+                              }`}>
+                                {task.description}
+                              </p>
+                              
+                              <div className="flex items-center text-xs text-gray-500 space-x-3">
+                                <div className="flex items-center">
+                                  <Clock size={12} className="mr-1" />
+                                  {task.estimatedMinutes} minutes
+                                </div>
+                                <div className="px-2 py-1 bg-gray-100 rounded text-xs">
+                                  {task.category}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           {/* Footer */}

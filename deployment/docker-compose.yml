@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Freedom by Design Suite
+  freedom-suite:
+    build:
+      context: ..
+      dockerfile: ./deployment/docker-suite.dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUITE_DOMAIN=suite.yourdomain.com
+      - NEXT_PUBLIC_ENABLE_FREEDOM_SUITE=true
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    networks:
+      - freedom-network
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.suite.rule=Host(`suite.yourdomain.com`)"
+      - "traefik.http.routers.suite.tls=true"
+      - "traefik.http.routers.suite.tls.certresolver=letsencrypt"
+      - "traefik.http.services.suite.loadbalancer.server.port=3000"
+
+  # Executive Intelligence Engine
+  executive-ai:
+    build:
+      context: ..
+      dockerfile: ./deployment/docker-ai.dockerfile
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_AI_DOMAIN=ai.yourdomain.com
+      - NEXT_PUBLIC_ENABLE_EXECUTIVE_AI=true
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    networks:
+      - freedom-network
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ai.rule=Host(`ai.yourdomain.com`)"
+      - "traefik.http.routers.ai.tls=true"
+      - "traefik.http.routers.ai.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ai.loadbalancer.server.port=3000"
+
+  # Reverse Proxy (Traefik)
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@yourdomain.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--global.checknewversion=false"
+      - "--global.sendanonymoususage=false"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - freedom-network
+    restart: unless-stopped
+
+  # PostgreSQL Database (Optional - if not using Supabase)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=freedom_suite
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../database/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - freedom-network
+    restart: unless-stopped
+
+  # Redis Cache (Optional - for performance)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - freedom-network
+    restart: unless-stopped
+
+networks:
+  freedom-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  letsencrypt:

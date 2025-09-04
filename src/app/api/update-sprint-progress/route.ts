@@ -13,20 +13,26 @@ export async function POST(request: NextRequest) {
       userId, sprintKey, stepNumber, stepTitle, status
     })
 
-    // Get the sprint ID first
+    // Get the sprint ID first - use enhanced sprint mapping
     let sprintId = null
     if (sprintKey) {
-      const { data: sprintData, error: sprintError } = await supabase
-        .from('sprints')
-        .select('id')
-        .eq('sprint_key', sprintKey)
-        .single()
-
-      if (sprintError) {
-        console.error('[SPRINT-PROGRESS] Error finding sprint:', sprintError)
+      // Map sprint keys to UUIDs for enhanced sprints
+      const sprintKeyMapping: Record<string, string> = {
+        'S1': 'c8b5a7d9-2e4f-4a1b-8c9d-1e2f3a4b5c6d', // profitable_service
+        'S2': '00371e13-e1ee-49db-b22b-4667ed04c0d2', // smooth_path  
+        'S3': 'f1a2b3c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c', // sell_bottleneck
+        'S4': 'a9b8c7d6-e5f4-3a2b-1c9d-8e7f6a5b4c3d', // streamline_delivery
+        'S5': '5e4d3c2b-1a9f-8e7d-6c5b-4a3f2e1d9c8b'  // continuous_improve
+      }
+      
+      sprintId = sprintKeyMapping[sprintKey]
+      
+      if (!sprintId) {
+        console.error('[SPRINT-PROGRESS] Unknown sprint key:', sprintKey)
         return NextResponse.json({ error: 'Sprint not found' }, { status: 404 })
       }
-      sprintId = sprintData.id
+      
+      console.log('[SPRINT-PROGRESS] Mapped sprint key', sprintKey, 'to ID', sprintId)
     }
 
     // Update or create user progress

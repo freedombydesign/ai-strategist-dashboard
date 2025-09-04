@@ -197,27 +197,125 @@ The more context you provide, the more surgically I can analyze what's working a
   }
 }
 
+// AI PROMPT TEMPLATE PROCESSOR
+function processAIPromptTemplate(template: any, userMessage: string): { isAIPrompt: boolean; processedPrompt?: string; missingVariables?: string[] } {
+  if (!template.description || !template.description.includes('AI PROMPT TEMPLATE:')) {
+    return { isAIPrompt: false };
+  }
+  
+  const promptText = template.description;
+  
+  // Extract variables like {{OfferText}}, {{ServiceDescription}}, etc.
+  const variableMatches = promptText.match(/\{\{([^}]+)\}\}/g);
+  const variables = variableMatches ? variableMatches.map(match => match.replace(/[{}]/g, '')) : [];
+  
+  // Try to extract values from user message for each variable
+  const extractedValues: Record<string, string> = {};
+  const missingVariables: string[] = [];
+  
+  for (const variable of variables) {
+    let value = '';
+    
+    // Smart extraction based on variable name
+    switch (variable.toLowerCase()) {
+      case 'toollist':
+        // Extract tools mentioned in user message
+        const toolMatches = userMessage.match(/([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)*)/g);
+        value = toolMatches ? toolMatches.join(', ') : '';
+        break;
+      case 'servicedescription':
+      case 'servicename':
+        // Look for service-related terms
+        const serviceMatch = userMessage.match(/(consulting|coaching|agency|service|business)/gi);
+        value = serviceMatch ? serviceMatch[0] + ' service' : 'your service';
+        break;
+      case 'processtext':
+        // Extract process description if available
+        const processMatch = userMessage.match(/process[^.]*[.!?]/gi);
+        value = processMatch ? processMatch[0] : 'your current process';
+        break;
+      case 'salesnotes':
+        // Look for sales-related content
+        value = userMessage.includes('sales') ? 'your sales approach' : 'your notes';
+        break;
+      default:
+        value = `[${variable}]`; // Placeholder
+        break;
+    }
+    
+    if (value && value !== `[${variable}]`) {
+      extractedValues[variable] = value;
+    } else {
+      missingVariables.push(variable);
+    }
+  }
+  
+  // Replace variables in the prompt
+  let processedPrompt = promptText;
+  for (const [variable, value] of Object.entries(extractedValues)) {
+    const pattern = new RegExp(`\\{\\{${variable}\\}\\}`, 'gi');
+    processedPrompt = processedPrompt.replace(pattern, value);
+  }
+  
+  return {
+    isAIPrompt: true,
+    processedPrompt,
+    missingVariables: missingVariables.length > 0 ? missingVariables : undefined
+  };
+}
+
 // SPECIALIZED PROMPTS FOR DIFFERENT CONTENT TYPES
-function getSpecializedPrompt(detection: { type: string; confidence: number; context: any }, personality: string, isRewriteRequest: boolean, isFullPageRewrite: boolean, frameworkContext?: any): string {
+function getSpecializedPrompt(detection: { type: string; confidence: number; context: any }, personality: string, isRewriteRequest: boolean, isFullPageRewrite: boolean, frameworkContext?: any, userMessage?: string): string {
   const baseRules = `FORBIDDEN FORMATTING: No asterisks, no bullet points, no numbered lists, no bold text. Just raw conversational paragraphs.`
+  
+  // Ruth's Master AI System Prompt - The "Brain"
+  const masterPrompt = `
+RUTH'S AI STRATEGIST - MASTER PHILOSOPHY:
+You are Ruth's AI Business Strategist, trained on her "Freedom by Design" methodology. Lead with Ruth's frameworks FIRST, generic advice LAST. Focus on micro-specific solutions for service-based business owners. Use Ruth's voice: direct, strategic, implementation-focused.
+
+FRAMEWORK PRIORITY: 1) Ruth's specific frameworks 2) Generic business advice as backup only.
+`
   
   // Build strategic framework context from Ruth's methodology
   let frameworkSection = ''
-  if (frameworkContext) {
+  if (frameworkContext && userMessage) {
     const { userSprint, strategicGuidance, contextualInsights } = frameworkContext
     
-    frameworkSection = `
-STRATEGIC FRAMEWORK - RUTH'S METHODOLOGY:
-${userSprint ? `Your priority focus: "${userSprint.full_title}" - ${userSprint.description}` : ''}
+    console.log('[AI-PROMPT-HANDLER] Strategic guidance array:', strategicGuidance.map(g => ({ title: g.title, hasContent: !!g.content })));
+    
+    // Check if the top framework is an AI prompt template
+    const topFramework = strategicGuidance[0];
+    console.log('[AI-PROMPT-HANDLER] Checking top framework:', topFramework?.title, 'Content preview:', topFramework?.content?.substring(0, 100));
+    const aiPromptResult = topFramework ? processAIPromptTemplate(topFramework, userMessage) : { isAIPrompt: false };
+    console.log('[AI-PROMPT-HANDLER] Result:', aiPromptResult);
+    
+    if (aiPromptResult.isAIPrompt && aiPromptResult.processedPrompt) {
+      // Use the processed AI prompt directly
+      frameworkSection = `
+RUTH'S AI PROMPT TEMPLATE ACTIVATED:
+${aiPromptResult.processedPrompt}
 
-${strategicGuidance.length > 0 ? `Key Strategic Guidance:
-${strategicGuidance.slice(0, 3).map(g => `- ${g.title}: ${g.content.substring(0, 200)}...`).join('\n')}` : ''}
+EXECUTION INSTRUCTION: Follow the exact AI prompt structure above. This is Ruth's specific methodology from her Airtable system. Do NOT provide generic advice - execute the prompt exactly as structured.
+${aiPromptResult.missingVariables ? `\nMISSING VARIABLES: ${aiPromptResult.missingVariables.join(', ')} - Ask the user for these details if needed.` : ''}
+`
+    } else {
+      // Use regular framework approach
+      frameworkSection = `
+RUTH'S AVAILABLE FRAMEWORKS:
+${userSprint ? `Priority Sprint: "${userSprint.full_title}" - ${userSprint.description}` : ''}
+
+${strategicGuidance.length > 0 ? `Ruth's Specific Frameworks to Use:
+${strategicGuidance.slice(0, 2).map(g => `
+FRAMEWORK: ${g.title}
+${g.content}
+`).join('\n')}` : ''}
 
 ${contextualInsights.length > 0 ? `Strategic Context:
 ${contextualInsights.join(' ')}` : ''}
 
-Apply Ruth's Freedom by Design methodology to this analysis. Focus on micro-specific solutions that address the user's actual business stage and challenges, not generic advice.
+CRITICAL INSTRUCTION: You MUST use Ruth's specific frameworks above in your response. Follow the exact steps and structure provided. Do NOT provide generic advice when Ruth's frameworks are available.
 `
+    }
   }
   
   // Handle minimal content that needs more context
@@ -270,23 +368,53 @@ Target service providers who see 500+ ads daily - make yours impossible to ignor
 End with: "Want me to rewrite any specific sections or your entire ad campaign?"`
 
     case 'script':
+      // Check if Decision Call Structure is specifically mentioned
+      const hasDecisionCallStructure = frameworkContext?.strategicGuidance?.some(g => 
+        g.title?.toLowerCase().includes('decision call structure') && g.content?.includes('https://docs.google.com')
+      );
+      
+      console.log('[AI-STRATEGIST] Checking for Decision Call Structure:', {
+        hasGuidance: !!frameworkContext?.strategicGuidance,
+        guidanceCount: frameworkContext?.strategicGuidance?.length || 0,
+        hasDecisionCallStructure,
+        guidanceTitles: frameworkContext?.strategicGuidance?.map(g => g.title) || []
+      });
+      
+      const decisionCallGuidance = hasDecisionCallStructure ? `
+🎯 DECISION CALL STRUCTURE TEMPLATE FOUND:
+Ruth's specific Decision Call Structure framework from module four:
+
+${frameworkContext.strategicGuidance[0]?.content || 'Content not found'}
+
+CRITICAL: Use this EXACT 5-phase structure in your response. Do not provide generic sales advice.
+` : '';
+
       return `${baseRules}
+${masterPrompt}
 ${frameworkSection}
-SALES SCRIPT ANALYSIS EXPERT - CONVERSATION SURGEON:
+${decisionCallGuidance}
+SALES SCRIPT STRATEGIST - RUTH'S METHODOLOGY EXPERT:
 
 ${isRewriteRequest || isFullPageRewrite ? 
-  'User wants SCRIPT REWRITES. Quote their exact copy, explain precisely why it fails, then provide visceral alternatives for conversation psychology.' :
-  `Your job: 1) QUOTE their exact script copy 2) DIAGNOSE the precise psychological mechanism that's failing (call outcomes, objection handling, closing rates) 3) PROVIDE visceral alternatives targeting conversation psychology.
+  'User wants SCRIPT REWRITES. Use Ruth\'s Decision Call Structure as the default framework unless they specify otherwise.' :
+  `DEFAULT APPROACH: Use Ruth's DECISION CALL STRUCTURE for all sales script requests. This is Ruth's primary sales methodology.
 
-SCRIPT PSYCHOLOGY RULES:
-- First 15 seconds determine if they hang up (pattern interrupt critical)
-- Questions beat statements (discovery over pitch)
-- Handle objections before they're raised 
-- Close with assumption, not asking permission
+RUTH'S DECISION CALL STRUCTURE (6-Step Framework):
+1. Open with Certainty and Calm - "Based on everything you shared, I can see a strong fit"
+2. Reaffirm Their Vision - "What feels most aligned about this next step?"
+3. Confirm Readiness - "Does [need] still feel like the priority?"
+4. Address Any Hesitations - "Anything we should talk through?"
+5. Affirm the Fit - "This feels like a perfect match. How does it feel for you?"
+6. Guide to Decision - "Next step would be [action]. Does that work?"
 
-For solutions, avoid generic openers. Use specific scenarios like "Instead of 'How's business?' try 'I noticed your team doubled but your systems didn't - sound familiar?'" or "Replace 'Are you interested?' with 'When would you want this implemented?'"
+KEY PRINCIPLES:
+- This is a DECISION call, not a sales call
+- They're already pre-qualified and interested
+- Your role is to confirm fit and guide their decision
+- Use certainty in language, not persuasion
+- Support their decision-making process
 
-Target service providers who get 10+ sales calls weekly - make yours sound different by addressing their exact Monday morning problem.`}
+Apply this framework to create specific sales scripts for Ruth's team unless user requests a different approach.`}
 
 End with: "Want me to rewrite any specific sections or your entire script?"`
 
@@ -391,7 +519,12 @@ export async function POST(request: NextRequest) {
         { type: rewriteType, confidence: 0.9, context: { isRewriteRequest: true } } : 
         contentDetection
       
-      const systemPrompt = getSpecializedPrompt(enhancedDetection, personality, isRewriteRequest, isFullPageRewrite, frameworkContext)
+      const systemPrompt = getSpecializedPrompt(enhancedDetection, personality, isRewriteRequest, isFullPageRewrite, frameworkContext, message)
+      
+      // Debug: Log the actual prompt being sent for Decision Call Structure
+      if (message.toLowerCase().includes('decision call')) {
+        console.log('[DEBUG-PROMPT] System prompt for Decision Call Structure:', systemPrompt.substring(0, 1000), '...')
+      }
       
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '../context/AuthContext'
 import { sprintService } from '../services/sprintService'
 import { FreedomScoreResult } from '../utils/freedomScoring'
@@ -24,29 +25,40 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
   console.log('[SIMPLE-SPRINT] *** COMPONENT RE-RENDER - SPRINT FIX DEPLOYED ***');
   console.log('[SIMPLE-SPRINT] *** COMPONENT RE-RENDER - DEV TOOLS CHECK ***');
   const { user } = useAuth()
+  const router = useRouter()
   const [sprints, setSprints] = useState<SimpleSprint[]>([])
   const [loading, setLoading] = useState(true)
   const [startingSprintId, setStartingSprintId] = useState<string | null>(null)
   const [startedSprints, setStartedSprints] = useState<Set<string>>(new Set())
+  const [completedSprints, setCompletedSprints] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (user?.id) {
       loadSprints()
       loadStartedSprints()
+      loadCompletedSprints()
     }
   }, [user?.id])
 
   const loadSprints = async () => {
     try {
       setLoading(true)
-      console.log('[SIMPLE-SPRINT] Loading sprints...')
+      console.log('[SIMPLE-SPRINT] Loading enhanced sprints from Airtable data...')
       
-      const sprintData = await sprintService.getAllSprints()
-      console.log('[SIMPLE-SPRINT] Loaded sprints:', sprintData)
+      const sprintData = await sprintService.getEnhancedSprintData()
+      console.log('[SIMPLE-SPRINT] Loaded enhanced sprints:', sprintData)
       
       setSprints(sprintData)
     } catch (error) {
-      console.error('[SIMPLE-SPRINT] Error loading sprints:', error)
+      console.error('[SIMPLE-SPRINT] Error loading enhanced sprints:', error)
+      // Fallback to regular sprints if enhanced data fails
+      try {
+        const fallbackData = await sprintService.getAllSprints()
+        console.log('[SIMPLE-SPRINT] Using fallback sprint data')
+        setSprints(fallbackData)
+      } catch (fallbackError) {
+        console.error('[SIMPLE-SPRINT] Fallback also failed:', fallbackError)
+      }
     } finally {
       setLoading(false)
     }
@@ -63,6 +75,22 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
           setStartedSprints(new Set(sprintIds))
         } catch (error) {
           console.error('[SIMPLE-SPRINT] Error parsing started sprints:', error)
+        }
+      }
+    }
+  }
+
+  const loadCompletedSprints = () => {
+    if (typeof window !== 'undefined' && user?.id) {
+      const key = `completed_sprints_${user.id}`
+      const saved = localStorage.getItem(key)
+      if (saved) {
+        try {
+          const sprintIds = JSON.parse(saved)
+          console.log('[SIMPLE-SPRINT] Loaded completed sprints from localStorage:', sprintIds)
+          setCompletedSprints(new Set(sprintIds))
+        } catch (error) {
+          console.error('[SIMPLE-SPRINT] Error parsing completed sprints:', error)
         }
       }
     }
@@ -159,6 +187,11 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
         const newStartedSprints = new Set([...startedSprints, sprint.id])
         setStartedSprints(newStartedSprints)
         saveStartedSprints(newStartedSprints)
+        
+        // Navigate immediately - don't wait for state updates
+        console.log('[SIMPLE-SPRINT] Navigating to sprint page:', `/sprint/${sprint.id}`)
+        router.push(`/sprint/${sprint.id}`)
+        return // Exit early to prevent any further processing
       } else {
         console.error('[SIMPLE-SPRINT] Failed to start sprint')
       }
@@ -216,6 +249,7 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
         {recommendedSprints.map((sprint, index) => {
           const isStarting = startingSprintId === sprint.id
           const isStarted = startedSprints.has(sprint.id)
+          const isCompleted = completedSprints.has(sprint.id)
 
           return (
             <div 
@@ -253,7 +287,15 @@ export default function SimpleSprintPlanner({ freedomScore }: SimpleSprintPlanne
                 </div>
 
                 <div className="flex flex-col items-end">
-                  {!isStarted ? (
+                  {isCompleted ? (
+                    <Link
+                      href={`/sprint/${sprint.id}`}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center transition-colors"
+                    >
+                      <CheckCircle size={16} className="mr-2" />
+                      ✅ Completed - View
+                    </Link>
+                  ) : !isStarted ? (
                     <button
                       onClick={() => handleStartSprint(sprint)}
                       disabled={isStarting}
