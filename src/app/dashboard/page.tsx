@@ -121,10 +121,10 @@ export default function Dashboard() {
                   Check-in
                 </Link>
                 <Link
-                  href="/ai-strategist"
+                  href="https://ai.scalewithruth.com"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
                 >
-                  AI Strategist
+                  Executive Intelligence
                 </Link>
                 <Link
                   href="/admin"
@@ -238,11 +238,11 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Coaches</h3>
                   <div className="space-y-3">
                     <Link
-                      href="/ai-strategist"
+                      href="https://ai.scalewithruth.com"
                       className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
                     >
                       <SparklesIcon className="w-4 h-4 mr-2" style={{width: '16px', height: '16px'}} />
-                      Strategic Coach
+                      Executive Intelligence
                     </Link>
                     <Link
                       href="/implementation-coach"
@@ -280,11 +280,11 @@ export default function Dashboard() {
                       View Achievements
                     </Link>
                     <Link
-                      href="/ai-strategist"
+                      href="https://ai.scalewithruth.com"
                       className="flex items-center text-gray-600 hover:text-gray-900"
                     >
                       <SparklesIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
-                      Ask AI Strategist
+                      Executive Intelligence
                     </Link>
                   </div>
                 </div>

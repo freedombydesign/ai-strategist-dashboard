@@ -1,4 +1,34 @@
+'use client'
+
+import { useState } from 'react'
+
 export default function FreedomSuitePage() {
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+
+  const handleGenerateReport = async () => {
+    const email = prompt('Enter your email address to receive the business report:')
+    if (!email) return
+    
+    setIsGeneratingReport(true)
+    try {
+      const response = await fetch('/api/freedom-suite/generate-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      
+      const result = await response.json()
+      if (result.success) {
+        alert('✅ Business report generated successfully! Check your email for the download link.')
+      } else {
+        alert('❌ Failed to generate report: ' + result.error)
+      }
+    } catch (error) {
+      alert('❌ Failed to generate report. Please try again.')
+    } finally {
+      setIsGeneratingReport(false)
+    }
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -45,7 +75,10 @@ export default function FreedomSuitePage() {
         {/* System Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
           {/* Cash Flow Command */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={() => window.open('/cash-flow-command', '_blank')}
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -72,7 +105,10 @@ export default function FreedomSuitePage() {
           </div>
 
           {/* ProfitPulse */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={() => window.open('/business-metrics', '_blank')}
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -99,7 +135,10 @@ export default function FreedomSuitePage() {
           </div>
 
           {/* JourneyBuilder */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={() => alert('🎯 JourneyBuilder - Customer journey optimization coming soon!')}
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -126,7 +165,10 @@ export default function FreedomSuitePage() {
           </div>
 
           {/* SystemStack */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={() => alert('📚 SystemStack - Process documentation system coming soon!')}
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -153,7 +195,10 @@ export default function FreedomSuitePage() {
           </div>
 
           {/* ConvertFlow */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={() => alert('🔄 ConvertFlow - Sales optimization system coming soon!')}
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -180,7 +225,10 @@ export default function FreedomSuitePage() {
           </div>
 
           {/* DeliverEase */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={() => alert('🚀 DeliverEase - Client delivery system coming soon!')}
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
@@ -207,7 +255,10 @@ export default function FreedomSuitePage() {
           </div>
 
           {/* LaunchLoop */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
+          <div 
+            onClick={() => alert('🔬 LaunchLoop - Continuous optimization system coming soon!')}
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -247,8 +298,12 @@ export default function FreedomSuitePage() {
             >
               🧠 Executive Intelligence →
             </a>
-            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-              📊 Generate Report
+            <button 
+              onClick={handleGenerateReport}
+              disabled={isGeneratingReport}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {isGeneratingReport ? '📊 Generating...' : '📊 Generate Report'}
             </button>
           </div>
         </div>

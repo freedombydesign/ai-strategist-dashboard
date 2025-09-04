@@ -1,4 +1,35 @@
+'use client'
+
+import { useState } from 'react'
+
 export default function ExecutiveIntelligencePage() {
+  const [isEmailSending, setIsEmailSending] = useState(false)
+
+  const handleEmailBriefing = async () => {
+    const email = prompt('Enter your email address to receive the executive briefing:')
+    if (!email) return
+    
+    setIsEmailSending(true)
+    try {
+      const response = await fetch('/api/freedom-suite/email-briefing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      
+      const result = await response.json()
+      if (result.success) {
+        alert('✅ Executive briefing sent successfully!')
+      } else {
+        alert('❌ Failed to send briefing: ' + result.error)
+      }
+    } catch (error) {
+      alert('❌ Failed to send briefing. Please try again.')
+    } finally {
+      setIsEmailSending(false)
+    }
+  }
+
   const briefing = {
     date: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
     topPriority: "Client portfolio risk assessment needed - Top 3 clients represent 47% of revenue",
@@ -212,8 +243,12 @@ export default function ExecutiveIntelligencePage() {
             >
               📊 View Business Suite →
             </a>
-            <button className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors">
-              📧 Email Briefing
+            <button 
+              onClick={handleEmailBriefing}
+              disabled={isEmailSending}
+              className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+            >
+              {isEmailSending ? '📧 Sending...' : '📧 Email Briefing'}
             </button>
           </div>
         </div>
