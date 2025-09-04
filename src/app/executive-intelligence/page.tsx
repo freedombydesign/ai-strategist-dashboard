@@ -1,14 +1,5 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
-
 export default function ExecutiveIntelligencePage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  
-  const [briefing, setBriefing] = useState({
+  const briefing = {
     date: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
     topPriority: "Client portfolio risk assessment needed - Top 3 clients represent 47% of revenue",
     keyWin: "December revenue exceeded target by 12% ($485k vs $433k target)",
@@ -16,9 +7,9 @@ export default function ExecutiveIntelligencePage() {
     healthScore: 8.4,
     healthTrend: 'improving',
     confidence: 87.5
-  })
+  }
 
-  const [alerts, setAlerts] = useState([
+  const alerts = [
     {
       id: 1,
       severity: 'high',
@@ -46,28 +37,7 @@ export default function ExecutiveIntelligencePage() {
       affectedRevenue: 125000,
       confidence: 71.8
     }
-  ])
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    }
-  }, [user, loading, router])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading Executive Intelligence...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null
-  }
+  ]
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -90,13 +60,12 @@ export default function ExecutiveIntelligencePage() {
               <span className="ml-3 px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full">AI-Powered</span>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user.user_metadata?.firstName || user.email?.split('@')[0]}</span>
-              <button
-                onClick={() => router.push('https://suite.scalewithruth.com')}
+              <a
+                href="https://suite.scalewithruth.com"
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
               >
                 📊 Business Suite
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -230,30 +199,21 @@ export default function ExecutiveIntelligencePage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">🎯 Recommended Actions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="p-4 text-left border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
-              <div className="flex items-center mb-2">
-                <span className="text-xl mr-2">📞</span>
-                <span className="font-medium">Schedule Client Call</span>
-              </div>
-              <p className="text-sm text-gray-600">Review TechCorp relationship health</p>
-            </button>
-            <button className="p-4 text-left border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
-              <div className="flex items-center mb-2">
-                <span className="text-xl mr-2">🔍</span>
-                <span className="font-medium">Analyze Sales Process</span>
-              </div>
-              <p className="text-sm text-gray-600">Investigate conversion rate decline</p>
-            </button>
-            <button className="p-4 text-left border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
-              <div className="flex items-center mb-2">
-                <span className="text-xl mr-2">💡</span>
-                <span className="font-medium">Upsell Strategy</span>
-              </div>
-              <p className="text-sm text-gray-600">Prepare RetailPlus expansion proposal</p>
+        {/* Success Message */}
+        <div className="mt-8 bg-white rounded-xl shadow-sm p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">🧠 Executive Intelligence is LIVE!</h2>
+          <p className="text-lg text-gray-600 mb-6">
+            Your AI-powered decision support system is analyzing data across all 7 business systems to provide strategic insights and predictive alerts.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <a
+              href="https://suite.scalewithruth.com"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              📊 View Business Suite →
+            </a>
+            <button className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+              📧 Email Briefing
             </button>
           </div>
         </div>

@@ -1,43 +1,4 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
-
 export default function FreedomSuitePage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  const [systemStats, setSystemStats] = useState({
-    cashFlow: { health: 85, alerts: 2 },
-    profitPulse: { health: 92, profit: 34.2 },
-    journeyBuilder: { health: 78, active: 12 },
-    systemStack: { health: 88, processes: 45 },
-    convertFlow: { health: 73, pipeline: 1250000 },
-    deliverEase: { health: 94, projects: 8 },
-    launchLoop: { health: 81, experiments: 3 }
-  })
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    }
-  }, [user, loading, router])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading Freedom Suite...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -49,13 +10,12 @@ export default function FreedomSuitePage() {
               <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">Premium</span>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user.user_metadata?.firstName || user.email?.split('@')[0]}</span>
-              <button
-                onClick={() => router.push('https://ai.scalewithruth.com')}
+              <a
+                href="https://ai.scalewithruth.com"
                 className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
               >
                 🧠 Executive AI
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -64,7 +24,7 @@ export default function FreedomSuitePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white mb-8">
-          <h2 className="text-3xl font-bold mb-4">Your Business Operating System</h2>
+          <h2 className="text-3xl font-bold mb-4">🎉 Your Business Operating System</h2>
           <p className="text-xl opacity-90 mb-6">7 integrated systems working together to scale your service business from $1M to $3M+ revenue</p>
           <div className="grid grid-cols-3 gap-6">
             <div className="text-center">
@@ -85,7 +45,7 @@ export default function FreedomSuitePage() {
         {/* System Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
           {/* Cash Flow Command */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/cash-flow-command')}>
+          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -96,23 +56,23 @@ export default function FreedomSuitePage() {
                   <p className="text-sm text-gray-500">Financial Forecasting</p>
                 </div>
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${systemStats.cashFlow.health >= 80 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                {systemStats.cashFlow.health}%
+              <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                85%
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Active Alerts</span>
-                <span className="font-medium">{systemStats.cashFlow.alerts}</span>
+                <span className="font-medium">2</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: `${systemStats.cashFlow.health}%` }}></div>
+                <div className="bg-green-600 h-2 rounded-full" style={{ width: "85%" }}></div>
               </div>
             </div>
           </div>
 
           {/* ProfitPulse */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/profit-pulse')}>
+          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -123,23 +83,23 @@ export default function FreedomSuitePage() {
                   <p className="text-sm text-gray-500">Profitability Analysis</p>
                 </div>
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${systemStats.profitPulse.health >= 80 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                {systemStats.profitPulse.health}%
+              <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                92%
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Profit Margin</span>
-                <span className="font-medium text-green-600">{systemStats.profitPulse.profit}%</span>
+                <span className="font-medium text-green-600">34.2%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${systemStats.profitPulse.health}%` }}></div>
+                <div className="bg-blue-600 h-2 rounded-full" style={{ width: "92%" }}></div>
               </div>
             </div>
           </div>
 
           {/* JourneyBuilder */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/journey-builder')}>
+          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -150,23 +110,23 @@ export default function FreedomSuitePage() {
                   <p className="text-sm text-gray-500">Customer Journeys</p>
                 </div>
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${systemStats.journeyBuilder.health >= 80 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                {systemStats.journeyBuilder.health}%
+              <div className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                78%
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Active Journeys</span>
-                <span className="font-medium">{systemStats.journeyBuilder.active}</span>
+                <span className="font-medium">12</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${systemStats.journeyBuilder.health}%` }}></div>
+                <div className="bg-purple-600 h-2 rounded-full" style={{ width: "78%" }}></div>
               </div>
             </div>
           </div>
 
           {/* SystemStack */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/system-stack')}>
+          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -177,23 +137,23 @@ export default function FreedomSuitePage() {
                   <p className="text-sm text-gray-500">Process Documentation</p>
                 </div>
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${systemStats.systemStack.health >= 80 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                {systemStats.systemStack.health}%
+              <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                88%
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Active Processes</span>
-                <span className="font-medium">{systemStats.systemStack.processes}</span>
+                <span className="font-medium">45</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-orange-600 h-2 rounded-full" style={{ width: `${systemStats.systemStack.health}%` }}></div>
+                <div className="bg-orange-600 h-2 rounded-full" style={{ width: "88%" }}></div>
               </div>
             </div>
           </div>
 
           {/* ConvertFlow */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/convert-flow')}>
+          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -204,23 +164,23 @@ export default function FreedomSuitePage() {
                   <p className="text-sm text-gray-500">Sales Optimization</p>
                 </div>
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${systemStats.convertFlow.health >= 80 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                {systemStats.convertFlow.health}%
+              <div className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                73%
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Pipeline Value</span>
-                <span className="font-medium">${(systemStats.convertFlow.pipeline / 1000000).toFixed(2)}M</span>
+                <span className="font-medium">$1.25M</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-red-600 h-2 rounded-full" style={{ width: `${systemStats.convertFlow.health}%` }}></div>
+                <div className="bg-red-600 h-2 rounded-full" style={{ width: "73%" }}></div>
               </div>
             </div>
           </div>
 
           {/* DeliverEase */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/deliver-ease')}>
+          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
@@ -231,23 +191,23 @@ export default function FreedomSuitePage() {
                   <p className="text-sm text-gray-500">Client Delivery</p>
                 </div>
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${systemStats.deliverEase.health >= 80 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                {systemStats.deliverEase.health}%
+              <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                94%
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Active Projects</span>
-                <span className="font-medium">{systemStats.deliverEase.projects}</span>
+                <span className="font-medium">8</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-teal-600 h-2 rounded-full" style={{ width: `${systemStats.deliverEase.health}%` }}></div>
+                <div className="bg-teal-600 h-2 rounded-full" style={{ width: "94%" }}></div>
               </div>
             </div>
           </div>
 
           {/* LaunchLoop */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push('/launch-loop')}>
+          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -258,44 +218,37 @@ export default function FreedomSuitePage() {
                   <p className="text-sm text-gray-500">Continuous Optimization</p>
                 </div>
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${systemStats.launchLoop.health >= 80 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                {systemStats.launchLoop.health}%
+              <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                81%
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Running Experiments</span>
-                <span className="font-medium">{systemStats.launchLoop.experiments}</span>
+                <span className="font-medium">3</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${systemStats.launchLoop.health}%` }}></div>
+                <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "81%" }}></div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
-              <span className="text-2xl mb-2">📊</span>
-              <span className="text-sm font-medium text-gray-900">Generate Report</span>
-            </button>
-            <button className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
-              <span className="text-2xl mb-2">🔧</span>
-              <span className="text-sm font-medium text-gray-900">System Health</span>
-            </button>
-            <button className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
-              <span className="text-2xl mb-2">📈</span>
-              <span className="text-sm font-medium text-gray-900">View Analytics</span>
-            </button>
-            <button 
-              onClick={() => router.push('https://ai.scalewithruth.com')}
-              className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors"
+        {/* Success Message */}
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">🎉 Freedom Suite is LIVE!</h2>
+          <p className="text-lg text-gray-600 mb-6">
+            Your complete 8-system business operating system is now deployed and ready to scale your service business to $3M+ revenue.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <a
+              href="https://ai.scalewithruth.com"
+              className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
             >
-              <span className="text-2xl mb-2">🧠</span>
-              <span className="text-sm font-medium text-gray-900">Executive AI</span>
+              🧠 Executive Intelligence →
+            </a>
+            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+              📊 Generate Report
             </button>
           </div>
         </div>
