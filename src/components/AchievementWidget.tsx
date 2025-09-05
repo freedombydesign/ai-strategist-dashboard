@@ -18,7 +18,29 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
 
   useEffect(() => {
     if (user?.id) {
+      // Add a timeout to prevent infinite loading
+      const loadTimeout = setTimeout(() => {
+        if (loading) {
+          console.warn('[ACHIEVEMENT-WIDGET] Loading timeout, setting fallback data')
+          setAchievements([])
+          setMomentumScore({
+            current: 0,
+            trend: 'stable',
+            multiplier: 1,
+            factors: {
+              streakBonus: 0,
+              consistencyBonus: 0,
+              businessImpactBonus: 0,
+              achievementBonus: 0
+            }
+          })
+          setLoading(false)
+        }
+      }, 10000) // 10 second timeout
+
       loadAchievementData()
+      
+      return () => clearTimeout(loadTimeout)
     }
   }, [user?.id])
 
@@ -34,8 +56,26 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
       setAchievements(userAchievements)
       setMomentumScore(momentum)
       
+      console.log('[ACHIEVEMENT-WIDGET] Loaded data:', {
+        achievementCount: userAchievements.length,
+        momentumScore: momentum
+      })
+      
     } catch (error) {
       console.error('[ACHIEVEMENT-WIDGET] Error loading data:', error)
+      // Set empty data so widget doesn't stay in loading state
+      setAchievements([])
+      setMomentumScore({
+        current: 0,
+        trend: 'stable',
+        multiplier: 1,
+        factors: {
+          streakBonus: 0,
+          consistencyBonus: 0,
+          businessImpactBonus: 0,
+          achievementBonus: 0
+        }
+      })
     } finally {
       setLoading(false)
     }

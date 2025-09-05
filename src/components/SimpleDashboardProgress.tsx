@@ -178,11 +178,17 @@ export default function SimpleDashboardProgress({ freedomScore, className = '' }
         }
       }
       
-      console.log('[DASHBOARD-PROGRESS] Progress calculated:', {
+      console.log('[DASHBOARD-PROGRESS] Progress calculation details:', {
         sprintName: currentSprint.client_facing_title,
-        completed,
+        currentSprintId,
+        completedTasksKey,
         totalSteps,
-        percent
+        completed,
+        percent,
+        enhancedStepsCount: enhancedSteps.length,
+        completedTasksData: completedTasksData ? 'exists' : 'missing',
+        validStepIds: Array.from(new Set(enhancedSteps.map(step => `enhanced-step-${step.id}`))),
+        rawCompletedTasks: completedTasksData ? JSON.parse(completedTasksData) : null
       })
 
       setProgressData({

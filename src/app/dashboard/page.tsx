@@ -25,6 +25,7 @@ import BusinessMetricsWidget from '@/components/BusinessMetricsWidget'
 import ImplementationMetricsOverview from '@/components/ImplementationMetricsOverview'
 import AchievementWidget from '@/components/AchievementWidget'
 import EnhancedSprintTracker from '@/components/EnhancedSprintTracker'
+import SprintDebugWidget from '@/components/SprintDebugWidget'
 import { LogOut } from 'lucide-react'
 
 export default function Dashboard() {
@@ -215,6 +216,9 @@ export default function Dashboard() {
                   </div>
                 </div>
 
+                {/* Debug Widget (temporary) */}
+                <SprintDebugWidget />
+                
                 {/* Daily Check-in Prompt */}
                 <DailyCheckinPrompt />
                 
@@ -278,6 +282,17 @@ export default function Dashboard() {
                       <ArrowTrendingUpIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
                       Business Analytics
                     </Link>
+                    <button
+                      onClick={() => {
+                        console.log('[DASHBOARD] Update Business Profile button clicked');
+                        // TODO: Implement business context update functionality
+                        alert('Business Profile update feature coming soon!');
+                      }}
+                      className="flex items-center text-gray-600 hover:text-gray-900 w-full text-left"
+                    >
+                      <UserGroupIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
+                      Update Business Profile
+                    </button>
                     <Link
                       href="/achievements"
                       className="flex items-center text-gray-600 hover:text-gray-900"
