@@ -32,14 +32,14 @@ import {
 } from '@heroicons/react/24/outline'
 import { formatCurrency, formatPercentage } from '@/lib/utils'
 
-// Sample data - in real implementation, this would come from your backend
-const revenueData = [
-  { month: 'Jan', revenue: 42000, profit: 12600 },
-  { month: 'Feb', revenue: 38000, profit: 11400 },
-  { month: 'Mar', revenue: 45000, profit: 13500 },
-  { month: 'Apr', revenue: 52000, profit: 15600 },
-  { month: 'May', revenue: 48000, profit: 14400 },
-  { month: 'Jun', revenue: 56000, profit: 16800 },
+// This will be populated with real data from the database
+const defaultRevenueData = [
+  { month: 'Jan', revenue: 0, profit: 0 },
+  { month: 'Feb', revenue: 0, profit: 0 },
+  { month: 'Mar', revenue: 0, profit: 0 },
+  { month: 'Apr', revenue: 0, profit: 0 },
+  { month: 'May', revenue: 0, profit: 0 },
+  { month: 'Jun', revenue: 0, profit: 0 },
 ]
 
 const clientHealthData = [
