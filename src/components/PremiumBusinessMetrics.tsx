@@ -143,6 +143,7 @@ function KPICard({ title, value, change, trend, icon: Icon, description, index }
 export function PremiumBusinessMetrics() {
   const { user } = useAuth()
   const [businessData, setBusinessData] = useState<any>(null)
+  const [revenueData, setRevenueData] = useState(defaultRevenueData)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -153,16 +154,37 @@ export function PremiumBusinessMetrics() {
 
   const loadBusinessData = async () => {
     try {
-      const data = await businessMetricsService.getBusinessAnalytics(user!.id)
-      setBusinessData(data)
+      const [analytics, snapshots] = await Promise.all([
+        businessMetricsService.getBusinessAnalytics(user!.id),
+        businessMetricsService.getRecentSnapshots(user!.id, 6)
+      ])
+      
+      setBusinessData(analytics)
+      
+      // Convert snapshots to chart data
+      if (snapshots.length > 0) {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        const chartData = snapshots.reverse().map(snapshot => {
+          const date = new Date(snapshot.snapshot_date)
+          const monthName = monthNames[date.getMonth()]
+          const profit = snapshot.monthly_revenue - snapshot.monthly_expenses
+          
+          return {
+            month: monthName,
+            revenue: snapshot.monthly_revenue,
+            profit: profit
+          }
+        })
+        setRevenueData(chartData)
+      }
     } catch (error) {
       console.error('[BUSINESS-METRICS] Error loading data:', error)
-      // Use sample data as fallback
       setBusinessData({
         totalSnapshots: 0,
-        latestRevenue: 0,
-        latestExpenses: 0,
-        recentTrend: 'stable'
+        averageRevenue: 0,
+        averageExpenses: 0,
+        averageProfit: 0,
+        recentTrend: 'neutral'
       })
     } finally {
       setLoading(false)

@@ -32,6 +32,9 @@ export default function BusinessMetricsPage() {
   const [formData, setFormData] = useState({
     monthly_revenue: '',
     monthly_expenses: '',
+    active_clients: '',
+    avg_project_value: '',
+    avg_delivery_days: '',
     notes: ''
   })
 
@@ -79,6 +82,9 @@ export default function BusinessMetricsPage() {
         setFormData({
           monthly_revenue: '',
           monthly_expenses: '',
+          active_clients: '',
+          avg_project_value: '',
+          avg_delivery_days: '',
           notes: ''
         })
         
