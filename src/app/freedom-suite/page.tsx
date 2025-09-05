@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function FreedomSuitePage() {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
@@ -75,10 +76,8 @@ export default function FreedomSuitePage() {
         {/* System Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
           {/* Cash Flow Command */}
-          <div 
-            onClick={() => window.open('/cash-flow-command', '_blank')}
-            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
-          >
+          <Link href="/cash-flow-command" className="block">
+            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -102,13 +101,11 @@ export default function FreedomSuitePage() {
                 <div className="bg-green-600 h-2 rounded-full" style={{ width: "85%" }}></div>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* ProfitPulse */}
-          <div 
-            onClick={() => window.open('/business-metrics', '_blank')}
-            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
-          >
+          <Link href="/business-metrics" className="block">
+            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -132,7 +129,7 @@ export default function FreedomSuitePage() {
                 <div className="bg-blue-600 h-2 rounded-full" style={{ width: "92%" }}></div>
               </div>
             </div>
-          </div>
+          </Link>
 
           {/* JourneyBuilder */}
           <div 
