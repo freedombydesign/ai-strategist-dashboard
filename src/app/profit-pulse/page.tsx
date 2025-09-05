@@ -3,40 +3,52 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-export default function ProfitPulsePage() {
-  const [metrics, setMetrics] = useState({
-    monthlyRevenue: 485000,
-    profitMargin: 34.2,
-    grossProfit: 165870,
-    netProfit: 145200,
-    expenseRatio: 65.8,
-    revenueGrowth: 12.5,
-    healthScore: 92
-  })
+interface ProfitMetrics {
+  monthlyRevenue: number
+  monthlyExpenses: number
+  grossProfit: number
+  netProfit: number
+  profitMargin: number
+  expenseRatio: number
+  revenueGrowth: number
+  expenseGrowth: number
+  profitGrowth: number
+  avgTransactionValue: number
+  customersCount: number
+  revenuePerCustomer: number
+  healthScore: number
+}
 
-  const [insights, setInsights] = useState([
-    {
-      id: 1,
-      type: 'positive',
-      title: 'Strong Profit Margins',
-      message: 'Your 34.2% profit margin is well above industry average of 22%',
-      impact: 'high'
-    },
-    {
-      id: 2,
-      type: 'growth',
-      title: 'Revenue Growth Trending Up',
-      message: '12.5% month-over-month growth indicates strong business momentum',
-      impact: 'high'
-    },
-    {
-      id: 3,
-      type: 'opportunity',
-      title: 'Expense Optimization Opportunity', 
-      message: 'Reducing expenses by 5% could increase profit margin to 39%',
-      impact: 'medium'
-    }
-  ])
+interface ClientProfitability {
+  customerId: string
+  customerName: string
+  revenue: number
+  estimatedExpenses: number
+  profit: number
+  profitMargin: number
+  transactionCount: number
+  avgOrderValue: number
+  lastTransaction: number
+}
+
+interface ProfitInsight {
+  type: 'opportunity' | 'warning' | 'success' | 'optimization'
+  title: string
+  message: string
+  impact: 'low' | 'medium' | 'high' | 'critical'
+  potentialSavings?: number
+  recommendedAction: string
+}
+
+export default function ProfitPulsePage() {
+  const [metrics, setMetrics] = useState<ProfitMetrics | null>(null)
+  const [clients, setClients] = useState<ClientProfitability[]>([])
+  const [insights, setInsights] = useState<ProfitInsight[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState('overview')
+  const [lastSync, setLastSync] = useState<Date | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
   return (
     <div className="min-h-screen bg-gray-50">
