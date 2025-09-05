@@ -62,12 +62,6 @@ export default function SimpleDashboardProgress({ freedomScore, className = '' }
         return
       }
 
-      // For now, don't show any progress to avoid confusion with duplicate database entries
-      // User needs to explicitly start a sprint to see progress
-      console.log('[DASHBOARD-PROGRESS] Progress tracking disabled due to database cleanup needed')
-      setProgressData(null)
-      return
-
       const parsedStartedSprints = JSON.parse(startedSprintsData)
       console.log('[DASHBOARD-PROGRESS] Started sprints:', parsedStartedSprints)
       setStartedSprints(parsedStartedSprints)
@@ -204,9 +198,10 @@ export default function SimpleDashboardProgress({ freedomScore, className = '' }
     }
   }
 
-  // FIXED: Always return null to prevent showing incorrect 20% progress
-  // This will be restored once database is cleaned up
-  return null
+  // Don't render anything if no progress data
+  if (!progressData) {
+    return null
+  }
 
   // Use enhanced progress tracker if we have sprint data
   const currentSprintId = progressData && startedSprints.length > 0 ? 

@@ -115,6 +115,12 @@ export default function Dashboard() {
                   Analytics
                 </Link>
                 <Link
+                  href="/achievements"
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg"
+                >
+                  Achievements
+                </Link>
+                <Link
                   href="/checkin"
                   className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg"
                 >

@@ -3,32 +3,152 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-export default function CashFlowCommandPage() {
-  const [metrics, setMetrics] = useState({
-    currentBalance: 45250,
-    monthlyRecurring: 32400,
-    pendingInvoices: 18750,
-    overdueInvoices: 4200,
-    cashRunway: 6.2,
-    healthScore: 85
-  })
+interface CashFlowMetrics {
+  currentBalance: number
+  monthlyRecurring: number
+  pendingInvoices: number
+  overdueInvoices: number
+  cashRunway: number
+  healthScore: number
+  revenueGrowth: number
+  avgTransactionValue: number
+  customersCount: number
+}
 
-  const [alerts, setAlerts] = useState([
-    {
-      id: 1,
-      type: 'warning',
-      title: 'Invoice Overdue',
-      message: 'TechCorp Solutions - $4,200 overdue by 12 days',
-      urgency: 'high'
-    },
-    {
-      id: 2,
-      type: 'info',
-      title: 'Recurring Payment Due',
-      message: 'RetailPlus monthly service - $5,400 due in 3 days',
-      urgency: 'medium'
+interface CashFlowAlert {
+  id: string
+  type: 'warning' | 'info' | 'success' | 'critical'
+  title: string
+  message: string
+  urgency: 'low' | 'medium' | 'high' | 'critical'
+  amount?: number
+  dueDate?: string
+}
+
+interface Transaction {
+  id: string
+  amount: number
+  status: string
+  created: number
+  description: string | null
+  customer: string | null
+  currency: string
+  type: 'payment' | 'refund' | 'payout' | 'invoice'
+}
+
+export default function CashFlowCommandPage() {
+  const [metrics, setMetrics] = useState<CashFlowMetrics | null>(null)
+  const [alerts, setAlerts] = useState<CashFlowAlert[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [lastSync, setLastSync] = useState<Date | null>(null)
+  const [activeTab, setActiveTab] = useState('overview')
+  const [syncing, setSyncing] = useState(false)
+
+  // Load real data from Stripe API
+  useEffect(() => {
+    loadCashFlowData()
+  }, [])
+
+  const loadCashFlowData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Load metrics, alerts, and transactions in parallel
+      const [metricsRes, alertsRes, transactionsRes] = await Promise.all([
+        fetch('/api/cash-flow/metrics'),
+        fetch('/api/cash-flow/alerts'),
+        fetch('/api/cash-flow/transactions?limit=20')
+      ])
+
+      const metricsData = await metricsRes.json()
+      const alertsData = await alertsRes.json()
+      const transactionsData = await transactionsRes.json()
+
+      if (metricsData.success) {
+        setMetrics(metricsData.data)
+      }
+
+      if (alertsData.success) {
+        setAlerts(alertsData.data)
+      }
+
+      if (transactionsData.success) {
+        setTransactions(transactionsData.data)
+      }
+
+      setLastSync(new Date())
+    } catch (err) {
+      console.error('Error loading cash flow data:', err)
+      setError('Failed to load cash flow data. Please check your Stripe configuration.')
+    } finally {
+      setLoading(false)
     }
-  ])
+  }
+
+  const handleSync = async () => {
+    try {
+      setSyncing(true)
+      const response = await fetch('/api/cash-flow/metrics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sync' })
+      })
+      
+      const data = await response.json()
+      if (data.success) {
+        await loadCashFlowData()
+        alert('✅ Cash flow data synced successfully!')
+      } else {
+        alert('❌ Sync failed: ' + data.error)
+      }
+    } catch (err) {
+      console.error('Sync error:', err)
+      alert('❌ Sync failed. Please try again.')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const getAlertColor = (type: string) => {
+    switch (type) {
+      case 'critical': return 'border-red-400 bg-red-50'
+      case 'warning': return 'border-yellow-400 bg-yellow-50'
+      case 'info': return 'border-blue-400 bg-blue-50'
+      case 'success': return 'border-green-400 bg-green-50'
+      default: return 'border-gray-400 bg-gray-50'
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount)
+  }
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading real-time cash flow data...</p>
+          <p className="text-sm text-gray-500">Connecting to Stripe API</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,11 +158,31 @@ export default function CashFlowCommandPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-gray-900">💰 Cash Flow Command</h1>
-              <span className="ml-3 px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                {metrics.healthScore}% Health
-              </span>
+              {metrics && (
+                <span className={`ml-3 px-3 py-1 text-sm font-medium rounded-full ${
+                  metrics.healthScore >= 80 
+                    ? 'bg-green-100 text-green-800'
+                    : metrics.healthScore >= 60
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {metrics.healthScore}% Health
+                </span>
+              )}
+              {lastSync && (
+                <span className="ml-3 text-xs text-gray-500">
+                  Last synced: {lastSync.toLocaleTimeString()}
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={handleSync}
+                disabled={syncing}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+              >
+                {syncing ? '⏳ Syncing...' : '🔄 Sync Stripe'}
+              </button>
               <Link
                 href="/dashboard"
                 className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
