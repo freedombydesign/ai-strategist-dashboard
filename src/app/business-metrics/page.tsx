@@ -10,7 +10,7 @@ import { PremiumBusinessMetrics } from '@/components/PremiumBusinessMetrics'
 import { MobileNavigation, FloatingActionButton } from '@/components/MobileNavigation'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { ArrowLeftIcon, CurrencyDollarIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, CurrencyDollarIcon, CalendarIcon, UsersIcon, ClockIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -74,6 +74,9 @@ export default function BusinessMetricsPage() {
         monthly_revenue: revenue,
         monthly_expenses: expenses,
         profit_margin: revenue > 0 ? ((revenue - expenses) / revenue) * 100 : 0,
+        active_clients: parseInt(formData.active_clients) || undefined,
+        avg_project_value: parseFloat(formData.avg_project_value) || undefined,
+        avg_delivery_days: parseInt(formData.avg_delivery_days) || undefined,
         notes: formData.notes
       })
 
@@ -217,6 +220,60 @@ export default function BusinessMetricsPage() {
                         placeholder="15,000.00"
                         required
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-body font-medium text-foreground mb-3">
+                        Active Clients
+                      </label>
+                      <div className="relative">
+                        <UsersIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-medium-gray w-5 h-5" />
+                        <input
+                          type="number"
+                          min="0"
+                          value={formData.active_clients}
+                          onChange={(e) => setFormData(prev => ({ ...prev, active_clients: e.target.value }))}
+                          className="w-full pl-12 pr-4 py-4 bg-surface border border-black/10 rounded-xl focus:ring-2 focus:ring-rich-gold focus:border-rich-gold transition-all font-medium text-foreground placeholder-medium-gray"
+                          placeholder="25"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-body font-medium text-foreground mb-3">
+                        Avg Project Value ($)
+                      </label>
+                      <div className="relative">
+                        <CurrencyDollarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-medium-gray w-5 h-5" />
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.avg_project_value}
+                          onChange={(e) => setFormData(prev => ({ ...prev, avg_project_value: e.target.value }))}
+                          className="w-full pl-12 pr-4 py-4 bg-surface border border-black/10 rounded-xl focus:ring-2 focus:ring-rich-gold focus:border-rich-gold transition-all font-medium text-foreground placeholder-medium-gray"
+                          placeholder="8,500.00"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-body font-medium text-foreground mb-3">
+                        Avg Delivery Time (days)
+                      </label>
+                      <div className="relative">
+                        <ClockIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-medium-gray w-5 h-5" />
+                        <input
+                          type="number"
+                          min="0"
+                          value={formData.avg_delivery_days}
+                          onChange={(e) => setFormData(prev => ({ ...prev, avg_delivery_days: e.target.value }))}
+                          className="w-full pl-12 pr-4 py-4 bg-surface border border-black/10 rounded-xl focus:ring-2 focus:ring-rich-gold focus:border-rich-gold transition-all font-medium text-foreground placeholder-medium-gray"
+                          placeholder="14"
+                        />
+                      </div>
                     </div>
                   </div>
 

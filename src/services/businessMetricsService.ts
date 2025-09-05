@@ -7,6 +7,9 @@ export interface BusinessSnapshot {
   monthly_revenue: number
   monthly_expenses: number
   profit_margin: number
+  active_clients?: number
+  avg_project_value?: number
+  avg_delivery_days?: number
   notes: string
   created_at: string
   updated_at: string
