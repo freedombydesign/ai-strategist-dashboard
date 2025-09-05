@@ -104,7 +104,7 @@ export default function FreedomSuitePage() {
           </Link>
 
           {/* ProfitPulse */}
-          <Link href="/business-metrics" className="block">
+          <Link href="/profit-pulse" className="block">
             <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">

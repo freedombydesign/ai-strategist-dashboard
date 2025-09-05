@@ -7,32 +7,49 @@ export function middleware(request: NextRequest) {
 
   console.log(`[MIDDLEWARE] ${hostname} ${pathname}`)
 
-  // Handle suite subdomain - force redirect
+  // Handle suite subdomain
   if (hostname.includes('suite.scalewithruth.com')) {
-    // If already on the freedom-suite path, continue
-    if (pathname.startsWith('/freedom-suite')) {
+    // Allow all freedom-suite related paths and other pages
+    if (pathname.startsWith('/freedom-suite') || 
+        pathname.startsWith('/cash-flow-command') || 
+        pathname.startsWith('/profit-pulse') ||
+        pathname.startsWith('/business-metrics') ||
+        pathname.startsWith('/api/') ||
+        pathname.startsWith('/_next/')) {
       return NextResponse.next()
     }
     
-    // Always redirect to freedom-suite for this subdomain
-    const url = request.nextUrl.clone()
-    url.pathname = '/freedom-suite'
-    console.log(`[MIDDLEWARE] Redirecting suite to: ${url}`)
-    return NextResponse.redirect(url)
+    // Only redirect root path
+    if (pathname === '/') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/freedom-suite'
+      console.log(`[MIDDLEWARE] Redirecting suite root to: ${url}`)
+      return NextResponse.redirect(url)
+    }
+    
+    // Allow other paths to continue normally
+    return NextResponse.next()
   }
 
-  // Handle ai subdomain - force redirect
+  // Handle ai subdomain
   if (hostname.includes('ai.scalewithruth.com')) {
-    // If already on the executive-intelligence path, continue
-    if (pathname.startsWith('/executive-intelligence')) {
+    // Allow executive-intelligence paths and other necessary paths
+    if (pathname.startsWith('/executive-intelligence') ||
+        pathname.startsWith('/api/') ||
+        pathname.startsWith('/_next/')) {
       return NextResponse.next()
     }
     
-    // Always redirect to executive-intelligence for this subdomain
-    const url = request.nextUrl.clone()
-    url.pathname = '/executive-intelligence'
-    console.log(`[MIDDLEWARE] Redirecting ai to: ${url}`)
-    return NextResponse.redirect(url)
+    // Only redirect root path
+    if (pathname === '/') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/executive-intelligence'
+      console.log(`[MIDDLEWARE] Redirecting ai root to: ${url}`)
+      return NextResponse.redirect(url)
+    }
+    
+    // Allow other paths to continue normally
+    return NextResponse.next()
   }
 
   // For main domain or other cases, continue normally
