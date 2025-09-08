@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { PremiumHeader } from '@/components/PremiumHeader'
-import { PremiumAIChat } from '@/components/PremiumAIChat'
+import EnhancedChat from '@/components/EnhancedChat'
 import { MobileNavigation, FloatingActionButton } from '@/components/MobileNavigation'
 import { useAuth } from '../../context/AuthContext'
 
@@ -16,14 +16,14 @@ export default function AIStrategist() {
         {/* Premium Header */}
         <PremiumHeader />
         
-        {/* Main Chat Interface */}
+        {/* Main Chat Interface - Original AI Strategist with full features */}
         <motion.main 
-          className="flex-1 flex flex-col"
+          className="flex-1 flex flex-col overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          {user && <PremiumAIChat userId={user.id} />}
+          {user && <EnhancedChat userId={user.id} />}
         </motion.main>
         
         {/* Mobile Navigation - Only show on mobile */}

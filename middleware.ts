@@ -13,6 +13,11 @@ export function middleware(request: NextRequest) {
     if (pathname.startsWith('/freedom-suite') || 
         pathname.startsWith('/cash-flow-command') || 
         pathname.startsWith('/profit-pulse') ||
+        pathname.startsWith('/convert-flow') ||
+        pathname.startsWith('/journey-builder') ||
+        pathname.startsWith('/system-stack') ||
+        pathname.startsWith('/deliver-ease') ||
+        pathname.startsWith('/launch-loop') ||
         pathname.startsWith('/business-metrics') ||
         pathname.startsWith('/api/') ||
         pathname.startsWith('/_next/')) {

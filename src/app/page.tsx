@@ -1,7 +1,43 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChartBarIcon, RocketLaunchIcon, SparklesIcon } from '@heroicons/react/24/outline'
 
 export default function HomePage() {
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    // Only run client-side
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname.toLowerCase()
+      
+      // Route based on domain - lightweight routing
+      if (hostname.includes('suite.scalewithruth.com')) {
+        router.push('/suite')
+        return
+      } else if (hostname.includes('ai.scalewithruth.com')) {
+        router.push('/ai-intelligence')
+        return
+      }
+      
+      // Default: show landing page for main domain
+      setLoading(false)
+    }
+  }, [router])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-6 py-12">

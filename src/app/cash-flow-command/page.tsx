@@ -1,328 +1,689 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { Suspense, useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  BarChart3,
+  LineChart,
+  PieChart,
+  Users,
+  FileText,
+  Zap,
+  Target,
+  Shield,
+  Activity,
+  Filter,
+  Download,
+  RefreshCw,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus
+} from 'lucide-react'
 
-interface CashFlowMetrics {
-  currentBalance: number
-  monthlyRecurring: number
-  pendingInvoices: number
-  overdueInvoices: number
-  cashRunway: number
-  healthScore: number
-  revenueGrowth: number
-  avgTransactionValue: number
-  customersCount: number
+// Advanced mock data representing sophisticated cash flow analytics
+const mockDashboardData = {
+  currentCashPosition: 485750,
+  projectedCashFlow: {
+    conservative: 523840,
+    realistic: 578320,
+    optimistic: 634200,
+    confidence: 87
+  },
+  weeklyForecast: [
+    { week: 'Week 1', ending: '2024-01-07', inflow: 45000, outflow: 28000, netFlow: 17000, runningBalance: 502750, probability: 92 },
+    { week: 'Week 2', ending: '2024-01-14', inflow: 52000, outflow: 31000, netFlow: 21000, runningBalance: 523750, probability: 89 },
+    { week: 'Week 3', ending: '2024-01-21', inflow: 38000, outflow: 33000, netFlow: 5000, runningBalance: 528750, probability: 85 },
+    { week: 'Week 4', ending: '2024-01-28', inflow: 61000, outflow: 35000, netFlow: 26000, runningBalance: 554750, probability: 88 },
+    { week: 'Week 5', ending: '2024-02-04', inflow: 44000, outflow: 29000, netFlow: 15000, runningBalance: 569750, probability: 83 },
+    { week: 'Week 6', ending: '2024-02-11', inflow: 39000, outflow: 32000, netFlow: 7000, runningBalance: 576750, probability: 81 }
+  ],
+  alerts: {
+    critical: 2,
+    high: 5,
+    medium: 8,
+    low: 3,
+    items: [
+      {
+        id: 1,
+        type: 'cash_gap_warning',
+        severity: 'high',
+        title: 'Projected Cash Shortage - Week 8',
+        description: 'Conservative scenario shows potential $12K shortfall in 8 weeks',
+        projectedDate: '2024-02-25',
+        recommendedActions: ['Accelerate collections on $47K outstanding', 'Defer non-critical expenses'],
+        timeToAction: '2 weeks'
+      },
+      {
+        id: 2,
+        type: 'payment_acceleration',
+        severity: 'medium',
+        title: 'Collection Opportunity Identified',
+        description: '$89K in overdue invoices show high collection probability',
+        expectedImpact: 'Improve cash position by $67K within 10 days',
+        recommendedActions: ['Deploy automated collection sequence', 'Offer 2% early payment discount']
+      }
+    ]
+  },
+  paymentIntelligence: {
+    totalOutstanding: 234750,
+    overdueAmount: 89340,
+    expectedCollections: 187250,
+    collectionProbability: 79.6,
+    averageCollectionDays: 38.5,
+    riskDistribution: {
+      lowRisk: 142000,
+      mediumRisk: 67500,
+      highRisk: 25250
+    }
+  },
+  clientAnalytics: {
+    totalClients: 47,
+    averagePaymentScore: 78.3,
+    topTierClients: 12,
+    riskClients: 8,
+    segmentPerformance: [
+      { segment: 'Premium Partners', clients: 12, avgScore: 91.2, revenue: 215000, growth: 18.5 },
+      { segment: 'Core Enterprise', clients: 18, avgScore: 82.1, revenue: 347000, growth: 12.3 },
+      { segment: 'Growth Accounts', clients: 11, avgScore: 71.8, revenue: 156000, growth: 28.7 },
+      { segment: 'Risk Management', clients: 6, avgScore: 54.2, revenue: 89000, growth: -5.2 }
+    ]
+  },
+  accelerationMetrics: {
+    activeStrategies: 8,
+    collectionRate: 84.7,
+    averageAcceleration: 12.3, // days
+    revenueAccelerated: 167500,
+    roi: 312.5,
+    successfulInterventions: 23
+  },
+  keyInsights: [
+    {
+      type: 'forecast',
+      title: 'Strong Q1 Outlook',
+      description: '87% confidence in achieving $578K cash position by end of Q1',
+      impact: 'positive',
+      priority: 'high'
+    },
+    {
+      type: 'risk',
+      title: 'Client Concentration Risk',
+      description: 'Top 3 clients represent 47% of outstanding receivables',
+      impact: 'warning',
+      priority: 'high'
+    },
+    {
+      type: 'opportunity',
+      title: 'Acceleration Potential',
+      description: '$127K in receivables show high early payment probability',
+      impact: 'opportunity',
+      priority: 'medium'
+    }
+  ]
 }
 
-interface CashFlowAlert {
-  id: string
-  type: 'warning' | 'info' | 'success' | 'critical'
-  title: string
-  message: string
-  urgency: 'low' | 'medium' | 'high' | 'critical'
-  amount?: number
-  dueDate?: string
-}
-
-interface Transaction {
-  id: string
-  amount: number
-  status: string
-  created: number
-  description: string | null
-  customer: string | null
-  currency: string
-  type: 'payment' | 'refund' | 'payout' | 'invoice'
-}
-
-export default function CashFlowCommandPage() {
-  const [metrics, setMetrics] = useState<CashFlowMetrics | null>(null)
-  const [alerts, setAlerts] = useState<CashFlowAlert[]>([])
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [lastSync, setLastSync] = useState<Date | null>(null)
+export default function CashFlowCommandDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
-  const [syncing, setSyncing] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [timeframe, setTimeframe] = useState('13-week')
 
-  // Load real data from Stripe API
-  useEffect(() => {
-    loadCashFlowData()
-  }, [])
-
-  const loadCashFlowData = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      // Load metrics, alerts, and transactions in parallel
-      const [metricsRes, alertsRes, transactionsRes] = await Promise.all([
-        fetch('/api/cash-flow/metrics'),
-        fetch('/api/cash-flow/alerts'),
-        fetch('/api/cash-flow/transactions?limit=20')
-      ])
-
-      const metricsData = await metricsRes.json()
-      const alertsData = await alertsRes.json()
-      const transactionsData = await transactionsRes.json()
-
-      if (metricsData.success) {
-        setMetrics(metricsData.data)
-      }
-
-      if (alertsData.success) {
-        setAlerts(alertsData.data)
-      }
-
-      if (transactionsData.success) {
-        setTransactions(transactionsData.data)
-      }
-
-      setLastSync(new Date())
-    } catch (err) {
-      console.error('Error loading cash flow data:', err)
-      setError('Failed to load cash flow data. Please check your Stripe configuration.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSync = async () => {
-    try {
-      setSyncing(true)
-      const response = await fetch('/api/cash-flow/metrics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync' })
-      })
-      
-      const data = await response.json()
-      if (data.success) {
-        await loadCashFlowData()
-        alert('✅ Cash flow data synced successfully!')
-      } else {
-        alert('❌ Sync failed: ' + data.error)
-      }
-    } catch (err) {
-      console.error('Sync error:', err)
-      alert('❌ Sync failed. Please try again.')
-    } finally {
-      setSyncing(false)
-    }
-  }
-
-  const getAlertColor = (type: string) => {
-    switch (type) {
-      case 'critical': return 'border-red-400 bg-red-50'
-      case 'warning': return 'border-yellow-400 bg-yellow-50'
-      case 'info': return 'border-blue-400 bg-blue-50'
-      case 'success': return 'border-green-400 bg-green-50'
-      default: return 'border-gray-400 bg-gray-50'
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount)
-  }
-
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading real-time cash flow data...</p>
-          <p className="text-sm text-gray-500">Connecting to Stripe API</p>
-        </div>
-      </div>
-    )
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    setRefreshing(false)
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">💰 Cash Flow Command</h1>
-              {metrics && (
-                <span className={`ml-3 px-3 py-1 text-sm font-medium rounded-full ${
-                  metrics.healthScore >= 80 
-                    ? 'bg-green-100 text-green-800'
-                    : metrics.healthScore >= 60
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {metrics.healthScore}% Health
-                </span>
-              )}
-              {lastSync && (
-                <span className="ml-3 text-xs text-gray-500">
-                  Last synced: {lastSync.toLocaleTimeString()}
-                </span>
-              )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+      <div className="px-8 py-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">
+                Cash Flow Command
+              </h1>
+              <p className="text-slate-600 text-lg">
+                Advanced cash flow intelligence and predictive analytics
+              </p>
             </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleSync}
-                disabled={syncing}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+            <div className="flex items-center gap-3">
+              <select 
+                className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white"
+                value={timeframe}
+                onChange={(e) => setTimeframe(e.target.value)}
               >
-                {syncing ? '⏳ Syncing...' : '🔄 Sync Stripe'}
-              </button>
-              <Link
-                href="/dashboard"
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
+                <option value="13-week">13-Week Forecast</option>
+                <option value="26-week">26-Week Forecast</option>
+                <option value="52-week">52-Week Forecast</option>
+              </select>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Filter className="h-4 w-4" />
+                Filters
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2" 
+                onClick={handleRefresh}
+                disabled={refreshing}
               >
-                ← Dashboard
-              </Link>
-              <Link
-                href="https://suite.scalewithruth.com"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                🏢 Full Suite
-              </Link>
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 gap-2">
+                <Zap className="h-4 w-4" />
+                Run Analysis
+              </Button>
             </div>
           </div>
+        </div>
+
+        {/* Critical Alerts Banner */}
+        {mockDashboardData.alerts.critical > 0 && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <div>
+                  <h3 className="font-semibold text-red-900">Critical Cash Flow Alerts</h3>
+                  <p className="text-red-700 text-sm">
+                    {mockDashboardData.alerts.critical} critical alerts require immediate attention
+                  </p>
+                </div>
+              </div>
+              <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+                View Alerts
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Executive Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <ExecutiveMetricCard
+            title="Current Cash Position"
+            value={`$${(mockDashboardData.currentCashPosition / 1000).toFixed(0)}K`}
+            subtitle="As of today"
+            trend={{ value: 8.2, direction: 'up' }}
+            icon={<DollarSign className="h-5 w-5" />}
+            className="border-l-4 border-l-green-500"
+          />
+          <ExecutiveMetricCard
+            title="13-Week Forecast"
+            value={`$${(mockDashboardData.projectedCashFlow.realistic / 1000).toFixed(0)}K`}
+            subtitle={`${mockDashboardData.projectedCashFlow.confidence}% confidence`}
+            trend={{ value: 19.1, direction: 'up' }}
+            icon={<TrendingUp className="h-5 w-5" />}
+            className="border-l-4 border-l-blue-500"
+          />
+          <ExecutiveMetricCard
+            title="Outstanding Receivables"
+            value={`$${(mockDashboardData.paymentIntelligence.totalOutstanding / 1000).toFixed(0)}K`}
+            subtitle={`${mockDashboardData.paymentIntelligence.collectionProbability}% collection probability`}
+            trend={{ value: -3.1, direction: 'down' }}
+            icon={<FileText className="h-5 w-5" />}
+            className="border-l-4 border-l-amber-500"
+          />
+          <ExecutiveMetricCard
+            title="Collection Performance"
+            value={`${mockDashboardData.accelerationMetrics.collectionRate}%`}
+            subtitle={`${mockDashboardData.accelerationMetrics.averageAcceleration} day acceleration`}
+            trend={{ value: 5.7, direction: 'up' }}
+            icon={<Target className="h-5 w-5" />}
+            className="border-l-4 border-l-purple-500"
+          />
+        </div>
+
+        {/* Main Dashboard Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-none lg:inline-flex bg-slate-100/50">
+            <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-white">
+              <BarChart3 className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="forecast" className="gap-2 data-[state=active]:bg-white">
+              <LineChart className="h-4 w-4" />
+              Forecast
+            </TabsTrigger>
+            <TabsTrigger value="alerts" className="gap-2 data-[state=active]:bg-white">
+              <AlertTriangle className="h-4 w-4" />
+              Alerts
+            </TabsTrigger>
+            <TabsTrigger value="clients" className="gap-2 data-[state=active]:bg-white">
+              <Users className="h-4 w-4" />
+              Clients
+            </TabsTrigger>
+            <TabsTrigger value="acceleration" className="gap-2 data-[state=active]:bg-white">
+              <Zap className="h-4 w-4" />
+              Acceleration
+            </TabsTrigger>
+            <TabsTrigger value="intelligence" className="gap-2 data-[state=active]:bg-white">
+              <Shield className="h-4 w-4" />
+              Intelligence
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Cash Flow Forecast Chart */}
+              <Card className="lg:col-span-2 border-0 shadow-lg hover:shadow-xl transition-shadow">
+                <CardHeader className="border-b border-slate-100 pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <LineChart className="h-5 w-5 text-blue-600" />
+                      13-Week Cash Flow Forecast
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-green-700 bg-green-50">
+                        {mockDashboardData.projectedCashFlow.confidence}% Confidence
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <CashFlowForecastChart data={mockDashboardData.weeklyForecast} />
+                </CardContent>
+              </Card>
+
+              {/* Key Insights Panel */}
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                <CardHeader className="border-b border-slate-100 pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Activity className="h-5 w-5 text-purple-600" />
+                    Strategic Insights
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {mockDashboardData.keyInsights.map((insight, index) => (
+                      <InsightCard key={index} insight={insight} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Client Performance Matrix */}
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader className="border-b border-slate-100 pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="h-5 w-5 text-indigo-600" />
+                  Client Performance Matrix
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <ClientPerformanceMatrix segments={mockDashboardData.clientAnalytics.segmentPerformance} />
+              </CardContent>
+            </Card>
+
+            {/* Payment Intelligence Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                <CardHeader className="border-b border-slate-100 pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <PieChart className="h-5 w-5 text-emerald-600" />
+                    Payment Risk Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <PaymentRiskChart riskData={mockDashboardData.paymentIntelligence.riskDistribution} />
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                <CardHeader className="border-b border-slate-100 pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Target className="h-5 w-5 text-orange-600" />
+                    Acceleration Performance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <AccelerationMetrics metrics={mockDashboardData.accelerationMetrics} />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="forecast">
+            <ForecastingInterface data={mockDashboardData} />
+          </TabsContent>
+
+          <TabsContent value="alerts">
+            <AlertsManagement alerts={mockDashboardData.alerts} />
+          </TabsContent>
+
+          <TabsContent value="clients">
+            <ClientAnalyticsDashboard analytics={mockDashboardData.clientAnalytics} />
+          </TabsContent>
+
+          <TabsContent value="acceleration">
+            <AccelerationDashboard metrics={mockDashboardData.accelerationMetrics} />
+          </TabsContent>
+
+          <TabsContent value="intelligence">
+            <BusinessIntelligence data={mockDashboardData} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  )
+}
+
+function ExecutiveMetricCard({ 
+  title, 
+  value, 
+  subtitle, 
+  trend, 
+  icon, 
+  className = "" 
+}: {
+  title: string
+  value: string
+  subtitle: string
+  trend: { value: number; direction: 'up' | 'down' | 'flat' }
+  icon: React.ReactNode
+  className?: string
+}) {
+  return (
+    <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-200 ${className}`}>
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-slate-100 rounded-lg">
+                <div className="text-slate-600">
+                  {icon}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-600 uppercase tracking-wide">{title}</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-slate-900">{value}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">{subtitle}</span>
+                <div className={`flex items-center gap-1 text-xs ${
+                  trend.direction === 'up' ? 'text-emerald-600' : 
+                  trend.direction === 'down' ? 'text-red-600' : 
+                  'text-slate-500'
+                }`}>
+                  {trend.direction === 'up' && <ArrowUpRight className="h-3 w-3" />}
+                  {trend.direction === 'down' && <ArrowDownRight className="h-3 w-3" />}
+                  {trend.direction === 'flat' && <Minus className="h-3 w-3" />}
+                  <span className="font-medium">{Math.abs(trend.value)}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function CashFlowForecastChart({ data }: { data: any[] }) {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="text-center p-3 bg-red-50 rounded-lg border">
+          <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Conservative</p>
+          <p className="text-xl font-bold text-red-700 mt-1">$524K</p>
+          <p className="text-xs text-red-600">80% confidence</p>
+        </div>
+        <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Realistic</p>
+          <p className="text-xl font-bold text-blue-700 mt-1">$578K</p>
+          <p className="text-xs text-blue-600">87% confidence</p>
+        </div>
+        <div className="text-center p-3 bg-green-50 rounded-lg border">
+          <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Optimistic</p>
+          <p className="text-xl font-bold text-green-700 mt-1">$634K</p>
+          <p className="text-xs text-green-600">65% confidence</p>
         </div>
       </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <span className="text-green-600 font-bold">$</span>
-                </div>
+      
+      <div className="space-y-2">
+        {data.slice(0, 6).map((week, index) => (
+          <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="text-sm font-medium text-slate-900">{week.week}</div>
+              <div className="text-xs text-slate-600">{week.ending}</div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div className="text-emerald-600 font-medium">+${(week.inflow / 1000).toFixed(0)}K</div>
+              <div className="text-red-600 font-medium">-${(week.outflow / 1000).toFixed(0)}K</div>
+              <div className={`font-bold ${week.netFlow >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                {week.netFlow >= 0 ? '+' : ''}${(week.netFlow / 1000).toFixed(0)}K
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Current Balance</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  ${metrics.currentBalance.toLocaleString()}
-                </p>
-              </div>
+              <div className="text-slate-900 font-bold">${(week.runningBalance / 1000).toFixed(0)}K</div>
+              <div className="text-xs bg-slate-200 px-2 py-1 rounded">{week.probability}%</div>
             </div>
           </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-blue-600 font-bold">↻</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Monthly Recurring</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  ${metrics.monthlyRecurring.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
+function InsightCard({ insight }: { insight: any }) {
+  const iconMap = {
+    forecast: <TrendingUp className="h-4 w-4" />,
+    risk: <AlertTriangle className="h-4 w-4" />,
+    opportunity: <Target className="h-4 w-4" />
+  }
 
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <span className="text-yellow-600 font-bold">⏳</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Pending Invoices</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  ${metrics.pendingInvoices.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
+  const colorMap = {
+    positive: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+    warning: 'bg-amber-50 border-amber-200 text-amber-800',
+    opportunity: 'bg-blue-50 border-blue-200 text-blue-800'
+  }
 
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                  <span className="text-red-600 font-bold">!</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Cash Runway</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {metrics.cashRunway} months
-                </p>
-              </div>
-            </div>
-          </div>
+  return (
+    <div className={`p-3 rounded-lg border ${colorMap[insight.impact as keyof typeof colorMap]}`}>
+      <div className="flex items-start gap-2">
+        <div className="mt-0.5">
+          {iconMap[insight.type as keyof typeof iconMap]}
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Cash Flow Alerts */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">💡 Cash Flow Alerts</h3>
-            <div className="space-y-4">
-              {alerts.map((alert) => (
-                <div key={alert.id} className={`p-4 rounded-lg border-l-4 ${
-                  alert.urgency === 'high' 
-                    ? 'border-red-400 bg-red-50' 
-                    : 'border-yellow-400 bg-yellow-50'
-                }`}>
-                  <h4 className="font-semibold text-gray-900">{alert.title}</h4>
-                  <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">⚡ Quick Actions</h3>
-            <div className="space-y-3">
-              <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                📊 Generate Cash Flow Report
-              </button>
-              <button className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                💸 Send Invoice Reminders
-              </button>
-              <button className="w-full bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
-                📈 Forecast Next 90 Days
-              </button>
-              <button className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                ⚙️ Set Up Alerts
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Status Message */}
-        <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <span className="text-green-600 text-xl">✅</span>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-green-800">
-                Cash Flow Command is operational!
-              </h3>
-              <div className="mt-2 text-sm text-green-700">
-                <p>Your cash flow monitoring system is active and tracking all financial metrics in real-time.</p>
-              </div>
-            </div>
-          </div>
+        <div className="flex-1">
+          <h4 className="font-medium text-sm mb-1">{insight.title}</h4>
+          <p className="text-xs leading-relaxed">{insight.description}</p>
         </div>
       </div>
     </div>
+  )
+}
+
+function ClientPerformanceMatrix({ segments }: { segments: any[] }) {
+  return (
+    <div className="space-y-4">
+      {segments.map((segment, index) => (
+        <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-white rounded-lg border hover:border-slate-300 transition-colors">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 text-white text-sm font-bold rounded">
+              {segment.clients}
+            </div>
+            <div>
+              <h4 className="font-semibold text-slate-900">{segment.segment}</h4>
+              <div className="flex items-center gap-3 text-sm text-slate-600">
+                <span>Score: {segment.avgScore}</span>
+                <span>Revenue: ${(segment.revenue / 1000).toFixed(0)}K</span>
+                <div className={`flex items-center gap-1 ${segment.growth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {segment.growth >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  <span>{Math.abs(segment.growth)}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-lg font-bold text-slate-900">${(segment.revenue / 1000).toFixed(0)}K</div>
+            <div className="text-sm text-slate-600">Avg Score: {segment.avgScore}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PaymentRiskChart({ riskData }: { riskData: any }) {
+  const total = riskData.lowRisk + riskData.mediumRisk + riskData.highRisk
+  
+  return (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+            <span className="text-sm font-medium">Low Risk</span>
+          </div>
+          <div className="text-right">
+            <div className="font-bold">${(riskData.lowRisk / 1000).toFixed(0)}K</div>
+            <div className="text-xs text-slate-500">{Math.round((riskData.lowRisk / total) * 100)}%</div>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+            <span className="text-sm font-medium">Medium Risk</span>
+          </div>
+          <div className="text-right">
+            <div className="font-bold">${(riskData.mediumRisk / 1000).toFixed(0)}K</div>
+            <div className="text-xs text-slate-500">{Math.round((riskData.mediumRisk / total) * 100)}%</div>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            <span className="text-sm font-medium">High Risk</span>
+          </div>
+          <div className="text-right">
+            <div className="font-bold">${(riskData.highRisk / 1000).toFixed(0)}K</div>
+            <div className="text-xs text-slate-500">{Math.round((riskData.highRisk / total) * 100)}%</div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="pt-4 border-t">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-slate-900">${(total / 1000).toFixed(0)}K</div>
+          <div className="text-sm text-slate-600">Total Exposure</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AccelerationMetrics({ metrics }: { metrics: any }) {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="text-center p-3 bg-slate-50 rounded-lg">
+          <div className="text-2xl font-bold text-slate-900">{metrics.activeStrategies}</div>
+          <div className="text-xs text-slate-600 uppercase tracking-wide">Active Strategies</div>
+        </div>
+        <div className="text-center p-3 bg-emerald-50 rounded-lg">
+          <div className="text-2xl font-bold text-emerald-700">{metrics.collectionRate}%</div>
+          <div className="text-xs text-emerald-600 uppercase tracking-wide">Success Rate</div>
+        </div>
+      </div>
+      
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Average Acceleration</span>
+          <span className="font-bold">{metrics.averageAcceleration} days</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Revenue Accelerated</span>
+          <span className="font-bold">${(metrics.revenueAccelerated / 1000).toFixed(0)}K</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">ROI</span>
+          <span className="font-bold text-emerald-600">{metrics.roi}%</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Placeholder components for other tabs
+function ForecastingInterface({ data }: { data: any }) {
+  return (
+    <Card className="border-0 shadow-lg">
+      <CardHeader>
+        <CardTitle>Advanced Forecasting Interface</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-slate-600">Sophisticated forecasting interface with scenario modeling coming soon...</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function AlertsManagement({ alerts }: { alerts: any }) {
+  return (
+    <Card className="border-0 shadow-lg">
+      <CardHeader>
+        <CardTitle>Alert Management Center</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-slate-600">Comprehensive alert management interface coming soon...</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ClientAnalyticsDashboard({ analytics }: { analytics: any }) {
+  return (
+    <Card className="border-0 shadow-lg">
+      <CardHeader>
+        <CardTitle>Client Analytics Dashboard</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-slate-600">Advanced client analytics and scoring interface coming soon...</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function AccelerationDashboard({ metrics }: { metrics: any }) {
+  return (
+    <Card className="border-0 shadow-lg">
+      <CardHeader>
+        <CardTitle>Payment Acceleration Dashboard</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-slate-600">Payment acceleration tools and optimization interface coming soon...</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function BusinessIntelligence({ data }: { data: any }) {
+  return (
+    <Card className="border-0 shadow-lg">
+      <CardHeader>
+        <CardTitle>Business Intelligence Center</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <p className="text-slate-600">Advanced business intelligence and predictive analytics coming soon...</p>
+      </CardContent>
+    </Card>
   )
 }
