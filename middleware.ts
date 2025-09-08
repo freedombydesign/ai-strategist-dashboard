@@ -9,16 +9,16 @@ export function middleware(request: NextRequest) {
 
   // Handle suite subdomain
   if (hostname.includes('suite.scalewithruth.com')) {
-    // Allow all freedom-suite related paths and other pages
-    if (pathname.startsWith('/freedom-suite') || 
-        pathname.startsWith('/cash-flow-command') || 
-        pathname.startsWith('/profit-pulse') ||
-        pathname.startsWith('/convert-flow') ||
-        pathname.startsWith('/journey-builder') ||
-        pathname.startsWith('/system-stack') ||
+    // Allow all suite related paths and other pages
+    if (pathname.startsWith('/suite-home') ||
+        pathname.startsWith('/suite') || 
         pathname.startsWith('/deliver-ease') ||
-        pathname.startsWith('/launch-loop') ||
-        pathname.startsWith('/business-metrics') ||
+        pathname.startsWith('/profit-pulse') ||
+        pathname.startsWith('/cash-flow') ||
+        pathname.startsWith('/convert-flow') ||
+        pathname.startsWith('/login') ||
+        pathname.startsWith('/signup') ||
+        pathname.startsWith('/dashboard') ||
         pathname.startsWith('/api/') ||
         pathname.startsWith('/_next/')) {
       return NextResponse.next()
@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
     // Only redirect root path
     if (pathname === '/') {
       const url = request.nextUrl.clone()
-      url.pathname = '/freedom-suite'
+      url.pathname = '/suite-home'
       console.log(`[MIDDLEWARE] Redirecting suite root to: ${url}`)
       return NextResponse.redirect(url)
     }
@@ -38,8 +38,14 @@ export function middleware(request: NextRequest) {
 
   // Handle ai subdomain
   if (hostname.includes('ai.scalewithruth.com')) {
-    // Allow executive-intelligence paths and other necessary paths
-    if (pathname.startsWith('/executive-intelligence') ||
+    // Allow ai-intelligence paths and other necessary paths
+    if (pathname.startsWith('/ai-home') ||
+        pathname.startsWith('/ai-intelligence') ||
+        pathname.startsWith('/ai-strategist') ||
+        pathname.startsWith('/implementation-coach') ||
+        pathname.startsWith('/login') ||
+        pathname.startsWith('/signup') ||
+        pathname.startsWith('/dashboard') ||
         pathname.startsWith('/api/') ||
         pathname.startsWith('/_next/')) {
       return NextResponse.next()
@@ -48,7 +54,7 @@ export function middleware(request: NextRequest) {
     // Only redirect root path
     if (pathname === '/') {
       const url = request.nextUrl.clone()
-      url.pathname = '/executive-intelligence'
+      url.pathname = '/ai-home'
       console.log(`[MIDDLEWARE] Redirecting ai root to: ${url}`)
       return NextResponse.redirect(url)
     }

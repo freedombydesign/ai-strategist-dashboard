@@ -120,9 +120,9 @@ export async function POST(request: NextRequest) {
         })
 
       case 'sync_entries':
-        const { platform } = body
+        const { platform: syncPlatform } = body
         const syncResults = await timeTrackingIntegrationService
-          .syncTimeEntries(userId, platform)
+          .syncTimeEntries(userId, syncPlatform)
 
         const totalProcessed = syncResults.reduce((sum, result) => sum + result.entriesProcessed, 0)
         const totalAdded = syncResults.reduce((sum, result) => sum + result.entriesAdded, 0)

@@ -1,10 +1,7 @@
 'use client'
 
-import { Suspense } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Suspense, useState } from 'react'
+import Link from 'next/link'
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -98,33 +95,43 @@ const mockDashboardData = {
 }
 
 export default function ConvertFlowDashboard() {
+  const [activeTab, setActiveTab] = useState('overview')
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <div className="px-8 py-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-                ConvertFlow
-              </h1>
-              <p className="text-slate-600 mt-1">
-                Automated sales systems that convert prospects into clients
-              </p>
+            <div className="flex items-center gap-4">
+              <Link 
+                href="/freedom-suite" 
+                className="text-slate-600 hover:text-slate-800 text-sm font-medium flex items-center gap-2"
+              >
+                ← Back to Systems
+              </Link>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+                  ConvertFlow
+                </h1>
+                <p className="text-slate-600 mt-1">
+                  Automated sales systems that convert prospects into clients
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" className="gap-2">
+              <button className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white hover:bg-slate-50 flex items-center gap-2">
                 <Download className="h-4 w-4" />
                 Export
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2">
+              </button>
+              <button className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white hover:bg-slate-50 flex items-center gap-2">
                 <RefreshCw className="h-4 w-4" />
                 Refresh
-              </Button>
-              <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 gap-2">
+              </button>
+              <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-sm font-medium flex items-center gap-2">
                 <Zap className="h-4 w-4" />
                 New Funnel
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -166,103 +173,130 @@ export default function ConvertFlowDashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:grid-cols-none lg:inline-flex">
-            <TabsTrigger value="overview" className="gap-2">
+        <div className="space-y-6">
+          <div className="flex gap-1 bg-slate-100/50 p-1 rounded-lg">
+            <button 
+              onClick={() => setActiveTab('overview')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                activeTab === 'overview' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               <BarChart3 className="h-4 w-4" />
               Overview
-            </TabsTrigger>
-            <TabsTrigger value="funnels" className="gap-2">
+            </button>
+            <button 
+              onClick={() => setActiveTab('funnels')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                activeTab === 'funnels' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               <Target className="h-4 w-4" />
               Funnels
-            </TabsTrigger>
-            <TabsTrigger value="leads" className="gap-2">
+            </button>
+            <button 
+              onClick={() => setActiveTab('leads')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                activeTab === 'leads' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               <Users className="h-4 w-4" />
               Leads
-            </TabsTrigger>
-            <TabsTrigger value="proposals" className="gap-2">
+            </button>
+            <button 
+              onClick={() => setActiveTab('proposals')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                activeTab === 'proposals' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               <FileText className="h-4 w-4" />
               Proposals
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2">
+            </button>
+            <button 
+              onClick={() => setActiveTab('analytics')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                activeTab === 'analytics' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               <PieChart className="h-4 w-4" />
               Analytics
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
 
-          <TabsContent value="overview" className="space-y-6">
+          {activeTab === 'overview' && (
+          <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Top Performing Funnels */}
-              <Card className="lg:col-span-2 border-0 shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader className="border-b border-slate-100">
-                  <CardTitle className="flex items-center gap-2">
+              <div className="lg:col-span-2 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+                <div className="border-b border-slate-100 pb-4 p-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-green-600" />
                     Top Performing Funnels
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
+                  </h3>
+                </div>
+                <div className="p-6">
                   <div className="space-y-4">
                     {mockDashboardData.topPerformingFunnels.map((funnel, index) => (
                       <FunnelPerformanceRow key={funnel.id} funnel={funnel} rank={index + 1} />
                     ))}
                   </div>
-                  <Button variant="outline" className="w-full mt-4">
+                  <button className="w-full mt-4 px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white hover:bg-slate-50">
                     View All Funnels
-                  </Button>
-                </CardContent>
-              </Card>
+                  </button>
+                </div>
+              </div>
 
               {/* Recent Activity */}
-              <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader className="border-b border-slate-100">
-                  <CardTitle className="flex items-center gap-2">
+              <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+                <div className="border-b border-slate-100 pb-4 p-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Activity className="h-5 w-5 text-blue-600" />
                     Recent Activity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
+                  </h3>
+                </div>
+                <div className="p-6">
                   <div className="space-y-4">
                     {mockDashboardData.recentActivities.map((activity) => (
                       <ActivityRow key={activity.id} activity={activity} />
                     ))}
                   </div>
-                  <Button variant="outline" className="w-full mt-4">
+                  <button className="w-full mt-4 px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white hover:bg-slate-50">
                     View All Activity
-                  </Button>
-                </CardContent>
-              </Card>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Revenue Forecast */}
-            <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="border-b border-slate-100">
-                <CardTitle className="flex items-center gap-2">
+            <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+              <div className="border-b border-slate-100 pb-4 p-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-purple-600" />
                   Revenue Forecast
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
+                </h3>
+              </div>
+              <div className="p-6">
                 <RevenueForecastChart />
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
+          </div>
+          )}
 
-          <TabsContent value="funnels">
+          {activeTab === 'funnels' && (
             <FunnelManagement />
-          </TabsContent>
+          )}
 
-          <TabsContent value="leads">
+          {activeTab === 'leads' && (
             <LeadManagement />
-          </TabsContent>
+          )}
 
-          <TabsContent value="proposals">
+          {activeTab === 'proposals' && (
             <ProposalManagement />
-          </TabsContent>
+          )}
 
-          <TabsContent value="analytics">
+          {activeTab === 'analytics' && (
             <AdvancedAnalytics />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -284,8 +318,8 @@ function MetricCard({
   trend: 'up' | 'down'
 }) {
   return (
-    <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
-      <CardContent className="p-6">
+    <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+      <div className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-lg">
@@ -310,8 +344,8 @@ function MetricCard({
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -365,9 +399,9 @@ function ActivityRow({ activity }: { activity: any }) {
         <p className="text-sm text-slate-600">{activity.company}</p>
         <p className="text-sm text-slate-500 mt-1">{activity.description}</p>
         <div className="flex items-center gap-2 mt-2">
-          <Badge variant="outline" className="text-xs">
+          <span className="px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white">
             +{activity.scoreChange} points
-          </Badge>
+          </span>
           <span className="text-xs text-slate-500">
             {new Date(activity.timestamp).toLocaleDateString()}
           </span>
@@ -408,52 +442,52 @@ function RevenueForecastChart() {
 
 function FunnelManagement() {
   return (
-    <Card className="border-0 shadow-md">
-      <CardHeader className="border-b border-slate-100">
-        <CardTitle>Funnel Management</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+    <div className="bg-white rounded-lg shadow-lg">
+      <div className="border-b border-slate-100 pb-4 p-6">
+        <h3 className="text-lg font-semibold">Funnel Management</h3>
+      </div>
+      <div className="p-6">
         <p className="text-slate-600">Funnel management interface coming soon...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
 function LeadManagement() {
   return (
-    <Card className="border-0 shadow-md">
-      <CardHeader className="border-b border-slate-100">
-        <CardTitle>Lead Management</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+    <div className="bg-white rounded-lg shadow-lg">
+      <div className="border-b border-slate-100 pb-4 p-6">
+        <h3 className="text-lg font-semibold">Lead Management</h3>
+      </div>
+      <div className="p-6">
         <p className="text-slate-600">Lead management interface coming soon...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
 function ProposalManagement() {
   return (
-    <Card className="border-0 shadow-md">
-      <CardHeader className="border-b border-slate-100">
-        <CardTitle>Proposal Management</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+    <div className="bg-white rounded-lg shadow-lg">
+      <div className="border-b border-slate-100 pb-4 p-6">
+        <h3 className="text-lg font-semibold">Proposal Management</h3>
+      </div>
+      <div className="p-6">
         <p className="text-slate-600">Proposal management interface coming soon...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
 function AdvancedAnalytics() {
   return (
-    <Card className="border-0 shadow-md">
-      <CardHeader className="border-b border-slate-100">
-        <CardTitle>Advanced Analytics</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+    <div className="bg-white rounded-lg shadow-lg">
+      <div className="border-b border-slate-100 pb-4 p-6">
+        <h3 className="text-lg font-semibold">Advanced Analytics</h3>
+      </div>
+      <div className="p-6">
         <p className="text-slate-600">Advanced analytics interface coming soon...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

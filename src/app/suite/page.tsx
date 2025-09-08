@@ -1,13 +1,7 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
-
-// Lazy load heavy components to prevent crashes
-const DeliverEaseDashboard = dynamic(() => import('@/components/DeliverEaseDashboard'), {
-  loading: () => <div className="animate-pulse bg-gray-100 h-96 rounded-lg"></div>
-})
 
 export default function BusinessSuitePage() {
   const [activeSystem, setActiveSystem] = useState<string | null>(null)

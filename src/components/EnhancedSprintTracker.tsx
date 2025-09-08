@@ -273,8 +273,8 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
         progressPercent = totalSteps > 0 ? Math.round((currentStepNumber / totalSteps) * 100) : 0
       }
     } else {
-      // Fallback to step-number based calculation
-      progressPercent = totalSteps > 0 ? Math.round((currentStepNumber / totalSteps) * 100) : 0
+      // No completed tasks found, progress should be 0%
+      progressPercent = 0
     }
   }
 

@@ -18,10 +18,10 @@ export default function AIIntelligencePage() {
             </div>
             <div className="flex items-center space-x-4">
               <Link
-                href="https://scalewithruth.com/dashboard"
+                href="/freedom-suite"
                 className="bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/20 transition-colors border border-white/20"
               >
-                Freedom Dashboard
+                ← Back to Systems
               </Link>
             </div>
           </div>

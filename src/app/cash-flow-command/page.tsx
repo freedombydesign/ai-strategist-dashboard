@@ -1,10 +1,7 @@
 'use client'
 
 import { Suspense, useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import Link from 'next/link'
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -149,13 +146,21 @@ export default function CashFlowCommandDashboard() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">
-                Cash Flow Command
-              </h1>
-              <p className="text-slate-600 text-lg">
-                Advanced cash flow intelligence and predictive analytics
-              </p>
+            <div className="flex items-center gap-4">
+              <Link 
+                href="/freedom-suite" 
+                className="text-slate-600 hover:text-slate-800 text-sm font-medium flex items-center gap-2"
+              >
+                ← Back to Systems
+              </Link>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">
+                  Cash Flow Command
+                </h1>
+                <p className="text-slate-600 text-lg">
+                  Advanced cash flow intelligence and predictive analytics
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <select 
@@ -167,28 +172,22 @@ export default function CashFlowCommandDashboard() {
                 <option value="26-week">26-Week Forecast</option>
                 <option value="52-week">52-Week Forecast</option>
               </select>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" />
+              <button className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white hover:bg-slate-50">
                 Filters
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Download className="h-4 w-4" />
+              </button>
+              <button className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white hover:bg-slate-50">
                 Export
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-2" 
+              </button>
+              <button 
+                className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium bg-white hover:bg-slate-50 disabled:opacity-50" 
                 onClick={handleRefresh}
                 disabled={refreshing}
               >
-                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-              <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 gap-2">
-                <Zap className="h-4 w-4" />
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </button>
+              <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-sm font-medium">
                 Run Analysis
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -206,9 +205,9 @@ export default function CashFlowCommandDashboard() {
                   </p>
                 </div>
               </div>
-              <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+              <button className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium">
                 View Alerts
-              </Button>
+              </button>
             </div>
           </div>
         )}
@@ -250,135 +249,161 @@ export default function CashFlowCommandDashboard() {
         </div>
 
         {/* Main Dashboard Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-none lg:inline-flex bg-slate-100/50">
-            <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-white">
-              <BarChart3 className="h-4 w-4" />
+        <div className="space-y-6">
+          <div className="flex gap-1 bg-slate-100/50 p-1 rounded-lg">
+            <button 
+              onClick={() => setActiveTab('overview')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'overview' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               Overview
-            </TabsTrigger>
-            <TabsTrigger value="forecast" className="gap-2 data-[state=active]:bg-white">
-              <LineChart className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={() => setActiveTab('forecast')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'forecast' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               Forecast
-            </TabsTrigger>
-            <TabsTrigger value="alerts" className="gap-2 data-[state=active]:bg-white">
-              <AlertTriangle className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={() => setActiveTab('alerts')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'alerts' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               Alerts
-            </TabsTrigger>
-            <TabsTrigger value="clients" className="gap-2 data-[state=active]:bg-white">
-              <Users className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={() => setActiveTab('clients')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'clients' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               Clients
-            </TabsTrigger>
-            <TabsTrigger value="acceleration" className="gap-2 data-[state=active]:bg-white">
-              <Zap className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={() => setActiveTab('acceleration')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'acceleration' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               Acceleration
-            </TabsTrigger>
-            <TabsTrigger value="intelligence" className="gap-2 data-[state=active]:bg-white">
-              <Shield className="h-4 w-4" />
+            </button>
+            <button 
+              onClick={() => setActiveTab('intelligence')} 
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'intelligence' ? 'bg-white shadow-sm' : 'hover:bg-white/50'
+              }`}
+            >
               Intelligence
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
 
-          <TabsContent value="overview" className="space-y-6">
+          {activeTab === 'overview' && (
+          <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Cash Flow Forecast Chart */}
-              <Card className="lg:col-span-2 border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader className="border-b border-slate-100 pb-4">
+              <div className="lg:col-span-2 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+                <div className="border-b border-slate-100 pb-4 p-6">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-lg">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
                       <LineChart className="h-5 w-5 text-blue-600" />
                       13-Week Cash Flow Forecast
-                    </CardTitle>
+                    </h3>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-green-700 bg-green-50">
+                      <div className="px-2 py-1 border border-green-200 rounded text-sm text-green-700 bg-green-50">
                         {mockDashboardData.projectedCashFlow.confidence}% Confidence
-                      </Badge>
+                      </div>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="p-6">
+                </div>
+                <div className="p-6">
                   <CashFlowForecastChart data={mockDashboardData.weeklyForecast} />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Key Insights Panel */}
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader className="border-b border-slate-100 pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
+              <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+                <div className="border-b border-slate-100 pb-4 p-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Activity className="h-5 w-5 text-purple-600" />
                     Strategic Insights
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
+                  </h3>
+                </div>
+                <div className="p-6">
                   <div className="space-y-4">
                     {mockDashboardData.keyInsights.map((insight, index) => (
                       <InsightCard key={index} insight={insight} />
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
             {/* Client Performance Matrix */}
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="border-b border-slate-100 pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
+            <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+              <div className="border-b border-slate-100 pb-4 p-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Users className="h-5 w-5 text-indigo-600" />
                   Client Performance Matrix
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
+                </h3>
+              </div>
+              <div className="p-6">
                 <ClientPerformanceMatrix segments={mockDashboardData.clientAnalytics.segmentPerformance} />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Payment Intelligence Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader className="border-b border-slate-100 pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
+              <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+                <div className="border-b border-slate-100 pb-4 p-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
                     <PieChart className="h-5 w-5 text-emerald-600" />
                     Payment Risk Distribution
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
+                  </h3>
+                </div>
+                <div className="p-6">
                   <PaymentRiskChart riskData={mockDashboardData.paymentIntelligence.riskDistribution} />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader className="border-b border-slate-100 pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
+              <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+                <div className="border-b border-slate-100 pb-4 p-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Target className="h-5 w-5 text-orange-600" />
                     Acceleration Performance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
+                  </h3>
+                </div>
+                <div className="p-6">
                   <AccelerationMetrics metrics={mockDashboardData.accelerationMetrics} />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
-          </TabsContent>
+          </div>
+          )}
 
-          <TabsContent value="forecast">
+          {activeTab === 'forecast' && (
             <ForecastingInterface data={mockDashboardData} />
-          </TabsContent>
+          )}
 
-          <TabsContent value="alerts">
+          {activeTab === 'alerts' && (
             <AlertsManagement alerts={mockDashboardData.alerts} />
-          </TabsContent>
+          )}
 
-          <TabsContent value="clients">
+          {activeTab === 'clients' && (
             <ClientAnalyticsDashboard analytics={mockDashboardData.clientAnalytics} />
-          </TabsContent>
+          )}
 
-          <TabsContent value="acceleration">
+          {activeTab === 'acceleration' && (
             <AccelerationDashboard metrics={mockDashboardData.accelerationMetrics} />
-          </TabsContent>
+          )}
 
-          <TabsContent value="intelligence">
+          {activeTab === 'intelligence' && (
             <BusinessIntelligence data={mockDashboardData} />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -400,8 +425,8 @@ function ExecutiveMetricCard({
   className?: string
 }) {
   return (
-    <Card className={`border-0 shadow-lg hover:shadow-xl transition-all duration-200 ${className}`}>
-      <CardContent className="p-6">
+    <div className={`bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 ${className}`}>
+      <div className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
@@ -432,8 +457,8 @@ function ExecutiveMetricCard({
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -625,65 +650,65 @@ function AccelerationMetrics({ metrics }: { metrics: any }) {
 // Placeholder components for other tabs
 function ForecastingInterface({ data }: { data: any }) {
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader>
-        <CardTitle>Advanced Forecasting Interface</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+    <div className="bg-white border-0 shadow-lg rounded-lg">
+      <div className="p-6 border-b border-slate-100">
+        <h3 className="text-lg font-semibold">Advanced Forecasting Interface</h3>
+      </div>
+      <div className="p-6">
         <p className="text-slate-600">Sophisticated forecasting interface with scenario modeling coming soon...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
 function AlertsManagement({ alerts }: { alerts: any }) {
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader>
-        <CardTitle>Alert Management Center</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+    <div className="bg-white border-0 shadow-lg rounded-lg">
+      <div className="p-6 border-b border-slate-100">
+        <h3 className="text-lg font-semibold">Alert Management Center</h3>
+      </div>
+      <div className="p-6">
         <p className="text-slate-600">Comprehensive alert management interface coming soon...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
 function ClientAnalyticsDashboard({ analytics }: { analytics: any }) {
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader>
-        <CardTitle>Client Analytics Dashboard</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+    <div className="bg-white border-0 shadow-lg rounded-lg">
+      <div className="p-6 border-b border-slate-100">
+        <h3 className="text-lg font-semibold">Client Analytics Dashboard</h3>
+      </div>
+      <div className="p-6">
         <p className="text-slate-600">Advanced client analytics and scoring interface coming soon...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
 function AccelerationDashboard({ metrics }: { metrics: any }) {
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader>
-        <CardTitle>Payment Acceleration Dashboard</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+    <div className="bg-white border-0 shadow-lg rounded-lg">
+      <div className="p-6 border-b border-slate-100">
+        <h3 className="text-lg font-semibold">Payment Acceleration Dashboard</h3>
+      </div>
+      <div className="p-6">
         <p className="text-slate-600">Payment acceleration tools and optimization interface coming soon...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
 function BusinessIntelligence({ data }: { data: any }) {
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader>
-        <CardTitle>Business Intelligence Center</CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+    <div className="bg-white border-0 shadow-lg rounded-lg">
+      <div className="p-6 border-b border-slate-100">
+        <h3 className="text-lg font-semibold">Business Intelligence Center</h3>
+      </div>
+      <div className="p-6">
         <p className="text-slate-600">Advanced business intelligence and predictive analytics coming soon...</p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

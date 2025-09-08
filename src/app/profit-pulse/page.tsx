@@ -120,10 +120,10 @@ export default function ProfitPulsePage() {
             </div>
             <div className="flex items-center space-x-4">
               <Link
-                href="/dashboard"
+                href="/freedom-suite"
                 className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg"
               >
-                DASHBOARD
+                ← BACK TO SYSTEMS
               </Link>
               <Link
                 href="https://suite.scalewithruth.com"

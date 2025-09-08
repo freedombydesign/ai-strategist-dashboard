@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [freedomScore, setFreedomScore] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showBusinessOnboarding, setShowBusinessOnboarding] = useState(false)
 
   useEffect(() => {
     if (user?.id) {
@@ -128,10 +129,10 @@ export default function Dashboard() {
                   Check-in
                 </Link>
                 <Link
-                  href="https://ai.scalewithruth.com"
+                  href="/ai-strategist"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
                 >
-                  Executive Intelligence
+                  AI Strategist
                 </Link>
                 <Link
                   href="/admin"
@@ -248,11 +249,11 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Coaches</h3>
                   <div className="space-y-3">
                     <Link
-                      href="https://ai.scalewithruth.com"
+                      href="/ai-strategist"
                       className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
                     >
                       <SparklesIcon className="w-4 h-4 mr-2" style={{width: '16px', height: '16px'}} />
-                      Executive Intelligence
+                      AI Strategist
                     </Link>
                     <Link
                       href="/implementation-coach"
@@ -283,11 +284,7 @@ export default function Dashboard() {
                       Business Analytics
                     </Link>
                     <button
-                      onClick={() => {
-                        console.log('[DASHBOARD] Update Business Profile button clicked');
-                        // TODO: Implement business context update functionality
-                        alert('Business Profile update feature coming soon!');
-                      }}
+                      onClick={() => setShowBusinessOnboarding(true)}
                       className="flex items-center text-gray-600 hover:text-gray-900 w-full text-left"
                     >
                       <UserGroupIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
@@ -301,11 +298,11 @@ export default function Dashboard() {
                       View Achievements
                     </Link>
                     <Link
-                      href="https://ai.scalewithruth.com"
+                      href="/ai-strategist"
                       className="flex items-center text-gray-600 hover:text-gray-900"
                     >
                       <SparklesIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
-                      Executive Intelligence
+                      AI Strategist
                     </Link>
                   </div>
                 </div>
@@ -334,6 +331,42 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Business Context Onboarding Modal */}
+        {showBusinessOnboarding && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              {/* Background overlay */}
+              <div 
+                className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                onClick={() => setShowBusinessOnboarding(false)}
+              ></div>
+
+              {/* Modal container */}
+              <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full sm:p-6">
+                {/* Close button */}
+                <div className="absolute top-0 right-0 pt-4 pr-4">
+                  <button
+                    type="button"
+                    className="bg-white rounded-md text-gray-400 hover:text-gray-600 focus:outline-none"
+                    onClick={() => setShowBusinessOnboarding(false)}
+                  >
+                    <span className="sr-only">Close</span>
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Business onboarding content */}
+                <BusinessContextOnboarding 
+                  onComplete={() => setShowBusinessOnboarding(false)}
+                  onClose={() => setShowBusinessOnboarding(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mobile Navigation */}
         <MobileNavigation />
