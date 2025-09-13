@@ -127,7 +127,7 @@ export default function Dashboard() {
         <div className="min-h-screen bg-gray-50 py-8">
           <BusinessContextOnboarding 
             onComplete={() => setShowBusinessOnboarding(false)}
-            onClose={() => setShowBusinessOnboarding(false)}
+            onSkip={() => setShowBusinessOnboarding(false)}
           />
         </div>
       </ProtectedRoute>
