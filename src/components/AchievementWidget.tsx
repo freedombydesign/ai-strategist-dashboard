@@ -76,6 +76,7 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
       
     } catch (error) {
       console.error('[ACHIEVEMENT-WIDGET] Error loading data:', error)
+      console.error('[ACHIEVEMENT-WIDGET] Error details:', error?.message, error?.stack)
       // Set empty data so widget doesn't stay in loading state
       setAchievements([])
       setMomentumScore({
@@ -90,6 +91,7 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
         }
       })
     } finally {
+      console.log('[ACHIEVEMENT-WIDGET] Finally block - setting loading to false')
       setLoading(false)
     }
   }
