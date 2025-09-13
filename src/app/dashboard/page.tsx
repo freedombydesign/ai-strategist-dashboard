@@ -38,6 +38,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (user?.id) {
       loadUserDiagnosticData()
+      checkBusinessContext()
     }
   }, [user?.id])
 
@@ -68,6 +69,27 @@ export default function Dashboard() {
       console.error('Error loading dashboard data:', err)
       setError('Error loading diagnostic data')
       setLoading(false)
+    }
+  }
+
+  const checkBusinessContext = async () => {
+    try {
+      console.log('[DASHBOARD] Checking business context for user:', user?.id)
+      const response = await fetch(`/api/business-context?userId=${user?.id}`)
+      const result = await response.json()
+      console.log('[DASHBOARD] Business context API response:', result)
+      
+      if (result.success && result.data && result.data.business_name) {
+        console.log('[DASHBOARD] Found business context, not showing onboarding')
+        setShowBusinessOnboarding(false)
+      } else {
+        console.log('[DASHBOARD] No business context found, showing onboarding')
+        setShowBusinessOnboarding(true)
+      }
+    } catch (error) {
+      console.error('[DASHBOARD] Error checking business context:', error)
+      // Show onboarding if there's an error checking
+      setShowBusinessOnboarding(true)
     }
   }
 
@@ -284,7 +306,7 @@ export default function Dashboard() {
                       Business Analytics
                     </Link>
                     <Link
-                      href="/business-metrics"
+                      href="/business-profile"
                       className="flex items-center text-gray-600 hover:text-gray-900"
                     >
                       <UserGroupIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
