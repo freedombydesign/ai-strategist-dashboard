@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import MobileOptimizedLayout from '@/components/MobileOptimizedLayout'
-import SimpleImplementationCoach from '@/components/SimpleImplementationCoach'
+import UltimateImplementationCoach from '@/components/UltimateImplementationCoach'
 import { implementationService } from '@/services/implementationService'
 import { ArrowLeft, Bot, TrendingUp, Flame, Calendar, Target, BarChart3 } from 'lucide-react'
 
@@ -126,8 +126,11 @@ export default function ImplementationCoachPage() {
             )}
           </div>
 
+          {/* Ultimate Implementation Coach - Bypasses all JavaScript interference */}
+          <UltimateImplementationCoach />
+          
+          {/* Original layout kept for reference but not used
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Chat Interface */}
             <div className="lg:col-span-2">
               <SimpleImplementationCoach />
             </div>
@@ -241,7 +244,7 @@ export default function ImplementationCoachPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
       </MobileOptimizedLayout>
