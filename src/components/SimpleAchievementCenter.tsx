@@ -20,10 +20,86 @@ export default function SimpleAchievementCenter() {
   const loadAchievements = async () => {
     try {
       setLoading(true)
-      const userAchievements = await achievementService.getUserAchievements(user!.id)
+      console.log('[ACHIEVEMENT-CENTER] Loading achievements for user:', user?.id)
+      
+      // Add timeout protection
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      )
+      
+      const achievementsPromise = achievementService.getUserAchievements(user!.id)
+      const userAchievements = await Promise.race([achievementsPromise, timeoutPromise]) as any
+      
+      console.log('[ACHIEVEMENT-CENTER] Achievements loaded:', userAchievements?.length)
       setAchievements(userAchievements)
     } catch (error) {
       console.error('[ACHIEVEMENT-CENTER] Error loading achievements:', error)
+      
+      // Try direct database query as fallback
+      try {
+        console.log('[ACHIEVEMENT-CENTER] Attempting fallback database query...')
+        const { supabase } = await import('../lib/supabase')
+        
+        // Get check-ins to calculate basic achievements
+        const { data: checkins, error: checkinError } = await supabase
+          .from('daily_checkins')
+          .select('*')
+          .eq('user_id', user!.id)
+          .order('checkin_date', { ascending: false })
+        
+        if (!checkinError && checkins) {
+          console.log('[ACHIEVEMENT-CENTER] Fallback loaded checkins:', checkins.length)
+          
+          // Create basic achievements based on check-ins
+          const basicAchievements = [
+            {
+              id: 'first_steps',
+              name: 'First Steps',
+              description: 'Complete your first daily check-in',
+              icon: '🚀',
+              category: 'streak' as const,
+              requirement: 1,
+              points: 10,
+              rarity: 'common' as const,
+              unlocked: checkins.length >= 1,
+              progress: Math.min(checkins.length, 1)
+            },
+            {
+              id: 'getting_started',
+              name: 'Getting Started',
+              description: 'Maintain a 3-day check-in streak',
+              icon: '🔥',
+              category: 'streak' as const,
+              requirement: 3,
+              points: 25,
+              rarity: 'common' as const,
+              unlocked: checkins.length >= 3,
+              progress: Math.min(checkins.length, 3)
+            },
+            {
+              id: 'week_warrior',
+              name: 'Week Warrior',
+              description: 'Maintain a 7-day check-in streak',
+              icon: '⚔️',
+              category: 'streak' as const,
+              requirement: 7,
+              points: 50,
+              rarity: 'rare' as const,
+              unlocked: checkins.length >= 7,
+              progress: Math.min(checkins.length, 7)
+            }
+          ]
+          
+          console.log('[ACHIEVEMENT-CENTER] Fallback achievements created:', basicAchievements.length)
+          setAchievements(basicAchievements)
+          return
+        }
+      } catch (fallbackError) {
+        console.error('[ACHIEVEMENT-CENTER] Fallback also failed:', fallbackError)
+      }
+      
+      // Final fallback - empty achievements array
+      setAchievements([])
     } finally {
       setLoading(false)
     }

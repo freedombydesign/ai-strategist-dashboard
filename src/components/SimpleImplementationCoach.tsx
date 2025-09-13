@@ -39,11 +39,22 @@ export default function SimpleImplementationCoach() {
 
   const loadInitialContext = async () => {
     try {
-      // Load check-ins from database using implementationService
-      const [analytics, streak] = await Promise.all([
+      console.log('[IMPLEMENTATION-COACH] Loading context for user:', user?.id)
+      
+      // Add timeout protection against JavaScript interference
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      )
+      
+      const dataPromise = Promise.all([
         implementationService.getImplementationAnalytics(user!.id),
         implementationService.calculateStreakDays(user!.id)
       ])
+      
+      const [analytics, streak] = await Promise.race([dataPromise, timeoutPromise]) as any
+
+      console.log('[IMPLEMENTATION-COACH] Analytics loaded:', analytics)
+      console.log('[IMPLEMENTATION-COACH] Streak loaded:', streak)
 
       const context = {
         streak,
@@ -51,10 +62,49 @@ export default function SimpleImplementationCoach() {
         avgEnergy: analytics.averageEnergyLevel
       }
 
+      console.log('[IMPLEMENTATION-COACH] Context set:', context)
       setCoachingContext(context)
     } catch (error) {
       console.error('[IMPLEMENTATION-COACH] Error loading context:', error)
-      // Set default context if loading fails
+      
+      // Try direct database query as fallback
+      try {
+        console.log('[IMPLEMENTATION-COACH] Attempting fallback database query...')
+        const { supabase } = await import('../lib/supabase')
+        
+        const { data: checkins, error: checkinError } = await supabase
+          .from('daily_checkins')
+          .select('*')
+          .eq('user_id', user!.id)
+          .order('checkin_date', { ascending: false })
+        
+        if (!checkinError && checkins) {
+          console.log('[IMPLEMENTATION-COACH] Fallback loaded checkins:', checkins.length)
+          const totalCheckins = checkins.length
+          const avgEnergy = checkins.length > 0 
+            ? Math.round(checkins.reduce((sum: number, c: any) => sum + (c.energy_level || 0), 0) / checkins.length)
+            : 0
+          
+          // Simple streak calculation
+          const today = new Date().toISOString().split('T')[0]
+          const hasToday = checkins.some((c: any) => c.checkin_date === today)
+          const streak = hasToday ? 1 : 0
+          
+          const fallbackContext = {
+            streak,
+            totalCheckins,
+            avgEnergy
+          }
+          
+          console.log('[IMPLEMENTATION-COACH] Fallback context set:', fallbackContext)
+          setCoachingContext(fallbackContext)
+          return
+        }
+      } catch (fallbackError) {
+        console.error('[IMPLEMENTATION-COACH] Fallback also failed:', fallbackError)
+      }
+      
+      // Final fallback to prevent blocking
       setCoachingContext({
         streak: 0,
         totalCheckins: 0,
