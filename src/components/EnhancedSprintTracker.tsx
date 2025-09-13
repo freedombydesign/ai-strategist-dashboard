@@ -251,6 +251,17 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
   const rawStepNumber = currentProgress?.step_number || 1
   const currentStepNumber = Math.min(rawStepNumber, totalSteps)
   
+  // Debug step counting and progress data
+  console.log('[SPRINT-TRACKER] Step counter debug:', {
+    rawStepNumber,
+    totalSteps,
+    currentStepNumber,
+    currentProgressExists: !!currentProgress,
+    stepNumberFromDB: currentProgress?.step_number,
+    sprintId: currentProgress?.sprint_id,
+    status: currentProgress?.status
+  })
+  
   // Debug step counting mismatch
   if (rawStepNumber > totalSteps) {
     console.warn('[SPRINT-TRACKER] Step number mismatch:', {
