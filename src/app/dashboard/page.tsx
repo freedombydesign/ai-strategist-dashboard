@@ -284,7 +284,7 @@ export default function Dashboard() {
                       Business Analytics
                     </Link>
                     <Link
-                      href="/business-profile"
+                      href="/business-metrics"
                       className="flex items-center text-gray-600 hover:text-gray-900"
                     >
                       <UserGroupIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
