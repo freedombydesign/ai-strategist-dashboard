@@ -58,7 +58,10 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
       
       console.log('[ACHIEVEMENT-WIDGET] Loaded data:', {
         achievementCount: userAchievements.length,
-        momentumScore: momentum
+        unlockedAchievements: userAchievements.filter(a => a.unlocked),
+        totalPoints: userAchievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0),
+        momentumScore: momentum,
+        achievementSample: userAchievements.slice(0, 3)
       })
       
     } catch (error) {

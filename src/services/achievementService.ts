@@ -266,22 +266,30 @@ class AchievementService {
 
   private async calculateProgress(userId: string, achievement: Achievement): Promise<number> {
     try {
+      console.log(`[ACHIEVEMENTS] Calculating progress for ${achievement.id} (${achievement.category})`)
+      
       switch (achievement.category) {
         case 'streak':
           const streak = await implementationService.calculateStreakDays(userId)
+          console.log(`[ACHIEVEMENTS] Streak for ${achievement.id}:`, streak)
           return Math.min(streak, achievement.requirement)
 
         case 'completion':
           const analytics = await implementationService.getImplementationAnalytics(userId)
+          console.log(`[ACHIEVEMENTS] Analytics for ${achievement.id}:`, analytics)
           const totalTasks = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0)
+          console.log(`[ACHIEVEMENTS] Total tasks for ${achievement.id}:`, totalTasks)
           return Math.min(totalTasks, achievement.requirement)
 
         case 'business':
-          const businessData = await businessMetricsService.getBusinessAnalytics(userId)
-          if (achievement.id === 'profit_tracker') {
-            return Math.min(businessData.totalSnapshots, achievement.requirement)
+          try {
+            const businessData = await businessMetricsService.getBusinessAnalytics(userId)
+            if (achievement.id === 'profit_tracker') {
+              return Math.min(businessData.totalSnapshots || 0, achievement.requirement)
+            }
+          } catch (error) {
+            console.log(`[ACHIEVEMENTS] Business data not available for ${achievement.id}:`, error.message)
           }
-          // For growth achievements, would need more complex logic
           return 0
 
         case 'consistency':
@@ -290,11 +298,13 @@ class AchievementService {
             return 0
           } else if (achievement.id === 'energy_champion') {
             const recentCheckins = await implementationService.getRecentCheckins(userId, 14)
+            console.log(`[ACHIEVEMENTS] Recent checkins for ${achievement.id}:`, recentCheckins.length)
             const highEnergyDays = recentCheckins.filter(c => (c.energy_level || 0) >= 8).length
+            console.log(`[ACHIEVEMENTS] High energy days for ${achievement.id}:`, highEnergyDays)
             return Math.min(highEnergyDays, achievement.requirement)
           } else if (achievement.id === 'momentum_master') {
-            const currentAnalytics = await implementationService.getImplementationAnalytics(userId)
             const momentum = await this.calculateMomentumScore(userId)
+            console.log(`[ACHIEVEMENTS] Momentum for ${achievement.id}:`, momentum.current)
             return Math.min(momentum.current, achievement.requirement)
           }
           return 0
@@ -307,7 +317,7 @@ class AchievementService {
           return 0
       }
     } catch (error) {
-      console.error('[ACHIEVEMENTS] Error calculating progress:', error)
+      console.error(`[ACHIEVEMENTS] Error calculating progress for ${achievement.id}:`, error)
       return 0
     }
   }
