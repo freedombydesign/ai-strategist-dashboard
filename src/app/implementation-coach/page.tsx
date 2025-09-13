@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import MobileOptimizedLayout from '@/components/MobileOptimizedLayout'
-import ImplementationCoach from '@/components/ImplementationCoach'
+import SimpleImplementationCoach from '@/components/SimpleImplementationCoach'
 import { implementationService } from '@/services/implementationService'
 import { ArrowLeft, Bot, TrendingUp, Flame, Calendar, Target, BarChart3 } from 'lucide-react'
 
@@ -129,7 +129,7 @@ export default function ImplementationCoachPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Chat Interface */}
             <div className="lg:col-span-2">
-              <ImplementationCoach />
+              <SimpleImplementationCoach />
             </div>
 
             {/* Coaching Insights Sidebar */}
