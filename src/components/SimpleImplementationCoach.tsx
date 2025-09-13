@@ -79,7 +79,9 @@ export default function SimpleImplementationCoach() {
           .order('checkin_date', { ascending: false })
         
         if (!checkinError && checkins) {
-          console.log('[IMPLEMENTATION-COACH] Fallback loaded checkins:', checkins.length)
+          console.log('[IMPLEMENTATION-COACH] Fallback SUCCESS! Loaded checkins:', checkins.length)
+          console.log('[IMPLEMENTATION-COACH] Checkin data:', checkins)
+          
           const totalCheckins = checkins.length
           const avgEnergy = checkins.length > 0 
             ? Math.round(checkins.reduce((sum: number, c: any) => sum + (c.energy_level || 0), 0) / checkins.length)
@@ -90,15 +92,19 @@ export default function SimpleImplementationCoach() {
           const hasToday = checkins.some((c: any) => c.checkin_date === today)
           const streak = hasToday ? 1 : 0
           
+          console.log('[IMPLEMENTATION-COACH] Calculated - Total:', totalCheckins, 'Energy:', avgEnergy, 'Streak:', streak)
+          
           const fallbackContext = {
             streak,
             totalCheckins,
             avgEnergy
           }
           
-          console.log('[IMPLEMENTATION-COACH] Fallback context set:', fallbackContext)
+          console.log('[IMPLEMENTATION-COACH] Setting fallback context:', fallbackContext)
           setCoachingContext(fallbackContext)
           return
+        } else {
+          console.error('[IMPLEMENTATION-COACH] Database fallback failed:', checkinError)
         }
       } catch (fallbackError) {
         console.error('[IMPLEMENTATION-COACH] Fallback also failed:', fallbackError)
