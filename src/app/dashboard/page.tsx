@@ -33,7 +33,7 @@ export default function Dashboard() {
   const [freedomScore, setFreedomScore] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showBusinessOnboarding, setShowBusinessOnboarding] = useState(false)
+  const [showBusinessOnboarding, setShowBusinessOnboarding] = useState<boolean | null>(null) // null = loading, false = don't show, true = show
 
   useEffect(() => {
     if (user?.id) {
@@ -121,7 +121,7 @@ export default function Dashboard() {
   }
 
   // Show business context onboarding if needed (original approach)
-  if (showBusinessOnboarding) {
+  if (showBusinessOnboarding === true) {
     return (
       <ProtectedRoute>
         <div className="min-h-screen bg-gray-50 py-8">
@@ -131,6 +131,18 @@ export default function Dashboard() {
           />
         </div>
       </ProtectedRoute>
+    )
+  }
+
+  // Show loading while determining business context state
+  if (showBusinessOnboarding === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
     )
   }
 
