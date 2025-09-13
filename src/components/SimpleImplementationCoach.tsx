@@ -166,6 +166,9 @@ Current coaching context:
 - User ID: ${user?.id}
 ` : 'Loading user context...'
 
+      console.log('[IMPLEMENTATION-COACH] Sending context to AI:', contextSummary)
+      console.log('[IMPLEMENTATION-COACH] Coaching context state:', coachingContext)
+
       const response = await fetch('/api/implementation-coach', {
         method: 'POST',
         headers: {
