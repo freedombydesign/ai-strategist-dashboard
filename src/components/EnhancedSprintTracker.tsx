@@ -249,7 +249,20 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
 
   const totalSteps = sprintSteps.length
   const rawStepNumber = currentProgress?.step_number || 1
-  const currentStepNumber = Math.min(rawStepNumber, totalSteps)
+  
+  // Handle corrupted data: if step number is higher than total steps AND status is just "started" 
+  // (not "completed"), reset to step 1
+  let currentStepNumber
+  if (rawStepNumber > totalSteps && currentProgress?.status === 'started') {
+    console.warn('[SPRINT-TRACKER] Corrupted step data detected, resetting to step 1:', {
+      rawStepNumber,
+      totalSteps,
+      status: currentProgress?.status
+    })
+    currentStepNumber = 1
+  } else {
+    currentStepNumber = Math.min(rawStepNumber, totalSteps)
+  }
   
   // Debug step counting and progress data
   console.log('[SPRINT-TRACKER] Step counter debug:', {
