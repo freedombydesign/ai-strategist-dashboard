@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { implementationService } from '../services/implementationService'
 import { MessageCircle, Send, Bot, User, TrendingUp, Flame, Target, Zap } from 'lucide-react'
 
 interface Message {
@@ -38,33 +39,16 @@ export default function SimpleImplementationCoach() {
 
   const loadInitialContext = async () => {
     try {
-      // Load check-ins from localStorage instead of database
-      const checkinKeys = Object.keys(localStorage).filter(key => key.startsWith(`checkin_${user!.id}_`))
-      const totalCheckins = checkinKeys.length
-      
-      let totalEnergy = 0
-      let streak = 0
-      
-      if (totalCheckins > 0) {
-        // Calculate average energy from check-ins
-        checkinKeys.forEach(key => {
-          const checkinData = JSON.parse(localStorage.getItem(key) || '{}')
-          if (checkinData.energy_level) {
-            totalEnergy += checkinData.energy_level
-          }
-        })
-        
-        // Simple streak calculation - check if there's a recent check-in
-        const recentCheckin = localStorage.getItem(`checkin_${user!.id}_${new Date().toISOString().split('T')[0]}`)
-        if (recentCheckin) {
-          streak = 1 // Simple streak for now
-        }
-      }
+      // Load check-ins from database using implementationService
+      const [analytics, streak] = await Promise.all([
+        implementationService.getImplementationAnalytics(user!.id),
+        implementationService.calculateStreakDays(user!.id)
+      ])
 
       const context = {
         streak,
-        totalCheckins,
-        avgEnergy: totalCheckins > 0 ? Math.round(totalEnergy / totalCheckins) : 0
+        totalCheckins: analytics.totalCheckins,
+        avgEnergy: analytics.averageEnergyLevel
       }
 
       setCoachingContext(context)
@@ -84,13 +68,13 @@ export default function SimpleImplementationCoach() {
       id: 'welcome-' + Date.now(),
       content: `👋 Hey there! I'm your Implementation Coach - here to help you accelerate your progress and overcome obstacles.
 
-I can see your recent activity and I'm ready to help you:
+I've analyzed your recent check-ins and I'm ready to help you:
 • Build consistency and momentum
 • Identify and solve implementation barriers  
 • Connect your daily actions to business results
 • Optimize your energy and productivity patterns
 
-What's on your mind today? How can I help you move forward?`,
+What's on your mind today? Any challenges you're facing with implementation?`,
       role: 'assistant',
       timestamp: new Date()
     }
