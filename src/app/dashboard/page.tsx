@@ -283,13 +283,13 @@ export default function Dashboard() {
                       <ArrowTrendingUpIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
                       Business Analytics
                     </Link>
-                    <button
-                      onClick={() => setShowBusinessOnboarding(true)}
-                      className="flex items-center text-gray-600 hover:text-gray-900 w-full text-left"
+                    <Link
+                      href="/business-profile"
+                      className="flex items-center text-gray-600 hover:text-gray-900"
                     >
                       <UserGroupIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
                       Update Business Profile
-                    </button>
+                    </Link>
                     <Link
                       href="/achievements"
                       className="flex items-center text-gray-600 hover:text-gray-900"
