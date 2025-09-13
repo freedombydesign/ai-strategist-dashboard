@@ -353,68 +353,212 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Business Profile Prompt Modal */}
+        {/* Business Profile Banner */}
         {showBusinessOnboarding && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              {/* Background overlay */}
-              <div 
-                className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-                onClick={() => setShowBusinessOnboarding(false)}
-              ></div>
-
-              {/* Modal container */}
-              <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-                {/* Close button */}
-                <div className="absolute top-0 right-0 pt-4 pr-4">
-                  <button
-                    type="button"
-                    className="bg-white rounded-md text-gray-400 hover:text-gray-600 focus:outline-none"
-                    onClick={() => setShowBusinessOnboarding(false)}
-                  >
-                    <span className="sr-only">Close</span>
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+          <div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white p-4 shadow-lg">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <div className="flex items-center">
+                <UserGroupIcon className="h-6 w-6 mr-3" style={{width: '24px', height: '24px'}} />
+                <div>
+                  <h3 className="font-semibold">Complete Your Business Profile</h3>
+                  <p className="text-blue-100 text-sm">Get personalized recommendations for your business</p>
                 </div>
-
-                {/* Business profile prompt */}
-                <div className="sm:flex sm:items-start">
-                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                    <UserGroupIcon className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
-                      Complete Your Business Profile
-                    </h3>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        Help us personalize your experience by completing your business profile. This will help us provide better recommendations for your specific situation.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                  <Link
-                    href="/business-profile"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={() => setShowBusinessOnboarding(false)}
-                  >
-                    Complete Profile
-                  </Link>
-                  <button
-                    type="button"
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm"
-                    onClick={() => setShowBusinessOnboarding(false)}
-                  >
-                    Skip for now
-                  </button>
-                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Link
+                  href="/business-profile"
+                  className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50"
+                  onClick={() => setShowBusinessOnboarding(false)}
+                >
+                  Complete Now
+                </Link>
+                <button
+                  onClick={() => setShowBusinessOnboarding(false)}
+                  className="text-blue-100 hover:text-white"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
         )}
+
+        <div className={`${showBusinessOnboarding ? 'pt-20' : ''} max-w-7xl mx-auto px-6 py-8`}>
+          {/* Welcome */}
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
+              <h2 className="text-xl font-semibold mb-2">
+                Welcome to your Freedom Operating System!
+              </h2>
+              <p className="text-blue-100">Ready to continue optimizing your business?</p>
+            </div>
+          </div>
+
+          {freedomScore ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Content */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Freedom Score */}
+                <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Freedom Score</h3>
+                  
+                  <div className="flex items-center mb-4">
+                    <div className="text-4xl font-bold text-blue-600 mr-4">
+                      {freedomScore.percent}%
+                    </div>
+                    <div>
+                      <div className="text-gray-600">Total: {freedomScore.totalScore}/60</div>
+                      <div className="text-sm text-gray-500">
+                        {freedomScore.completedAt && `Completed ${new Date(freedomScore.completedAt).toLocaleDateString()}`}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Module Breakdown */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                    {Object.entries(freedomScore.moduleAverages || {}).map(([module, score]: [string, any]) => (
+                      <div key={module} className="bg-gray-50 rounded-lg p-3 text-center">
+                        <div className="text-sm text-gray-600 mb-1">
+                          {getModuleName(module)}
+                        </div>
+                        <div className="text-xl font-bold text-gray-900">{score}</div>
+                        <div className="text-xs text-gray-500">out of 10</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <Link
+                      href="/assessment"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+                    >
+                      Retake Assessment
+                    </Link>
+                    <Link
+                      href="/ai-strategist"
+                      className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm"
+                    >
+                      Discuss with AI
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Debug Widget (temporary) */}
+                <SprintDebugWidget />
+                
+                {/* Daily Check-in Prompt */}
+                <DailyCheckinPrompt />
+                
+                {/* Enhanced Sprint Tracking */}
+                <EnhancedSprintTracker freedomScore={freedomScore} />
+                
+                {/* Simple Sprint Progress */}
+                <SimpleDashboardProgress freedomScore={freedomScore} />
+                
+                {/* Implementation Metrics Overview */}
+                <ImplementationMetricsOverview />
+                
+                {/* Sprint Planning */}
+                <SimpleSprintPlanner freedomScore={freedomScore} />
+              </div>
+
+              {/* Sidebar */}
+              <div className="space-y-6">
+                {/* Achievement Widget */}
+                <AchievementWidget />
+                
+                {/* Business Metrics Widget */}
+                <BusinessMetricsWidget />
+
+                {/* AI Strategist */}
+                <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Coaches</h3>
+                  <div className="space-y-3">
+                    <Link
+                      href="/ai-strategist"
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+                    >
+                      <SparklesIcon className="w-4 h-4 mr-2" style={{width: '16px', height: '16px'}} />
+                      AI Strategist
+                    </Link>
+                    <Link
+                      href="/implementation-coach"
+                      className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+                    >
+                      <RocketLaunchIcon className="w-4 h-4 mr-2" style={{width: '16px', height: '16px'}} />
+                      Implementation Coach
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                  <div className="space-y-3">
+                    <Link
+                      href="/assessment"
+                      className="flex items-center text-gray-600 hover:text-gray-900"
+                    >
+                      <ChartBarIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
+                      Retake Freedom Score
+                    </Link>
+                    <Link
+                      href="/business-metrics"
+                      className="flex items-center text-gray-600 hover:text-gray-900"
+                    >
+                      <ArrowTrendingUpIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
+                      Business Analytics
+                    </Link>
+                    <Link
+                      href="/business-profile"
+                      className="flex items-center text-gray-600 hover:text-gray-900"
+                    >
+                      <UserGroupIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
+                      Update Business Profile
+                    </Link>
+                    <Link
+                      href="/achievements"
+                      className="flex items-center text-gray-600 hover:text-gray-900"
+                    >
+                      <TrophyIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
+                      View Achievements
+                    </Link>
+                    <Link
+                      href="/ai-strategist"
+                      className="flex items-center text-gray-600 hover:text-gray-900"
+                    >
+                      <SparklesIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
+                      AI Strategist
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* No Score Yet */
+            <div className="bg-white rounded-lg shadow-sm border p-8">
+              <div className="text-center">
+                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" style={{width: '64px', height: '64px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Take Your Freedom Score Assessment
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  Discover your business bottlenecks and get personalized recommendations
+                </p>
+                <Link
+                  href="/assessment"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center"
+                >
+                  Start Assessment
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Mobile Navigation */}
         <MobileNavigation />
