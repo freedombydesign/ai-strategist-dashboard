@@ -96,6 +96,7 @@ class ImplementationService {
 
   async calculateStreakDays(userId: string): Promise<number> {
     try {
+      console.log('[IMPLEMENTATION] Calculating streak for user:', userId)
       // Get recent check-ins to calculate streak
       const { data, error } = await supabase
         .from('daily_checkins')
@@ -105,27 +106,52 @@ class ImplementationService {
         .limit(30) // Look at last 30 days
 
       if (error) throw error
-      if (!data || data.length === 0) return 0
+      if (!data || data.length === 0) {
+        console.log('[IMPLEMENTATION] No check-ins found for user')
+        return 0
+      }
+
+      console.log('[IMPLEMENTATION] Found check-ins:', data.length, data.slice(0, 5))
 
       // Calculate consecutive days with check-ins
       let streak = 0
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
+      // Start from the most recent check-in, not necessarily today
+      let currentDate = new Date(data[0].checkin_date)
+      currentDate.setHours(0, 0, 0, 0)
+
+      // Allow for today or yesterday as valid start points (grace period)
+      const yesterday = new Date(today)
+      yesterday.setDate(today.getDate() - 1)
+
+      // If the most recent check-in is not today or yesterday, streak is 0
+      if (currentDate.getTime() !== today.getTime() && currentDate.getTime() !== yesterday.getTime()) {
+        console.log('[IMPLEMENTATION] Most recent check-in is not recent enough:', currentDate.toISOString().split('T')[0])
+        return 0
+      }
+
+      // Count consecutive days
       for (let i = 0; i < data.length; i++) {
         const checkinDate = new Date(data[i].checkin_date)
         checkinDate.setHours(0, 0, 0, 0)
         
-        const expectedDate = new Date(today)
-        expectedDate.setDate(today.getDate() - streak)
+        const expectedDate = new Date(currentDate)
+        expectedDate.setDate(currentDate.getDate() - streak)
+
+        console.log('[IMPLEMENTATION] Comparing:', checkinDate.toISOString().split('T')[0], 'vs expected:', expectedDate.toISOString().split('T')[0])
 
         if (checkinDate.getTime() === expectedDate.getTime()) {
           streak++
+          console.log('[IMPLEMENTATION] Streak increased to:', streak)
         } else {
+          console.log('[IMPLEMENTATION] Streak broken at:', streak)
           break
         }
       }
 
+      console.log('[IMPLEMENTATION] Final streak:', streak)
       return streak
     } catch (error) {
       console.error('[IMPLEMENTATION] Error calculating streak:', error)
@@ -203,8 +229,12 @@ class ImplementationService {
     completionTrend: number[]
   }> {
     try {
+      console.log('[IMPLEMENTATION] Getting analytics for user:', userId)
       const checkins = await this.getRecentCheckins(userId, 30)
       const currentStreak = await this.calculateStreakDays(userId)
+      
+      console.log('[IMPLEMENTATION] Recent checkins:', checkins.length)
+      console.log('[IMPLEMENTATION] Sample checkin data:', checkins.slice(0, 2))
       
       const totalCheckins = checkins.length
       const averageEnergyLevel = checkins.length > 0 
@@ -219,6 +249,14 @@ class ImplementationService {
         .slice(0, 7)
         .reverse()
         .map(c => c.completed_tasks?.length || 0)
+
+      console.log('[IMPLEMENTATION] Analytics result:', {
+        totalCheckins,
+        averageEnergyLevel,
+        currentStreak,
+        longestStreak,
+        completionTrend
+      })
 
       return {
         totalCheckins,
