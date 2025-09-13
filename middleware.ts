@@ -2,68 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const hostname = request.headers.get('host') || ''
-  const pathname = request.nextUrl.pathname
-
-  console.log(`[MIDDLEWARE] ${hostname} ${pathname}`)
-
-  // Handle suite subdomain
-  if (hostname.includes('suite.scalewithruth.com')) {
-    // Allow all suite related paths and other pages
-    if (pathname.startsWith('/suite-home') ||
-        pathname.startsWith('/suite') || 
-        pathname.startsWith('/deliver-ease') ||
-        pathname.startsWith('/profit-pulse') ||
-        pathname.startsWith('/cash-flow') ||
-        pathname.startsWith('/convert-flow') ||
-        pathname.startsWith('/login') ||
-        pathname.startsWith('/signup') ||
-        pathname.startsWith('/dashboard') ||
-        pathname.startsWith('/api/') ||
-        pathname.startsWith('/_next/')) {
-      return NextResponse.next()
-    }
-    
-    // Only redirect root path
-    if (pathname === '/') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/suite-home'
-      console.log(`[MIDDLEWARE] Redirecting suite root to: ${url}`)
-      return NextResponse.redirect(url)
-    }
-    
-    // Allow other paths to continue normally
-    return NextResponse.next()
-  }
-
-  // Handle ai subdomain
-  if (hostname.includes('ai.scalewithruth.com')) {
-    // Allow ai-intelligence paths and other necessary paths
-    if (pathname.startsWith('/ai-home') ||
-        pathname.startsWith('/ai-intelligence') ||
-        pathname.startsWith('/ai-strategist') ||
-        pathname.startsWith('/implementation-coach') ||
-        pathname.startsWith('/login') ||
-        pathname.startsWith('/signup') ||
-        pathname.startsWith('/dashboard') ||
-        pathname.startsWith('/api/') ||
-        pathname.startsWith('/_next/')) {
-      return NextResponse.next()
-    }
-    
-    // Only redirect root path
-    if (pathname === '/') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/ai-home'
-      console.log(`[MIDDLEWARE] Redirecting ai root to: ${url}`)
-      return NextResponse.redirect(url)
-    }
-    
-    // Allow other paths to continue normally
-    return NextResponse.next()
-  }
-
-  // For main domain or other cases, continue normally
+  // COMPLETELY DISABLED - No redirects, let everything through
+  console.log(`[MIDDLEWARE] DISABLED - Allowing all requests through`)
   return NextResponse.next()
 }
 
