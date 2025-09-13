@@ -145,6 +145,14 @@ What's on your mind today? Any challenges you're facing with implementation?`,
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return
 
+    // Ensure context is loaded before sending message
+    if (!coachingContext) {
+      console.log('[IMPLEMENTATION-COACH] Context not ready, waiting...')
+      // Try to reload context
+      await loadInitialContext()
+      // If still no context after reload, continue with fallback
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputMessage,
