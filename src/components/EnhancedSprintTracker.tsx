@@ -248,7 +248,19 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
   ) || 0
 
   const totalSteps = sprintSteps.length
-  const currentStepNumber = currentProgress?.step_number || 1
+  const rawStepNumber = currentProgress?.step_number || 1
+  const currentStepNumber = Math.min(rawStepNumber, totalSteps)
+  
+  // Debug step counting mismatch
+  if (rawStepNumber > totalSteps) {
+    console.warn('[SPRINT-TRACKER] Step number mismatch:', {
+      rawStepNumber,
+      totalSteps,
+      currentStepNumber,
+      sprintId: currentProgress?.sprint_id,
+      sprintKey: currentProgress?.sprints?.sprint_key
+    })
+  }
   
   // Calculate progress using localStorage completion data (like the sprint detail pages)
   let progressPercent = 0
