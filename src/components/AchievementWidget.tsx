@@ -11,17 +11,22 @@ interface AchievementWidgetProps {
 }
 
 export default function AchievementWidget({ className = '' }: AchievementWidgetProps) {
+  console.log('[ACHIEVEMENT-WIDGET] Component initializing, achievementService available:', !!achievementService)
+  
   const { user } = useAuth()
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [momentumScore, setMomentumScore] = useState<MomentumScore | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log('[ACHIEVEMENT-WIDGET] useEffect triggered with user:', user?.id)
     if (user?.id) {
+      console.log('[ACHIEVEMENT-WIDGET] User ID found, starting data load for:', user.id)
+      
       // Add a timeout to prevent infinite loading
       const loadTimeout = setTimeout(() => {
         if (loading) {
-          console.warn('[ACHIEVEMENT-WIDGET] Loading timeout, setting fallback data')
+          console.warn('[ACHIEVEMENT-WIDGET] Loading timeout after 10 seconds, setting fallback data')
           setAchievements([])
           setMomentumScore({
             current: 0,
@@ -41,17 +46,22 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
       loadAchievementData()
       
       return () => clearTimeout(loadTimeout)
+    } else {
+      console.log('[ACHIEVEMENT-WIDGET] No user ID available, user state:', user)
     }
   }, [user?.id])
 
   const loadAchievementData = async () => {
     try {
+      console.log('[ACHIEVEMENT-WIDGET] loadAchievementData called for user:', user?.id)
       setLoading(true)
       
+      console.log('[ACHIEVEMENT-WIDGET] About to call achievementService methods...')
       const [userAchievements, momentum] = await Promise.all([
         achievementService.getUserAchievements(user!.id),
         achievementService.calculateMomentumScore(user!.id)
       ])
+      console.log('[ACHIEVEMENT-WIDGET] Service calls completed')
 
       setAchievements(userAchievements)
       setMomentumScore(momentum)
