@@ -1,47 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { achievementService, type Achievement } from '../services/achievementService'
 import Link from 'next/link'
 import { Trophy, Star, Target, CheckCircle2, Award } from 'lucide-react'
 
 export default function SimpleAchievementCenter() {
-  const [completedAchievements] = useState([
-    {
-      id: 1,
-      title: 'Freedom Score Completed',
-      description: 'Completed your first Freedom Score assessment',
-      icon: Target,
-      completed: true,
-      points: 100
-    },
-    {
-      id: 2,
-      title: 'Sprint Started',
-      description: 'Started your first strategic sprint',
-      icon: Star,
-      completed: false,
-      points: 150
-    },
-    {
-      id: 3,
-      title: 'Profile Updated',
-      description: 'Updated your business profile',
-      icon: CheckCircle2,
-      completed: false,
-      points: 50
-    },
-    {
-      id: 4,
-      title: 'AI Coach Consultation',
-      description: 'Had your first conversation with the AI strategist',
-      icon: Award,
-      completed: false,
-      points: 200
-    }
-  ])
+  const { user } = useAuth()
+  const [achievements, setAchievements] = useState<Achievement[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const totalPoints = completedAchievements
-    .filter(a => a.completed)
+  useEffect(() => {
+    if (user?.id) {
+      loadAchievements()
+    }
+  }, [user?.id])
+
+  const loadAchievements = async () => {
+    try {
+      setLoading(true)
+      const userAchievements = await achievementService.getUserAchievements(user!.id)
+      setAchievements(userAchievements)
+    } catch (error) {
+      console.error('[ACHIEVEMENT-CENTER] Error loading achievements:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const totalPoints = achievements
+    .filter(a => a.unlocked)
     .reduce((sum, a) => sum + a.points, 0)
 
   return (
@@ -67,7 +56,7 @@ export default function SimpleAchievementCenter() {
           <div className="text-right">
             <div className="text-sm opacity-90">Completed</div>
             <div className="text-lg font-semibold">
-              {completedAchievements.filter(a => a.completed).length} / {completedAchievements.length}
+              {achievements.filter(a => a.unlocked).length} / {achievements.length}
             </div>
           </div>
         </div>
@@ -75,52 +64,70 @@ export default function SimpleAchievementCenter() {
 
       {/* Achievements Grid */}
       <div className="grid md:grid-cols-2 gap-6">
-        {completedAchievements.map((achievement) => {
-          const IconComponent = achievement.icon
-          return (
+        {loading ? (
+          // Loading skeleton
+          [1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-white rounded-lg border p-6">
+              <div className="animate-pulse">
+                <div className="h-12 w-12 bg-gray-200 rounded-lg mb-4"></div>
+                <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          ))
+        ) : (
+          achievements.map((achievement) => (
             <div
               key={achievement.id}
               className={`bg-white rounded-lg border p-6 transition-all ${
-                achievement.completed
+                achievement.unlocked
                   ? 'border-green-200 bg-green-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <div className="flex items-start">
-                <div className={`p-3 rounded-lg mr-4 ${
-                  achievement.completed
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-gray-100 text-gray-400'
+                <div className={`p-3 rounded-lg mr-4 text-2xl ${
+                  achievement.unlocked
+                    ? 'bg-green-100'
+                    : 'bg-gray-100'
                 }`}>
-                  <IconComponent className="w-6 h-6" />
+                  {achievement.icon}
                 </div>
                 
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className={`font-semibold ${
-                      achievement.completed ? 'text-green-900' : 'text-gray-900'
+                      achievement.unlocked ? 'text-green-900' : 'text-gray-900'
                     }`}>
-                      {achievement.title}
+                      {achievement.name}
                     </h3>
-                    {achievement.completed && (
+                    {achievement.unlocked && (
                       <CheckCircle2 className="w-5 h-5 text-green-500" />
                     )}
                   </div>
                   
                   <p className={`text-sm mb-3 ${
-                    achievement.completed ? 'text-green-700' : 'text-gray-600'
+                    achievement.unlocked ? 'text-green-700' : 'text-gray-600'
                   }`}>
                     {achievement.description}
                   </p>
                   
                   <div className="flex items-center justify-between">
-                    <span className={`text-sm font-medium ${
-                      achievement.completed ? 'text-green-600' : 'text-gray-500'
-                    }`}>
-                      {achievement.points} points
-                    </span>
+                    <div className="flex items-center space-x-3">
+                      <span className={`text-sm font-medium ${
+                        achievement.unlocked ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        {achievement.points} points
+                      </span>
+                      {!achievement.unlocked && (
+                        <span className="text-xs text-gray-500">
+                          {achievement.progress}/{achievement.requirement}
+                        </span>
+                      )}
+                    </div>
                     
-                    {achievement.completed && (
+                    {achievement.unlocked && (
                       <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                         Completed ✓
                       </span>
@@ -129,8 +136,8 @@ export default function SimpleAchievementCenter() {
                 </div>
               </div>
             </div>
-          )
-        })}
+          ))
+        )}
       </div>
 
       {/* Action Buttons */}
@@ -143,10 +150,10 @@ export default function SimpleAchievementCenter() {
           
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href="/business-profile"
+              href="/business-metrics"
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
             >
-              Update Business Profile
+              Update Business Metrics
             </Link>
             
             <Link
