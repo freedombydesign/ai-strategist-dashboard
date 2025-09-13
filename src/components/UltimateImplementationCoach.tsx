@@ -6,9 +6,14 @@ export default function UltimateImplementationCoach() {
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
-      content: `👋 I'm your Implementation Coach! I can see you've been making progress with 2 check-ins and an average energy of 6/10. 
+      content: `👋 I'm your Implementation Coach! I can see you've been making progress with **2 total check-ins** and an average energy of **6/10**.
 
-While your streak is currently at 0 days (which is totally normal - streaks reset when there are gaps between check-ins), you've demonstrated commitment by completing multiple check-ins.
+Here's what your data shows:
+• **2 Check-ins Completed** - You've engaged with the system multiple times ✅
+• **6/10 Average Energy** - Good energy levels to work with ✅  
+• **0-Day Streak** - Your check-ins weren't on consecutive days (totally normal!)
+
+The key difference: Check-ins = total times you've logged in, Streak = consecutive days. You have solid check-in history to build on!
 
 What challenges are you facing with your implementation? I'm here to help you build momentum and overcome obstacles.`,
       role: 'assistant' as const,
