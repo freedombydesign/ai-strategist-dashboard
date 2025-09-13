@@ -428,23 +428,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Debug Widget (temporary) */}
-                <SprintDebugWidget />
-                
-                {/* Daily Check-in Prompt */}
-                <DailyCheckinPrompt />
-                
-                {/* Enhanced Sprint Tracking */}
-                <EnhancedSprintTracker freedomScore={freedomScore} />
-                
-                {/* Simple Sprint Progress */}
-                <SimpleDashboardProgress freedomScore={freedomScore} />
-                
-                {/* Implementation Metrics Overview */}
-                <ImplementationMetricsOverview />
-                
-                {/* Sprint Planning */}
-                <SimpleSprintPlanner freedomScore={freedomScore} />
               </div>
 
               {/* Sidebar */}
