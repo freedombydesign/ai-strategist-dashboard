@@ -162,17 +162,10 @@ export async function POST(request: NextRequest) {
     let coachingContext
     let systemPrompt
 
-    // Try to get comprehensive coaching context, but fallback to frontend context if it fails
-    try {
-      coachingContext = await getCoachingContext(userId)
-      systemPrompt = generateCoachingPrompt(coachingContext, message)
-      console.log('[IMPLEMENTATION-COACH API] Using database context - Total checkins:', coachingContext.analytics?.totalCheckins)
-    } catch (contextError) {
-      console.log('[IMPLEMENTATION-COACH API] Database context failed, using frontend context:', contextError)
-      
-      // Use the context sent from frontend as fallback
-      if (context && context.includes('Total check-ins completed:')) {
-        systemPrompt = `You are an AI Implementation Coach focused on accountability and progress acceleration.
+    // PREFER frontend context when available (it has working fallbacks)
+    if (context && context.includes('Total check-ins completed:')) {
+      console.log('[IMPLEMENTATION-COACH API] Frontend context available - using it directly!')
+      systemPrompt = `You are an AI Implementation Coach focused on accountability and progress acceleration.
 
 ${context}
 
@@ -185,9 +178,18 @@ Based on the user's actual implementation data above, provide coaching that:
 User's Message: "${message}"
 
 Respond as their dedicated Implementation Coach using their actual data.`
+      
+      console.log('[IMPLEMENTATION-COACH API] Using frontend context (preferred)')
+    } else {
+      // Try database context as backup
+      try {
+        console.log('[IMPLEMENTATION-COACH API] No frontend context, trying database...')
+        coachingContext = await getCoachingContext(userId)
+        systemPrompt = generateCoachingPrompt(coachingContext, message)
+        console.log('[IMPLEMENTATION-COACH API] Using database context - Total checkins:', coachingContext.analytics?.totalCheckins)
+      } catch (contextError) {
+        console.log('[IMPLEMENTATION-COACH API] Database context also failed:', contextError)
         
-        console.log('[IMPLEMENTATION-COACH API] Using fallback prompt with frontend context')
-      } else {
         // Final fallback - generic coaching
         systemPrompt = `You are an AI Implementation Coach. The user's data is currently unavailable, so provide general implementation coaching guidance.
 
