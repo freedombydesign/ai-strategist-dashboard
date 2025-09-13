@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { diagnosticService } from '@/services/diagnosticService'
+import BusinessContextOnboarding from '@/components/BusinessContextOnboarding'
 import DailyCheckinPrompt from '@/components/DailyCheckinPrompt'
 import { 
   ChartBarIcon,
@@ -116,6 +117,20 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+    )
+  }
+
+  // Show business context onboarding if needed (original approach)
+  if (showBusinessOnboarding) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50 py-8">
+          <BusinessContextOnboarding 
+            onComplete={() => setShowBusinessOnboarding(false)}
+            onClose={() => setShowBusinessOnboarding(false)}
+          />
+        </div>
+      </ProtectedRoute>
     )
   }
 
@@ -304,13 +319,13 @@ export default function Dashboard() {
                       <ArrowTrendingUpIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
                       Business Analytics
                     </Link>
-                    <Link
-                      href="/business-profile"
-                      className="flex items-center text-gray-600 hover:text-gray-900"
+                    <button
+                      onClick={() => setShowBusinessOnboarding(true)}
+                      className="flex items-center text-gray-600 hover:text-gray-900 w-full text-left"
                     >
                       <UserGroupIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
                       Update Business Profile
-                    </Link>
+                    </button>
                     <Link
                       href="/achievements"
                       className="flex items-center text-gray-600 hover:text-gray-900"
@@ -353,39 +368,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Business Profile Banner */}
-        {showBusinessOnboarding && (
-          <div className="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white p-4 shadow-lg">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <div className="flex items-center">
-                <UserGroupIcon className="h-6 w-6 mr-3" style={{width: '24px', height: '24px'}} />
-                <div>
-                  <h3 className="font-semibold">Complete Your Business Profile</h3>
-                  <p className="text-blue-100 text-sm">Get personalized recommendations for your business</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="/business-profile"
-                  className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50"
-                  onClick={() => setShowBusinessOnboarding(false)}
-                >
-                  Complete Now
-                </Link>
-                <button
-                  onClick={() => setShowBusinessOnboarding(false)}
-                  className="text-blue-100 hover:text-white"
-                >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className={`${showBusinessOnboarding ? 'pt-20' : ''} max-w-7xl mx-auto px-6 py-8`}>
+        <div className="max-w-7xl mx-auto px-6 py-8">
           {/* Welcome */}
           <div className="mb-8">
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
@@ -511,13 +494,13 @@ export default function Dashboard() {
                       <ArrowTrendingUpIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
                       Business Analytics
                     </Link>
-                    <Link
-                      href="/business-profile"
-                      className="flex items-center text-gray-600 hover:text-gray-900"
+                    <button
+                      onClick={() => setShowBusinessOnboarding(true)}
+                      className="flex items-center text-gray-600 hover:text-gray-900 w-full text-left"
                     >
                       <UserGroupIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
                       Update Business Profile
-                    </Link>
+                    </button>
                     <Link
                       href="/achievements"
                       className="flex items-center text-gray-600 hover:text-gray-900"
