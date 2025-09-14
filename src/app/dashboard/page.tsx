@@ -74,22 +74,26 @@ export default function Dashboard() {
 
   const checkBusinessContext = async () => {
     try {
-      console.log('[DASHBOARD] Checking business context for user:', user?.id)
-      const response = await fetch(`/api/business-context?userId=${user?.id}`)
-      const result = await response.json()
-      console.log('[DASHBOARD] Business context API response:', result)
+      console.log('[DASHBOARD] TEMPORARY: Skipping business context check for email testing')
+      // Temporarily skip business onboarding to test email system
+      setShowBusinessOnboarding(false)
       
-      if (result.success && result.data && result.data.business_name) {
-        console.log('[DASHBOARD] Found business context, not showing onboarding')
-        setShowBusinessOnboarding(false)
-      } else {
-        console.log('[DASHBOARD] No business context found, showing onboarding')
-        setShowBusinessOnboarding(true)
-      }
+      // Original code commented out for email testing:
+      // const response = await fetch(`/api/business-context?userId=${user?.id}`)
+      // const result = await response.json()
+      // console.log('[DASHBOARD] Business context API response:', result)
+      // 
+      // if (result.success && result.data && result.data.business_name) {
+      //   console.log('[DASHBOARD] Found business context, not showing onboarding')
+      //   setShowBusinessOnboarding(false)
+      // } else {
+      //   console.log('[DASHBOARD] No business context found, showing onboarding')
+      //   setShowBusinessOnboarding(true)
+      // }
     } catch (error) {
       console.error('[DASHBOARD] Error checking business context:', error)
-      // Show onboarding if there's an error checking
-      setShowBusinessOnboarding(true)
+      // Always skip onboarding during email testing
+      setShowBusinessOnboarding(false)
     }
   }
 
