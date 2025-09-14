@@ -57,22 +57,12 @@ class AchievementService {
       rarity: 'common'
     },
     {
-      id: 'email_test_2024',
-      name: 'Email System Test',
-      description: 'Testing direct email system - DELETE AFTER TEST',
-      icon: '📧',
-      category: 'completion',
-      requirement: 0,
-      points: 1,
-      rarity: 'common'
-    },
-    {
       id: 'getting_started',
       name: 'Getting Started',
-      description: 'Maintain a 2-day check-in streak (EMAIL TEST)',
+      description: 'Maintain a 3-day check-in streak',
       icon: '🔥',
       category: 'streak',
-      requirement: 2,
+      requirement: 3,
       points: 25,
       rarity: 'common'
     },
