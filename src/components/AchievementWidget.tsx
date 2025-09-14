@@ -11,58 +11,59 @@ interface AchievementWidgetProps {
 }
 
 export default function AchievementWidget({ className = '' }: AchievementWidgetProps) {
+  console.log('[ACHIEVEMENT-WIDGET] Component initializing, achievementService available:', !!achievementService)
+  
   const { user } = useAuth()
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [momentumScore, setMomentumScore] = useState<MomentumScore | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log('[ACHIEVEMENT-WIDGET] useEffect triggered with user:', user?.id)
     if (user?.id) {
-      // Add a timeout to prevent infinite loading
-      const loadTimeout = setTimeout(() => {
-        if (loading) {
-          console.warn('[ACHIEVEMENT-WIDGET] Loading timeout, setting fallback data')
-          setAchievements([])
-          setMomentumScore({
-            current: 0,
-            trend: 'stable',
-            multiplier: 1,
-            factors: {
-              streakBonus: 0,
-              consistencyBonus: 0,
-              businessImpactBonus: 0,
-              achievementBonus: 0
-            }
-          })
-          setLoading(false)
-        }
-      }, 10000) // 10 second timeout
-
+      console.log('[ACHIEVEMENT-WIDGET] User ID found, starting data load for:', user.id)
       loadAchievementData()
-      
-      return () => clearTimeout(loadTimeout)
+    } else {
+      console.log('[ACHIEVEMENT-WIDGET] No user ID available, user state:', user)
+      setLoading(false)
     }
   }, [user?.id])
 
   const loadAchievementData = async () => {
     try {
+      console.log('[ACHIEVEMENT-WIDGET] loadAchievementData called for user:', user?.id)
       setLoading(true)
       
-      const [userAchievements, momentum] = await Promise.all([
+      console.log('[ACHIEVEMENT-WIDGET] About to call achievementService methods...')
+      const [userAchievements, momentum, newlyUnlocked] = await Promise.all([
         achievementService.getUserAchievements(user!.id),
-        achievementService.calculateMomentumScore(user!.id)
+        achievementService.calculateMomentumScore(user!.id),
+        achievementService.checkAndUnlockAchievements(user!.id)
       ])
+      console.log('[ACHIEVEMENT-WIDGET] Service calls completed')
+      
+      if (newlyUnlocked.length > 0) {
+        console.log('[ACHIEVEMENT-WIDGET] Newly unlocked achievements:', newlyUnlocked)
+        // Refresh achievements after unlocking new ones
+        const refreshedAchievements = await achievementService.getUserAchievements(user!.id)
+        setAchievements(refreshedAchievements)
+      } else {
+        setAchievements(userAchievements)
+      }
 
-      setAchievements(userAchievements)
       setMomentumScore(momentum)
       
       console.log('[ACHIEVEMENT-WIDGET] Loaded data:', {
         achievementCount: userAchievements.length,
-        momentumScore: momentum
+        unlockedAchievements: userAchievements.filter(a => a.unlocked),
+        totalPoints: userAchievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0),
+        momentumScore: momentum,
+        achievementSample: userAchievements.slice(0, 3)
       })
       
     } catch (error) {
       console.error('[ACHIEVEMENT-WIDGET] Error loading data:', error)
+      console.error('[ACHIEVEMENT-WIDGET] Error details:', error?.message, error?.stack)
       // Set empty data so widget doesn't stay in loading state
       setAchievements([])
       setMomentumScore({
@@ -77,6 +78,7 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
         }
       })
     } finally {
+      console.log('[ACHIEVEMENT-WIDGET] Finally block - setting loading to false')
       setLoading(false)
     }
   }

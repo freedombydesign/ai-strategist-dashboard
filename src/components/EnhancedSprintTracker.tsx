@@ -248,7 +248,43 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
   ) || 0
 
   const totalSteps = sprintSteps.length
-  const currentStepNumber = currentProgress?.step_number || 1
+  const rawStepNumber = currentProgress?.step_number || 1
+  
+  // Handle corrupted data: if step number is higher than total steps AND status is just "started" 
+  // (not "completed"), reset to step 1
+  let currentStepNumber
+  if (rawStepNumber > totalSteps && currentProgress?.status === 'started') {
+    console.warn('[SPRINT-TRACKER] Corrupted step data detected, resetting to step 1:', {
+      rawStepNumber,
+      totalSteps,
+      status: currentProgress?.status
+    })
+    currentStepNumber = 1
+  } else {
+    currentStepNumber = Math.min(rawStepNumber, totalSteps)
+  }
+  
+  // Debug step counting and progress data
+  console.log('[SPRINT-TRACKER] Step counter debug:', {
+    rawStepNumber,
+    totalSteps,
+    currentStepNumber,
+    currentProgressExists: !!currentProgress,
+    stepNumberFromDB: currentProgress?.step_number,
+    sprintId: currentProgress?.sprint_id,
+    status: currentProgress?.status
+  })
+  
+  // Debug step counting mismatch
+  if (rawStepNumber > totalSteps) {
+    console.warn('[SPRINT-TRACKER] Step number mismatch:', {
+      rawStepNumber,
+      totalSteps,
+      currentStepNumber,
+      sprintId: currentProgress?.sprint_id,
+      sprintKey: currentProgress?.sprints?.sprint_key
+    })
+  }
   
   // Calculate progress using localStorage completion data (like the sprint detail pages)
   let progressPercent = 0

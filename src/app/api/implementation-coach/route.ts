@@ -143,7 +143,7 @@ Respond as their dedicated Implementation Coach with insights based on their act
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { message, userId } = body
+    const { message, userId, context } = body
 
     if (!message || !userId) {
       return NextResponse.json(
@@ -152,16 +152,54 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('[IMPLEMENTATION-COACH API] Received context from frontend:', context)
+
     // Initialize OpenAI
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     })
 
-    // Get comprehensive coaching context
-    const coachingContext = await getCoachingContext(userId)
-    
-    // Generate contextual coaching prompt
-    const systemPrompt = generateCoachingPrompt(coachingContext, message)
+    let coachingContext
+    let systemPrompt
+
+    // PREFER frontend context when available (it has working fallbacks)
+    if (context && context.includes('Total check-ins completed:')) {
+      console.log('[IMPLEMENTATION-COACH API] Frontend context available - using it directly!')
+      systemPrompt = `You are an AI Implementation Coach focused on accountability and progress acceleration.
+
+${context}
+
+Based on the user's actual implementation data above, provide coaching that:
+• Acknowledges their current progress and patterns
+• References specific metrics from their tracking
+• Asks focused questions about implementation barriers  
+• Provides 1-2 specific action items
+
+User's Message: "${message}"
+
+Respond as their dedicated Implementation Coach using their actual data.`
+      
+      console.log('[IMPLEMENTATION-COACH API] Using frontend context (preferred)')
+    } else {
+      // Try database context as backup
+      try {
+        console.log('[IMPLEMENTATION-COACH API] No frontend context, trying database...')
+        coachingContext = await getCoachingContext(userId)
+        systemPrompt = generateCoachingPrompt(coachingContext, message)
+        console.log('[IMPLEMENTATION-COACH API] Using database context - Total checkins:', coachingContext.analytics?.totalCheckins)
+      } catch (contextError) {
+        console.log('[IMPLEMENTATION-COACH API] Database context also failed:', contextError)
+        
+        // Final fallback - generic coaching
+        systemPrompt = `You are an AI Implementation Coach. The user's data is currently unavailable, so provide general implementation coaching guidance.
+
+User's Message: "${message}"
+
+Provide encouragement and general action items to help with implementation.`
+        
+        console.log('[IMPLEMENTATION-COACH API] Using generic fallback prompt')
+      }
+    }
 
     // Get AI response
     const completion = await openai.chat.completions.create({

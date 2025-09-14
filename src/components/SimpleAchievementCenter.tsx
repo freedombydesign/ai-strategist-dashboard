@@ -48,7 +48,8 @@ export default function SimpleAchievementCenter() {
           .order('checkin_date', { ascending: false })
         
         if (!checkinError && checkins) {
-          console.log('[ACHIEVEMENT-CENTER] Fallback loaded checkins:', checkins.length)
+          console.log('[ACHIEVEMENT-CENTER] Fallback SUCCESS! Loaded checkins:', checkins.length)
+          console.log('[ACHIEVEMENT-CENTER] Checkin data:', checkins)
           
           // Create basic achievements based on check-ins
           const basicAchievements = [
@@ -91,8 +92,11 @@ export default function SimpleAchievementCenter() {
           ]
           
           console.log('[ACHIEVEMENT-CENTER] Fallback achievements created:', basicAchievements.length)
+          console.log('[ACHIEVEMENT-CENTER] Achievement details:', basicAchievements)
           setAchievements(basicAchievements)
           return
+        } else {
+          console.error('[ACHIEVEMENT-CENTER] Database fallback failed:', checkinError)
         }
       } catch (fallbackError) {
         console.error('[ACHIEVEMENT-CENTER] Fallback also failed:', fallbackError)

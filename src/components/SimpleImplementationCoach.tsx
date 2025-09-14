@@ -79,7 +79,9 @@ export default function SimpleImplementationCoach() {
           .order('checkin_date', { ascending: false })
         
         if (!checkinError && checkins) {
-          console.log('[IMPLEMENTATION-COACH] Fallback loaded checkins:', checkins.length)
+          console.log('[IMPLEMENTATION-COACH] Fallback SUCCESS! Loaded checkins:', checkins.length)
+          console.log('[IMPLEMENTATION-COACH] Checkin data:', checkins)
+          
           const totalCheckins = checkins.length
           const avgEnergy = checkins.length > 0 
             ? Math.round(checkins.reduce((sum: number, c: any) => sum + (c.energy_level || 0), 0) / checkins.length)
@@ -90,15 +92,19 @@ export default function SimpleImplementationCoach() {
           const hasToday = checkins.some((c: any) => c.checkin_date === today)
           const streak = hasToday ? 1 : 0
           
+          console.log('[IMPLEMENTATION-COACH] Calculated - Total:', totalCheckins, 'Energy:', avgEnergy, 'Streak:', streak)
+          
           const fallbackContext = {
             streak,
             totalCheckins,
             avgEnergy
           }
           
-          console.log('[IMPLEMENTATION-COACH] Fallback context set:', fallbackContext)
+          console.log('[IMPLEMENTATION-COACH] Setting fallback context:', fallbackContext)
           setCoachingContext(fallbackContext)
           return
+        } else {
+          console.error('[IMPLEMENTATION-COACH] Database fallback failed:', checkinError)
         }
       } catch (fallbackError) {
         console.error('[IMPLEMENTATION-COACH] Fallback also failed:', fallbackError)
@@ -139,6 +145,14 @@ What's on your mind today? Any challenges you're facing with implementation?`,
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return
 
+    // Ensure context is loaded before sending message
+    if (!coachingContext) {
+      console.log('[IMPLEMENTATION-COACH] Context not ready, waiting...')
+      // Try to reload context
+      await loadInitialContext()
+      // If still no context after reload, continue with fallback
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputMessage,
@@ -159,6 +173,9 @@ Current coaching context:
 - Average energy level: ${coachingContext.avgEnergy}/10
 - User ID: ${user?.id}
 ` : 'Loading user context...'
+
+      console.log('[IMPLEMENTATION-COACH] Sending context to AI:', contextSummary)
+      console.log('[IMPLEMENTATION-COACH] Coaching context state:', coachingContext)
 
       const response = await fetch('/api/implementation-coach', {
         method: 'POST',

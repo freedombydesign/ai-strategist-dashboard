@@ -39,15 +39,20 @@ export interface MomentumScore {
 }
 
 class AchievementService {
+  // Cache to avoid repeated calculations
+  private streakCache = new Map<string, { value: number, timestamp: number }>()
+  private analyticsCache = new Map<string, { value: any, timestamp: number }>()
+  private cacheTimeout = 30000 // 30 seconds
+
   // Define all achievements
   private achievements: Achievement[] = [
-    // Streak Achievements
+    // Check-in Achievements
     {
       id: 'first_steps',
       name: 'First Steps',
       description: 'Complete your first daily check-in',
       icon: '🚀',
-      category: 'streak',
+      category: 'completion',
       requirement: 1,
       points: 10,
       rarity: 'common'
@@ -264,24 +269,72 @@ class AchievementService {
     }
   }
 
+  // Cached streak calculation
+  private async getCachedStreak(userId: string): Promise<number> {
+    const now = Date.now()
+    const cached = this.streakCache.get(userId)
+    
+    if (cached && (now - cached.timestamp) < this.cacheTimeout) {
+      console.log(`[ACHIEVEMENTS] Using cached streak for ${userId}:`, cached.value)
+      return cached.value
+    }
+    
+    const streak = await implementationService.calculateStreakDays(userId)
+    this.streakCache.set(userId, { value: streak, timestamp: now })
+    console.log(`[ACHIEVEMENTS] Calculated and cached new streak for ${userId}:`, streak)
+    return streak
+  }
+
+  // Cached analytics calculation  
+  private async getCachedAnalytics(userId: string): Promise<any> {
+    const now = Date.now()
+    const cached = this.analyticsCache.get(userId)
+    
+    if (cached && (now - cached.timestamp) < this.cacheTimeout) {
+      console.log(`[ACHIEVEMENTS] Using cached analytics for ${userId}`)
+      return cached.value
+    }
+    
+    const analytics = await implementationService.getImplementationAnalytics(userId)
+    this.analyticsCache.set(userId, { value: analytics, timestamp: now })
+    console.log(`[ACHIEVEMENTS] Calculated and cached new analytics for ${userId}`)
+    return analytics
+  }
+
   private async calculateProgress(userId: string, achievement: Achievement): Promise<number> {
     try {
+      console.log(`[ACHIEVEMENTS] Calculating progress for ${achievement.id} (${achievement.category})`)
+      
       switch (achievement.category) {
         case 'streak':
-          const streak = await implementationService.calculateStreakDays(userId)
+          const streak = await this.getCachedStreak(userId)
+          console.log(`[ACHIEVEMENTS] Streak for ${achievement.id}:`, streak)
           return Math.min(streak, achievement.requirement)
 
         case 'completion':
-          const analytics = await implementationService.getImplementationAnalytics(userId)
-          const totalTasks = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0)
-          return Math.min(totalTasks, achievement.requirement)
+          if (achievement.id === 'first_steps') {
+            // For first steps, count total check-ins, not tasks
+            const analytics = await this.getCachedAnalytics(userId)
+            console.log(`[ACHIEVEMENTS] Check-ins for ${achievement.id}:`, analytics.totalCheckins)
+            return Math.min(analytics.totalCheckins, achievement.requirement)
+          } else {
+            // For other completion achievements, count completed tasks
+            const analytics = await this.getCachedAnalytics(userId)
+            console.log(`[ACHIEVEMENTS] Analytics for ${achievement.id}:`, analytics)
+            const totalTasks = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0)
+            console.log(`[ACHIEVEMENTS] Total tasks for ${achievement.id}:`, totalTasks)
+            return Math.min(totalTasks, achievement.requirement)
+          }
 
         case 'business':
-          const businessData = await businessMetricsService.getBusinessAnalytics(userId)
-          if (achievement.id === 'profit_tracker') {
-            return Math.min(businessData.totalSnapshots, achievement.requirement)
+          try {
+            const businessData = await businessMetricsService.getBusinessAnalytics(userId)
+            if (achievement.id === 'profit_tracker') {
+              return Math.min(businessData.totalSnapshots || 0, achievement.requirement)
+            }
+          } catch (error) {
+            console.log(`[ACHIEVEMENTS] Business data not available for ${achievement.id}:`, error.message)
           }
-          // For growth achievements, would need more complex logic
           return 0
 
         case 'consistency':
@@ -290,12 +343,18 @@ class AchievementService {
             return 0
           } else if (achievement.id === 'energy_champion') {
             const recentCheckins = await implementationService.getRecentCheckins(userId, 14)
+            console.log(`[ACHIEVEMENTS] Recent checkins for ${achievement.id}:`, recentCheckins.length)
             const highEnergyDays = recentCheckins.filter(c => (c.energy_level || 0) >= 8).length
+            console.log(`[ACHIEVEMENTS] High energy days for ${achievement.id}:`, highEnergyDays)
             return Math.min(highEnergyDays, achievement.requirement)
           } else if (achievement.id === 'momentum_master') {
-            const currentAnalytics = await implementationService.getImplementationAnalytics(userId)
-            const momentum = await this.calculateMomentumScore(userId)
-            return Math.min(momentum.current, achievement.requirement)
+            // Use cached analytics to avoid recursive momentum calculation
+            const analytics = await this.getCachedAnalytics(userId)
+            const streak = await this.getCachedStreak(userId)
+            const baseScore = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0) * 10
+            const momentum = baseScore + (streak * 5)
+            console.log(`[ACHIEVEMENTS] Momentum for ${achievement.id}:`, momentum)
+            return Math.min(momentum, achievement.requirement)
           }
           return 0
 
@@ -307,7 +366,7 @@ class AchievementService {
           return 0
       }
     } catch (error) {
-      console.error('[ACHIEVEMENTS] Error calculating progress:', error)
+      console.error(`[ACHIEVEMENTS] Error calculating progress for ${achievement.id}:`, error)
       return 0
     }
   }
