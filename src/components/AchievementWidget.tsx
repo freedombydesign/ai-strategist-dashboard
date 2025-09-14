@@ -27,15 +27,25 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    console.log('[ACHIEVEMENT-WIDGET] useEffect triggered with user:', user?.id)
+    console.log('[ACHIEVEMENT-WIDGET] ⚡ useEffect TRIGGERED with user:', user?.id)
+    console.log('[ACHIEVEMENT-WIDGET] ⚡ useEffect full user object:', user)
     if (user?.id) {
-      console.log('[ACHIEVEMENT-WIDGET] User ID found, starting data load for:', user.id)
+      console.log('[ACHIEVEMENT-WIDGET] ✅ User ID found, starting data load for:', user.id)
       loadAchievementData()
     } else {
-      console.log('[ACHIEVEMENT-WIDGET] No user ID available, user state:', user)
+      console.log('[ACHIEVEMENT-WIDGET] ❌ No user ID available, user state:', user)
       setLoading(false)
     }
   }, [user?.id])
+
+  // Force trigger if user is available but useEffect didn't run
+  useEffect(() => {
+    console.log('[ACHIEVEMENT-WIDGET] 🔄 FORCE CHECK - User available on mount:', !!user?.id)
+    if (user?.id && loading) {
+      console.log('[ACHIEVEMENT-WIDGET] 🔄 FORCE TRIGGERING loadAchievementData')
+      loadAchievementData()
+    }
+  }, [user, loading])
 
   const loadAchievementData = async () => {
     try {
