@@ -39,10 +39,10 @@ export interface MomentumScore {
 }
 
 class AchievementService {
-  // Cache to avoid repeated calculations (CLEARED FOR TESTING)
+  // Cache to avoid repeated calculations
   private streakCache = new Map<string, { value: number, timestamp: number }>()
   private analyticsCache = new Map<string, { value: any, timestamp: number }>()
-  private cacheTimeout = 5000 // 5 seconds for testing
+  private cacheTimeout = 30000 // 30 seconds
 
   // Define all achievements
   private achievements: Achievement[] = [
@@ -60,10 +60,10 @@ class AchievementService {
     {
       id: 'getting_started',
       name: 'Getting Started',
-      description: 'Maintain a 2-day check-in streak (TEST MODE)',
+      description: 'Maintain a 3-day check-in streak',
       icon: '🔥',
       category: 'streak',
-      requirement: 2,
+      requirement: 3,
       points: 25,
       rarity: 'common'
     },
