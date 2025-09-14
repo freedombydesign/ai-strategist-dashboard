@@ -22,32 +22,10 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
     console.log('[ACHIEVEMENT-WIDGET] useEffect triggered with user:', user?.id)
     if (user?.id) {
       console.log('[ACHIEVEMENT-WIDGET] User ID found, starting data load for:', user.id)
-      
-      // Add a timeout to prevent infinite loading
-      const loadTimeout = setTimeout(() => {
-        if (loading) {
-          console.warn('[ACHIEVEMENT-WIDGET] Loading timeout after 10 seconds, setting fallback data')
-          setAchievements([])
-          setMomentumScore({
-            current: 0,
-            trend: 'stable',
-            multiplier: 1,
-            factors: {
-              streakBonus: 0,
-              consistencyBonus: 0,
-              businessImpactBonus: 0,
-              achievementBonus: 0
-            }
-          })
-          setLoading(false)
-        }
-      }, 10000) // 10 second timeout
-
       loadAchievementData()
-      
-      return () => clearTimeout(loadTimeout)
     } else {
       console.log('[ACHIEVEMENT-WIDGET] No user ID available, user state:', user)
+      setLoading(false)
     }
   }, [user?.id])
 
