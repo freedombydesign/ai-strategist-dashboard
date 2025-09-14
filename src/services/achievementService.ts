@@ -382,6 +382,10 @@ class AchievementService {
       for (const achievement of achievements) {
         console.log(`[ACHIEVEMENTS] Checking ${achievement.id}: unlocked=${achievement.unlocked}, progress=${achievement.progress}/${achievement.requirement}`)
         
+        if (achievement.id === 'task_master') {
+          console.log(`[ACHIEVEMENTS] 🎯 TASK MASTER DEBUG: unlocked=${achievement.unlocked}, progress=${achievement.progress}, requirement=${achievement.requirement}, readyToUnlock=${!achievement.unlocked && achievement.progress! >= achievement.requirement}`)
+        }
+        
         if (!achievement.unlocked && achievement.progress! >= achievement.requirement) {
           console.log(`[ACHIEVEMENTS] 🎉 UNLOCKING ACHIEVEMENT: ${achievement.id} - ${achievement.name}`)
           
