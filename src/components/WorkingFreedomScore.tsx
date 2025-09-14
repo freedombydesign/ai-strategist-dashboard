@@ -61,18 +61,29 @@ export default function FreedomScoreDiagnostic() {
   }
 
   const handleAnswerChange = (questionOrderIndex: number, value: string) => {
+    console.log('[WORKING-FREEDOM-SCORE] 🎯 Answer changed - Question:', questionOrderIndex, 'Value:', value)
     const newAnswers = { ...answers, [questionOrderIndex]: parseInt(value) }
     setAnswers(newAnswers)
+    console.log('[WORKING-FREEDOM-SCORE] 📋 Updated answers:', newAnswers)
 
     const allAnswered = Object.values(newAnswers).every(answer => answer !== null)
+    const answeredCount = Object.values(newAnswers).filter(answer => answer !== null).length
+    console.log('[WORKING-FREEDOM-SCORE] ✅ Progress:', answeredCount, '/ 12 questions answered')
+    console.log('[WORKING-FREEDOM-SCORE] 🏁 All answered?', allAnswered)
+    
     if (allAnswered) {
+      console.log('[WORKING-FREEDOM-SCORE] 🚀 All questions answered! Calling calculateScoreAndSave...')
       calculateScoreAndSave(newAnswers)
     }
   }
 
   const calculateScoreAndSave = async (answersObj: Record<number, number | null>) => {
+    console.log('[WORKING-FREEDOM-SCORE] 🚀 calculateScoreAndSave called!')
+    console.log('[WORKING-FREEDOM-SCORE] 📝 Answers object:', answersObj)
+    console.log('[WORKING-FREEDOM-SCORE] 👤 Current user:', user)
     try {
       setIsCalculating(true)
+      console.log('[WORKING-FREEDOM-SCORE] ⚡ Starting score calculation...')
       console.log('Calculating score with answers:', answersObj)
       
       const moduleAnswers: DiagnosticAnswers = {
@@ -102,11 +113,14 @@ export default function FreedomScoreDiagnostic() {
       // Save to database with real user ID
       if (user?.id) {
         try {
+          console.log('[WORKING-FREEDOM-SCORE] 💾 About to call diagnosticService.saveResponsesAndCalculateScore')
+          console.log('[WORKING-FREEDOM-SCORE] 📊 Module answers:', moduleAnswers)
+          console.log('[WORKING-FREEDOM-SCORE] 🆔 User ID:', user.id)
           const savedResponse = await diagnosticService.saveResponsesAndCalculateScore(
             moduleAnswers,
             user.id
           )
-          console.log('Response saved for user:', user.id, 'Response ID:', savedResponse.id)
+          console.log('[WORKING-FREEDOM-SCORE] ✅ Response saved for user:', user.id, 'Response ID:', savedResponse.id)
         } catch (saveError) {
           console.error('Error saving response:', saveError)
         }

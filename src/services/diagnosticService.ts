@@ -71,6 +71,9 @@ export const diagnosticService = {
     answers: DiagnosticAnswers, 
     userId?: string
   ): Promise<SavedResponse> {
+    console.log('[DIAGNOSTIC] 🚀 saveResponsesAndCalculateScore called!')
+    console.log('[DIAGNOSTIC] 📝 Answers received:', answers)
+    console.log('[DIAGNOSTIC] 👤 User ID:', userId)
     try {
       // Calculate the score using our new algorithm
       const scoreResult = scoreAndRecommend(answers);
