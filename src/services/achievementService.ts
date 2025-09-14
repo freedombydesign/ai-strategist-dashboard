@@ -70,10 +70,10 @@ class AchievementService {
     {
       id: 'week_warrior',
       name: 'Week Warrior',
-      description: 'Maintain a 7-day check-in streak',
+      description: 'Maintain a 2-day check-in streak (EMAIL TEST)',
       icon: '⚔️',
       category: 'streak',
-      requirement: 7,
+      requirement: 2,
       points: 50,
       rarity: 'rare'
     },
@@ -403,8 +403,14 @@ class AchievementService {
             try {
               console.log(`[ACHIEVEMENTS] 📧 Scheduling celebration email for ${achievement.name}`)
               await emailService.scheduleMilestoneCelebrationEmail(userId, {
-                achievement: unlockedAchievement,
+                name: unlockedAchievement.name,
+                title: `${unlockedAchievement.icon} ${unlockedAchievement.name}`,
+                progress: `+${achievement.points} points`,
+                percentage: '100',
+                impact: unlockedAchievement.description,
+                description: `You've unlocked the "${unlockedAchievement.name}" achievement! This ${unlockedAchievement.rarity} achievement is worth ${achievement.points} points.`,
                 totalPoints: achievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0) + achievement.points,
+                achievementData: unlockedAchievement,
                 unlockedAt: new Date().toISOString()
               });
               console.log(`[ACHIEVEMENTS] ✅ Email scheduled successfully for ${achievement.name}`)
