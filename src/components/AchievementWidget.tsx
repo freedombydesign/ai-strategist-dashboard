@@ -44,11 +44,18 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
   const loadAchievementData = async () => {
     try {
       setLoading(true)
+      console.log('[ACHIEVEMENT-WIDGET] 🔄 Starting achievement check process...')
       const [userAchievements, momentum, newlyUnlocked] = await Promise.all([
         achievementService.getUserAchievements(user!.id),
         achievementService.calculateMomentumScore(user!.id),
         achievementService.checkAndUnlockAchievements(user!.id)
       ])
+      
+      console.log('[ACHIEVEMENT-WIDGET] 🎯 Achievement check results:', {
+        userAchievements: userAchievements.length,
+        newlyUnlocked: newlyUnlocked.length,
+        newAchievements: newlyUnlocked.map(a => a.name)
+      })
       
       if (newlyUnlocked.length > 0) {
         // Refresh achievements after unlocking new ones
