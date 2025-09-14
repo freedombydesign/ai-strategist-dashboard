@@ -380,35 +380,52 @@ class AchievementService {
             const unlockedAchievement = { ...achievement, unlocked: true, unlockedAt: new Date().toISOString() }
             newlyUnlocked.push(unlockedAchievement)
 
-            // Schedule milestone celebration email via API
+            // Send achievement email directly
             try {
-              console.log(`[ACHIEVEMENTS] 📧 Scheduling email via API for ${achievement.name}`)
-              const response = await fetch('/api/email-notifications', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  type: 'milestone_celebration',
-                  userId: userId,
-                  data: {
-                    name: unlockedAchievement.name,
-                    title: `${unlockedAchievement.icon} ${unlockedAchievement.name}`,
-                    progress: `+${achievement.points} points`,
-                    percentage: '100',
-                    impact: unlockedAchievement.description,
-                    description: `You've unlocked the "${unlockedAchievement.name}" achievement! This ${unlockedAchievement.rarity} achievement is worth ${achievement.points} points.`,
-                    totalPoints: achievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0) + achievement.points,
-                    achievementData: unlockedAchievement,
-                    unlockedAt: new Date().toISOString()
-                  }
-                })
-              });
+              console.log(`[ACHIEVEMENTS] 📧 Sending achievement email directly for ${achievement.name}`)
               
-              const result = await response.json()
-              console.log(`[ACHIEVEMENTS] ✅ Email API response:`, result)
+              // Get user email from Supabase
+              const { data: userData } = await supabase.auth.admin.getUserById(userId)
+              const userEmail = userData?.user?.email
+              
+              if (userEmail) {
+                const { Resend } = await import('resend')
+                const resend = new Resend(process.env.RESEND_API_KEY)
+                
+                const emailResult = await resend.emails.send({
+                  from: process.env.EMAIL_FROM || 'coach@scalewithruth.com',
+                  to: userEmail,
+                  subject: `🎉 Achievement Unlocked: ${unlockedAchievement.name}!`,
+                  html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+                        <h1 style="margin: 0; font-size: 28px;">${unlockedAchievement.icon} Achievement Unlocked!</h1>
+                        <h2 style="margin: 10px 0 0 0; font-size: 24px; font-weight: normal;">${unlockedAchievement.name}</h2>
+                      </div>
+                      
+                      <div style="background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="font-size: 16px; color: #333; margin: 0 0 10px 0;"><strong>Description:</strong> ${unlockedAchievement.description}</p>
+                        <p style="font-size: 16px; color: #333; margin: 0 0 10px 0;"><strong>Points Earned:</strong> +${achievement.points} points</p>
+                        <p style="font-size: 16px; color: #333; margin: 0;"><strong>Rarity:</strong> ${unlockedAchievement.rarity.toUpperCase()}</p>
+                      </div>
+                      
+                      <div style="text-align: center;">
+                        <p style="font-size: 16px; color: #666;">Keep up the great work! Check your dashboard to see your progress.</p>
+                        <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://suite.scalewithruth.com'}/achievements" 
+                           style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">
+                          View All Achievements
+                        </a>
+                      </div>
+                    </div>
+                  `
+                })
+                
+                console.log(`[ACHIEVEMENTS] ✅ Email sent successfully:`, emailResult)
+              } else {
+                console.log(`[ACHIEVEMENTS] ⚠️ No email found for user ${userId}`)
+              }
             } catch (emailError) {
-              console.error('Error scheduling celebration email:', emailError);
+              console.error('Error sending celebration email:', emailError);
               // Don't fail achievement unlock for email issues
             }
           } else {
