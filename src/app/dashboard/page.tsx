@@ -361,24 +361,33 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            /* No Score Yet */
-            <div className="bg-white rounded-lg shadow-sm border p-8">
-              <div className="text-center">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" style={{width: '64px', height: '64px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Take Your Freedom Score Assessment
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  Discover your business bottlenecks and get personalized recommendations
-                </p>
-                <Link
-                  href="/assessment"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center"
-                >
-                  Start Assessment
-                </Link>
+            /* No Score Yet - but still show AchievementWidget for email testing */
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <div className="bg-white rounded-lg shadow-sm border p-8">
+                  <div className="text-center">
+                    <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" style={{width: '64px', height: '64px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      Take Your Freedom Score Assessment
+                    </h3>
+                    <p className="text-gray-500 mb-6">
+                      Discover your business bottlenecks and get personalized recommendations
+                    </p>
+                    <Link
+                      href="/assessment"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center"
+                    >
+                      Start Assessment
+                    </Link>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Sidebar with AchievementWidget for email testing */}
+              <div className="space-y-6">
+                <AchievementWidget />
               </div>
             </div>
           )}
