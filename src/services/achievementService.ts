@@ -134,10 +134,10 @@ class AchievementService {
     {
       id: 'profit_tracker',
       name: 'Profit Tracker',
-      description: 'Track business metrics for 3 consecutive months',
+      description: 'Track business metrics for 2 months (EMAIL TEST)',
       icon: '📈',
       category: 'business',
-      requirement: 3,
+      requirement: 2,
       points: 100,
       rarity: 'rare'
     },
