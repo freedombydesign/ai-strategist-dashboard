@@ -27,9 +27,12 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    console.log('[ACHIEVEMENT-WIDGET] ⚡ useEffect TRIGGERED - user?.id:', user?.id)
     if (user?.id) {
+      console.log('[ACHIEVEMENT-WIDGET] 🔄 Calling loadAchievementData...')
       loadAchievementData()
     } else {
+      console.log('[ACHIEVEMENT-WIDGET] ❌ No user ID, setting loading false')
       setLoading(false)
     }
   }, [user?.id])
