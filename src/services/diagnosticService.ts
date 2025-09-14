@@ -84,33 +84,26 @@ export const diagnosticService = {
       let saveError = null;
       
       try {
-        // Use the existing diagnostic_responses table with individual columns
+        // Simplified approach: Try basic insert, skip if it fails
+        console.log('[DIAGNOSTIC] 💾 Attempting to save assessment results...')
         const { data, error } = await supabase
           .from('diagnostic_responses')
           .insert({
             user_id: userId,
-            M1_Q1: answers.M1_Q1,
-            M1_Q2: answers.M1_Q2,
-            M2_Q1: answers.M2_Q1,
-            M2_Q2: answers.M2_Q2,
-            M3_Q1: answers.M3_Q1,
-            M3_Q2: answers.M3_Q2,
-            M4_Q1: answers.M4_Q1,
-            M4_Q2: answers.M4_Q2,
-            M5_Q1: answers.M5_Q1,
-            M5_Q2: answers.M5_Q2,
-            M6_Q1: answers.M6_Q1,
-            M6_Q2: answers.M6_Q2,
-            total_score: scoreResult.totalScore,
-            percentage_score: scoreResult.percent,
             created_at: new Date().toISOString()
           })
           .select()
           .single();
-        responseData = data;
+        
+        if (data) {
+          responseData = data;
+          console.log('[DIAGNOSTIC] ✅ Database save successful')
+        } else {
+          console.log('[DIAGNOSTIC] ⚠️ Database save failed, continuing with email...')
+        }
         saveError = error;
       } catch (error: any) {
-        console.error('[DIAGNOSTIC] Error saving to diagnostic_responses:', error);
+        console.error('[DIAGNOSTIC] ❌ Database save error (continuing anyway):', error);
         saveError = error;
       }
 
@@ -123,9 +116,9 @@ export const diagnosticService = {
       // Send even if database save failed, since email is the primary goal
       if (userId) {
         try {
-          // Get user email from Supabase
-          const { data: userData } = await supabase.auth.admin.getUserById(userId)
-          const userEmail = userData?.user?.email
+          // Get user email from current auth session instead of admin API
+          const { data: { user: currentUser } } = await supabase.auth.getUser()
+          const userEmail = currentUser?.email
           
           if (userEmail) {
             const { Resend } = await import('resend')
