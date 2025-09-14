@@ -1,7 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { implementationService } from './implementationService'
 import { businessMetricsService } from './businessMetricsService'
-import { emailService } from './emailService'
 
 export interface Achievement {
   id: string
@@ -102,20 +101,20 @@ class AchievementService {
     {
       id: 'task_master',
       name: 'Task Master',
-      description: 'Complete 6 total tasks (EMAIL TEST)',
+      description: 'Complete 5 total tasks (EMAIL TEST)',
       icon: '✅',
       category: 'completion',
-      requirement: 6,
+      requirement: 5,
       points: 75,
       rarity: 'rare'
     },
     {
       id: 'productivity_king',
       name: 'Productivity King',
-      description: 'Complete 200 total tasks',
+      description: 'Complete 5 total tasks (EMAIL TEST)',
       icon: '👑',
       category: 'completion',
-      requirement: 200,
+      requirement: 5,
       points: 200,
       rarity: 'epic'
     },
@@ -134,10 +133,10 @@ class AchievementService {
     {
       id: 'profit_tracker',
       name: 'Profit Tracker',
-      description: 'Track business metrics for 2 months (EMAIL TEST)',
+      description: 'Track business metrics for 6 months',
       icon: '📈',
       category: 'business',
-      requirement: 2,
+      requirement: 6,
       points: 100,
       rarity: 'rare'
     },
@@ -176,20 +175,20 @@ class AchievementService {
     {
       id: 'energy_champion',
       name: 'Energy Champion',
-      description: 'Maintain 8+ average energy for 2 weeks',
+      description: 'Maintain 8+ average energy for 2 weeks (EMAIL TEST)',
       icon: '⚡',
       category: 'consistency',
-      requirement: 14,
+      requirement: 0,
       points: 100,
       rarity: 'epic'
     },
     {
       id: 'momentum_master',
       name: 'Momentum Master',
-      description: 'Achieve 70+ momentum score (EMAIL TEST)',
+      description: 'Achieve 500+ momentum score',
       icon: '🎯',
       category: 'consistency',
-      requirement: 70,
+      requirement: 500,
       points: 300,
       rarity: 'epic'
     },
@@ -275,13 +274,11 @@ class AchievementService {
     const cached = this.streakCache.get(userId)
     
     if (cached && (now - cached.timestamp) < this.cacheTimeout) {
-      console.log(`[ACHIEVEMENTS] Using cached streak for ${userId}:`, cached.value)
       return cached.value
     }
     
     const streak = await implementationService.calculateStreakDays(userId)
     this.streakCache.set(userId, { value: streak, timestamp: now })
-    console.log(`[ACHIEVEMENTS] Calculated and cached new streak for ${userId}:`, streak)
     return streak
   }
 
@@ -291,38 +288,31 @@ class AchievementService {
     const cached = this.analyticsCache.get(userId)
     
     if (cached && (now - cached.timestamp) < this.cacheTimeout) {
-      console.log(`[ACHIEVEMENTS] Using cached analytics for ${userId}`)
       return cached.value
     }
     
     const analytics = await implementationService.getImplementationAnalytics(userId)
     this.analyticsCache.set(userId, { value: analytics, timestamp: now })
-    console.log(`[ACHIEVEMENTS] Calculated and cached new analytics for ${userId}`)
     return analytics
   }
 
   private async calculateProgress(userId: string, achievement: Achievement): Promise<number> {
     try {
-      console.log(`[ACHIEVEMENTS] Calculating progress for ${achievement.id} (${achievement.category})`)
       
       switch (achievement.category) {
         case 'streak':
           const streak = await this.getCachedStreak(userId)
-          console.log(`[ACHIEVEMENTS] Streak for ${achievement.id}:`, streak)
           return Math.min(streak, achievement.requirement)
 
         case 'completion':
           if (achievement.id === 'first_steps') {
             // For first steps, count total check-ins, not tasks
             const analytics = await this.getCachedAnalytics(userId)
-            console.log(`[ACHIEVEMENTS] Check-ins for ${achievement.id}:`, analytics.totalCheckins)
             return Math.min(analytics.totalCheckins, achievement.requirement)
           } else {
             // For other completion achievements, count completed tasks
             const analytics = await this.getCachedAnalytics(userId)
-            console.log(`[ACHIEVEMENTS] Analytics for ${achievement.id}:`, analytics)
             const totalTasks = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0)
-            console.log(`[ACHIEVEMENTS] Total tasks for ${achievement.id}:`, totalTasks)
             return Math.min(totalTasks, achievement.requirement)
           }
 
@@ -333,7 +323,7 @@ class AchievementService {
               return Math.min(businessData.totalSnapshots || 0, achievement.requirement)
             }
           } catch (error) {
-            console.log(`[ACHIEVEMENTS] Business data not available for ${achievement.id}:`, error.message)
+            // Business data not available
           }
           return 0
 
@@ -343,9 +333,7 @@ class AchievementService {
             return 0
           } else if (achievement.id === 'energy_champion') {
             const recentCheckins = await implementationService.getRecentCheckins(userId, 14)
-            console.log(`[ACHIEVEMENTS] Recent checkins for ${achievement.id}:`, recentCheckins.length)
             const highEnergyDays = recentCheckins.filter(c => (c.energy_level || 0) >= 8).length
-            console.log(`[ACHIEVEMENTS] High energy days for ${achievement.id}:`, highEnergyDays)
             return Math.min(highEnergyDays, achievement.requirement)
           } else if (achievement.id === 'momentum_master') {
             // Use cached analytics to avoid recursive momentum calculation
@@ -353,7 +341,6 @@ class AchievementService {
             const streak = await this.getCachedStreak(userId)
             const baseScore = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0) * 10
             const momentum = baseScore + (streak * 5)
-            console.log(`[ACHIEVEMENTS] Momentum for ${achievement.id}:`, momentum)
             return Math.min(momentum, achievement.requirement)
           }
           return 0
@@ -366,28 +353,18 @@ class AchievementService {
           return 0
       }
     } catch (error) {
-      console.error(`[ACHIEVEMENTS] Error calculating progress for ${achievement.id}:`, error)
+      console.error(`Error calculating progress for ${achievement.id}:`, error)
       return 0
     }
   }
 
   async checkAndUnlockAchievements(userId: string): Promise<Achievement[]> {
     try {
-      console.log('[ACHIEVEMENTS] checkAndUnlockAchievements called for user:', userId)
       const achievements = await this.getUserAchievements(userId)
       const newlyUnlocked: Achievement[] = []
-
-      console.log('[ACHIEVEMENTS] Checking', achievements.length, 'achievements for unlocks')
       
       for (const achievement of achievements) {
-        console.log(`[ACHIEVEMENTS] Checking ${achievement.id}: unlocked=${achievement.unlocked}, progress=${achievement.progress}/${achievement.requirement}`)
-        
-        if (achievement.id === 'task_master') {
-          console.log(`[ACHIEVEMENTS] 🎯 TASK MASTER DEBUG: unlocked=${achievement.unlocked}, progress=${achievement.progress}, requirement=${achievement.requirement}, readyToUnlock=${!achievement.unlocked && achievement.progress! >= achievement.requirement}`)
-        }
-        
         if (!achievement.unlocked && achievement.progress! >= achievement.requirement) {
-          console.log(`[ACHIEVEMENTS] 🎉 UNLOCKING ACHIEVEMENT: ${achievement.id} - ${achievement.name}`)
           
           // Unlock achievement
           const { error } = await supabase
@@ -403,32 +380,43 @@ class AchievementService {
             const unlockedAchievement = { ...achievement, unlocked: true, unlockedAt: new Date().toISOString() }
             newlyUnlocked.push(unlockedAchievement)
 
-            // Schedule milestone celebration email
+            // Schedule milestone celebration email via API
             try {
-              console.log(`[ACHIEVEMENTS] 📧 Scheduling celebration email for ${achievement.name}`)
-              await emailService.scheduleMilestoneCelebrationEmail(userId, {
-                name: unlockedAchievement.name,
-                title: `${unlockedAchievement.icon} ${unlockedAchievement.name}`,
-                progress: `+${achievement.points} points`,
-                percentage: '100',
-                impact: unlockedAchievement.description,
-                description: `You've unlocked the "${unlockedAchievement.name}" achievement! This ${unlockedAchievement.rarity} achievement is worth ${achievement.points} points.`,
-                totalPoints: achievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0) + achievement.points,
-                achievementData: unlockedAchievement,
-                unlockedAt: new Date().toISOString()
+              console.log(`[ACHIEVEMENTS] 📧 Scheduling email via API for ${achievement.name}`)
+              const response = await fetch('/api/email-notifications', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  type: 'milestone_celebration',
+                  userId: userId,
+                  data: {
+                    name: unlockedAchievement.name,
+                    title: `${unlockedAchievement.icon} ${unlockedAchievement.name}`,
+                    progress: `+${achievement.points} points`,
+                    percentage: '100',
+                    impact: unlockedAchievement.description,
+                    description: `You've unlocked the "${unlockedAchievement.name}" achievement! This ${unlockedAchievement.rarity} achievement is worth ${achievement.points} points.`,
+                    totalPoints: achievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0) + achievement.points,
+                    achievementData: unlockedAchievement,
+                    unlockedAt: new Date().toISOString()
+                  }
+                })
               });
-              console.log(`[ACHIEVEMENTS] ✅ Email scheduled successfully for ${achievement.name}`)
+              
+              const result = await response.json()
+              console.log(`[ACHIEVEMENTS] ✅ Email API response:`, result)
             } catch (emailError) {
-              console.error('[ACHIEVEMENTS] ❌ Error scheduling celebration email:', emailError);
+              console.error('Error scheduling celebration email:', emailError);
               // Don't fail achievement unlock for email issues
             }
           } else {
-            console.error('[ACHIEVEMENTS] Error unlocking achievement:', error)
+            console.error('Error unlocking achievement:', error)
           }
         }
       }
 
-      console.log(`[ACHIEVEMENTS] Unlock check complete. Found ${newlyUnlocked.length} newly unlocked achievements`)
       return newlyUnlocked
 
     } catch (error) {

@@ -29,9 +29,7 @@ import SprintDebugWidget from '@/components/SprintDebugWidget'
 import { LogOut } from 'lucide-react'
 
 export default function Dashboard() {
-  console.log('[DASHBOARD] 🏠 DASHBOARD PAGE COMPONENT STARTED')
   const { user, signOut, isSigningOut } = useAuth()
-  console.log('[DASHBOARD] 🏠 DASHBOARD PAGE AUTH HOOK COMPLETED')
   const [freedomScore, setFreedomScore] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -289,7 +287,6 @@ export default function Dashboard() {
               {/* Sidebar */}
               <div className="space-y-6">
                 {/* Achievement Widget */}
-                {console.log('[DASHBOARD] 🏆 ABOUT TO RENDER ACHIEVEMENTWIDGET')}
                 <AchievementWidget />
                 
                 {/* Business Metrics Widget */}
