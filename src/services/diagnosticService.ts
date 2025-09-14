@@ -122,7 +122,9 @@ export const diagnosticService = {
           
           if (userEmail) {
             const { Resend } = await import('resend')
-            const resend = new Resend(process.env.RESEND_API_KEY)
+            const resendApiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY || 're_aW5CKjn1_Q98Rex97d6hzUCcuHT8oEikw'
+            console.log('[DIAGNOSTIC] 🔑 Using Resend API key:', resendApiKey ? 'Found' : 'Missing')
+            const resend = new Resend(resendApiKey)
             
             const emailResult = await resend.emails.send({
               from: process.env.EMAIL_FROM || 'coach@scalewithruth.com',
