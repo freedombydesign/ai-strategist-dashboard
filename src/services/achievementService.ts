@@ -39,10 +39,10 @@ export interface MomentumScore {
 }
 
 class AchievementService {
-  // Cache to avoid repeated calculations
+  // Cache to avoid repeated calculations (CLEARED FOR TESTING)
   private streakCache = new Map<string, { value: number, timestamp: number }>()
   private analyticsCache = new Map<string, { value: any, timestamp: number }>()
-  private cacheTimeout = 30000 // 30 seconds
+  private cacheTimeout = 5000 // 5 seconds for testing
 
   // Define all achievements
   private achievements: Achievement[] = [
