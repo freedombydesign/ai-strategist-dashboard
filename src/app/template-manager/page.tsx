@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import NavigationHeader from '../../components/NavigationHeader'
 
 interface Template {
   id: string
@@ -325,16 +326,14 @@ export default function TemplateManagerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            📋 Template Manager
-          </h1>
-          <p className="text-purple-200">
-            Manage and view AI-generated templates for your workflows
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900">
+      <NavigationHeader
+        title="📋 Template Manager"
+        subtitle="Manage and view AI-generated templates for your workflows"
+      />
+
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Workflow Selection */}
@@ -544,6 +543,7 @@ export default function TemplateManagerPage() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

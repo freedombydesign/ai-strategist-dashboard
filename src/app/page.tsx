@@ -1,101 +1,130 @@
 import Link from 'next/link'
-import { ChartBarIcon, RocketLaunchIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { CogIcon, DocumentDuplicateIcon, ShareIcon, ChartBarIcon, ArrowPathIcon, BoltIcon } from '@heroicons/react/24/outline'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+      <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-6">
-            Freedom by Design
+        <div className="text-center mb-20">
+          <div className="flex justify-center mb-8">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg">
+              <CogIcon className="w-10 h-10 text-white" />
+            </div>
+          </div>
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Business Systemizer
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Transform your business with AI-powered strategic guidance
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Transform your service delivery workflows into streamlined, repeatable systems.
+            Generate custom templates and export to your favorite platforms.
           </p>
         </div>
 
-        {/* Main CTA Section */}
-        <div className="bg-white rounded-lg shadow-sm border p-12 mb-16 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-xl bg-blue-600 flex items-center justify-center">
-              <SparklesIcon className="w-8 h-8 text-white" />
-            </div>
-          </div>
+        {/* Main Value Proposition */}
+        <div className="bg-white rounded-2xl shadow-xl border border-purple-100 p-12 mb-20 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">
-            Ready to Unlock Your Business Freedom?
+            Stop Reinventing Your Workflows Every Time
           </h2>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Take the Freedom Score diagnostic to identify your constraints and get personalized strategies.
+          <p className="text-lg text-gray-600 mb-10 max-w-3xl mx-auto">
+            Analyze your current service delivery process, identify bottlenecks, and generate
+            customized workflow templates that integrate seamlessly with Trello, Asana, ClickUp, Monday.com, and Notion.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link 
-              href="/assessment"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg inline-flex items-center gap-3"
+            <Link
+              href="/service-delivery-systemizer"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-10 py-5 rounded-xl inline-flex items-center gap-3 text-lg font-semibold shadow-lg transition-all"
             >
-              <ChartBarIcon className="w-6 h-6" />
-              Start Freedom Score Assessment
+              <ArrowPathIcon className="w-6 h-6" />
+              Analyze My Workflow
             </Link>
-            
-            <Link 
-              href="/login"
-              className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-8 py-4 rounded-lg inline-flex items-center gap-3"
+
+            <Link
+              href="/template-manager"
+              className="border-2 border-purple-600 hover:bg-purple-50 text-purple-700 px-10 py-5 rounded-xl inline-flex items-center gap-3 text-lg font-semibold transition-all"
             >
-              <RocketLaunchIcon className="w-6 h-6" />
-              Access Dashboard
-            </Link>
-          </div>
-          
-          <div className="mt-8 flex justify-center items-center gap-4">
-            <div className="text-sm text-gray-500">Already have an account?</div>
-            <Link 
-              href="/login"
-              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Sign In
-            </Link>
-            <div className="w-px h-4 bg-gray-300"></div>
-            <Link 
-              href="/signup"
-              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Create Account
+              <DocumentDuplicateIcon className="w-6 h-6" />
+              Browse Templates
             </Link>
           </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <div className="w-12 h-12 rounded-lg bg-blue-100 mb-4 flex items-center justify-center mx-auto">
-              <ChartBarIcon className="w-6 h-6 text-blue-600" />
+        {/* How It Works */}
+        <div className="mb-20">
+          <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">How It Works</h3>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-purple-100 mb-6 flex items-center justify-center mx-auto">
+                <ChartBarIcon className="w-8 h-8 text-purple-600" />
+              </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">1. Analyze</h4>
+              <p className="text-gray-600">
+                Describe your current service delivery process. Our AI identifies inefficiencies and improvement opportunities.
+              </p>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Freedom Score Assessment</h3>
-            <p className="text-gray-600">
-              Strategic diagnostic to identify your business constraints and unlock growth potential
-            </p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <div className="w-12 h-12 rounded-lg bg-purple-100 mb-4 flex items-center justify-center mx-auto">
-              <RocketLaunchIcon className="w-6 h-6 text-purple-600" />
+
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-100 mb-6 flex items-center justify-center mx-auto">
+                <BoltIcon className="w-8 h-8 text-indigo-600" />
+              </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">2. Generate</h4>
+              <p className="text-gray-600">
+                Get customized workflow templates optimized for your specific service delivery needs and constraints.
+              </p>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Sprint Planning</h3>
-            <p className="text-gray-600">
-              Strategic sprints with guidance to systematically improve your business
-            </p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <div className="w-12 h-12 rounded-lg bg-green-100 mb-4 flex items-center justify-center mx-auto">
-              <SparklesIcon className="w-6 h-6 text-green-600" />
+
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-violet-100 mb-6 flex items-center justify-center mx-auto">
+                <ShareIcon className="w-8 h-8 text-violet-600" />
+              </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">3. Export</h4>
+              <p className="text-gray-600">
+                One-click export to Trello, Asana, ClickUp, Monday.com, or Notion. Your team starts using it immediately.
+              </p>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">AI Business Strategist</h3>
-            <p className="text-gray-600">
-              AI advisor trained on business frameworks to accelerate your growth
-            </p>
           </div>
+        </div>
+
+        {/* Platform Integrations */}
+        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl shadow-xl p-12 text-center text-white mb-20">
+          <h3 className="text-3xl font-bold mb-8">Seamless Platform Integration</h3>
+          <p className="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
+            Export your optimized workflows directly to the platforms your team already uses
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-8 text-lg font-semibold">
+            <div className="bg-blue-600 px-6 py-3 rounded-lg">Trello</div>
+            <div className="bg-red-500 px-6 py-3 rounded-lg">Asana</div>
+            <div className="bg-purple-600 px-6 py-3 rounded-lg">ClickUp</div>
+            <div className="bg-blue-500 px-6 py-3 rounded-lg">Monday.com</div>
+            <div className="bg-gray-700 px-6 py-3 rounded-lg">Notion</div>
+          </div>
+          <div className="mt-8">
+            <Link
+              href="/export-manager"
+              className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-4 rounded-xl inline-flex items-center gap-3 font-semibold transition-all"
+            >
+              <ShareIcon className="w-6 h-6" />
+              See Export Demo
+            </Link>
+          </div>
+        </div>
+
+        {/* Call to Action */}
+        <div className="text-center">
+          <h3 className="text-3xl font-bold text-gray-900 mb-6">
+            Ready to Systemize Your Service Delivery?
+          </h3>
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            Join service providers who've streamlined their workflows and freed up 10+ hours per week
+          </p>
+          <Link
+            href="/service-delivery-systemizer"
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-12 py-6 rounded-xl inline-flex items-center gap-3 text-xl font-semibold shadow-lg transition-all"
+          >
+            <CogIcon className="w-7 h-7" />
+            Start Systemizing Now
+          </Link>
         </div>
       </div>
     </div>

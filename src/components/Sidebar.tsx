@@ -23,37 +23,37 @@ const navigationItems = [
     name: 'Dashboard',
     href: '/dashboard',
     icon: HomeIcon,
-    description: 'Overview & insights'
+    description: 'System overview'
   },
   {
-    name: 'AI Strategist', 
-    href: '/ai-strategist',
+    name: 'Workflow Analyzer',
+    href: '/service-delivery-systemizer',
     icon: SparklesIcon,
-    description: 'Your business advisor'
+    description: 'Optimize workflows'
+  },
+  {
+    name: 'Templates',
+    href: '/template-manager',
+    icon: ChartBarIcon,
+    description: 'Workflow templates'
+  },
+  {
+    name: 'Export Manager',
+    href: '/export-manager',
+    icon: TrophyIcon,
+    description: 'Platform exports'
   },
   {
     name: 'Analytics',
-    href: '/business-metrics', 
-    icon: ChartBarIcon,
+    href: '/business-metrics',
+    icon: LightBulbIcon,
     description: 'Performance metrics'
   },
   {
-    name: 'Achievements',
-    href: '/achievements',
-    icon: TrophyIcon,
-    description: 'Goals & milestones'
-  },
-  {
-    name: 'Insights',
-    href: '/insights',
-    icon: LightBulbIcon,
-    description: 'Strategic intelligence'
-  },
-  {
-    name: 'Growth',
-    href: '/growth',
+    name: 'Settings',
+    href: '/settings',
     icon: RocketLaunchIcon,
-    description: 'Scale your business'
+    description: 'System configuration'
   }
 ]
 
@@ -95,12 +95,12 @@ export function Sidebar({ isCollapsed = false, onToggle }: SidebarProps) {
               transition={{ duration: 0.3 }}
               className="flex items-center gap-3"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-copper to-bronze flex items-center justify-center">
-                <SparklesIcon className="w-6 h-6 text-champagne" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
+                <CogIcon className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="headline-2 gradient-text">Strategist</h1>
-                <p className="caption text-muted">Business Intelligence</p>
+                <h1 className="headline-2 gradient-text">Systemizer</h1>
+                <p className="caption text-muted">Workflow Platform</p>
               </div>
             </motion.div>
           ) : (
@@ -110,9 +110,9 @@ export function Sidebar({ isCollapsed = false, onToggle }: SidebarProps) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.3 }}
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-copper to-bronze flex items-center justify-center"
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center"
             >
-              <SparklesIcon className="w-6 h-6 text-champagne" />
+              <CogIcon className="w-6 h-6 text-white" />
             </motion.div>
           )}
         </AnimatePresence>

@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { getFrameworkContext } from '../../../lib/strategicFrameworks'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-
 // SMART CONTENT DETECTION - IDENTIFY CONTENT TYPE
 function detectContentType(message: string): { type: string; confidence: number; context: any } {
   const content = message.toLowerCase()
@@ -459,9 +455,14 @@ End with: "Want me to rewrite any specific sections or your entire copy?"`
 export async function POST(request: NextRequest) {
   try {
     console.log('[AI-STRATEGIST-FIXED] API called - VERSION 2.0 - TIMESTAMP:', new Date().toISOString())
-    
+
     const requestBody = await request.json()
     const { user_id, message, website_intelligence, personality } = requestBody
+
+    // Initialize OpenAI client inside the handler where environment variables are available
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
     
     // Detect content type using smart detection
     const contentDetection = detectContentType(message)

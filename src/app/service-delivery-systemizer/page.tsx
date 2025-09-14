@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import NavigationHeader from '../../components/NavigationHeader'
 
 export default function ServiceDeliverySystemizerPage() {
   const [workflowSteps, setWorkflowSteps] = useState('')
@@ -61,25 +62,10 @@ export default function ServiceDeliverySystemizerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900">
-      {/* Header */}
-      <div className="bg-black/20 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <h1 className="text-3xl font-bold text-white">Service Delivery Systemizer</h1>
-              <p className="text-purple-200">AI-Powered Workflow Automation</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/ai-home"
-                className="bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/20 transition-colors border border-white/20"
-              >
-                ← Back to AI Home
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      <NavigationHeader
+        title="⚙️ Service Delivery Systemizer"
+        subtitle="AI-Powered Workflow Automation"
+      />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero Section */}

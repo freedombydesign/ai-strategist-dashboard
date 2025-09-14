@@ -3,8 +3,8 @@ import "./globals.css";
 import ClientAuthProvider from '../components/ClientAuthProvider';
 
 export const metadata: Metadata = {
-  title: "Freedom by Design - AI Business Strategist",
-  description: "Your personal business coach with Freedom Score integration - Nuclear Clean v2.0",
+  title: "Business Systemizer - Workflow Optimization Platform",
+  description: "Transform your service delivery workflows into streamlined, repeatable systems. Export to Trello, Asana, ClickUp, Monday.com, and Notion.",
 };
 
 export default function RootLayout({

@@ -31,52 +31,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Only run auth logic on the client side
     if (!isClient) return
-    
-    // Get initial session
+
+    // Get initial session with error handling
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) {
+          console.error('[AUTH-CONTEXT] Error getting initial session:', error)
+          setSession(null)
+          setUser(null)
+        } else {
+          setSession(session)
+          setUser(session?.user ?? null)
+        }
+      } catch (error) {
+        console.error('[AUTH-CONTEXT] Exception getting initial session:', error)
+        setSession(null)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
     }
 
     getInitialSession()
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('[AUTH-CONTEXT] Auth state change:', event, session?.user?.id)
-        
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
+    // Listen for auth changes with error handling
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('[AUTH-CONTEXT] Auth state change:', event, session?.user?.id)
 
-        // Handle sign in - create/update user profile
-        if (event === 'SIGNED_IN' && session?.user) {
-          try {
-            const { error } = await supabase
-              .from('users')
-              .upsert({
-                id: session.user.id,
-                email: session.user.email,
-                updated_at: new Date().toISOString(),
-              }, {
-                onConflict: 'id'
-              })
+          setSession(session)
+          setUser(session?.user ?? null)
+          setLoading(false)
 
-            if (error) {
-              console.error('[AUTH-CONTEXT] Error upserting user profile:', error)
-            } else {
-              console.log('[AUTH-CONTEXT] User profile updated successfully')
+          // Handle sign in - create/update user profile
+          if (event === 'SIGNED_IN' && session?.user) {
+            try {
+              const { error } = await supabase
+                .from('users')
+                .upsert({
+                  id: session.user.id,
+                  email: session.user.email,
+                  updated_at: new Date().toISOString(),
+                }, {
+                  onConflict: 'id'
+                })
+
+              if (error) {
+                console.error('[AUTH-CONTEXT] Error upserting user profile:', error)
+              } else {
+                console.log('[AUTH-CONTEXT] User profile updated successfully')
+              }
+            } catch (error) {
+              console.error('[AUTH-CONTEXT] Error in user profile upsert:', error)
             }
-          } catch (error) {
-            console.error('[AUTH-CONTEXT] Error in user profile upsert:', error)
           }
         }
-      }
-    )
+      )
 
-    return () => subscription.unsubscribe()
+      return () => {
+        try {
+          subscription.unsubscribe()
+        } catch (error) {
+          console.error('[AUTH-CONTEXT] Error unsubscribing:', error)
+        }
+      }
+    } catch (error) {
+      console.error('[AUTH-CONTEXT] Error setting up auth state listener:', error)
+      setLoading(false)
+    }
   }, [isClient])
 
   const [isSigningOut, setIsSigningOut] = useState(false)

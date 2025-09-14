@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import NavigationHeader from '../../components/NavigationHeader'
 // Note: signIn will be implemented as a direct API call for now
 // import { signIn } from 'next-auth/react'
 
@@ -127,13 +128,21 @@ export default function ExportManagerPage() {
 
     // Check for OAuth connection status from URL
     const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('connected') === 'true') {
-      setConnectionStatus('Platform connected successfully!')
-      // Clear URL parameters
-      window.history.replaceState({}, document.title, window.location.pathname)
+    const connected = urlParams.get('connected')
+    const success = urlParams.get('success')
+    const error = urlParams.get('error')
+
+    if (success === 'true' && connected) {
+      setConnectionStatus(`${connected.charAt(0).toUpperCase() + connected.slice(1)} connected successfully!`)
+      // Clear URL parameters after a delay
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname)
+        setConnectionStatus('')
+        fetchPlatformConnections() // Refresh connections
+      }, 3000)
     }
-    if (urlParams.get('error') === 'oauth_error') {
-      setError('OAuth connection failed. Please try again.')
+    if (error) {
+      setError(`OAuth connection failed: ${error.replace(/_/g, ' ')}`)
     }
   }, [])
 
@@ -156,22 +165,80 @@ export default function ExportManagerPage() {
 
   const fetchPlatformConnections = async () => {
     try {
+      console.log('[Platform-Connections] Fetching connections...')
       const response = await fetch('/api/platform-connections')
+
+      console.log('[Platform-Connections] Response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('[Platform-Connections] Response data:', data)
         setPlatformConnections(data.connections || [])
+      } else {
+        const errorText = await response.text()
+        console.error('[Platform-Connections] Error response:', errorText)
+        setError(`Failed to fetch connections: ${response.status} ${response.statusText}`)
       }
     } catch (err) {
-      console.warn('Failed to fetch platform connections:', err)
+      console.error('[Platform-Connections] Fetch error:', err)
+      setError(`Network error fetching connections: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
   const handleConnect = async (platform: string) => {
     try {
-      // Redirect to OAuth endpoint directly
-      window.location.href = `/api/auth/signin/${platform}?callbackUrl=${encodeURIComponent('/export-manager?connected=true')}`
+      console.log(`[OAuth] Attempting to connect to ${platform}`)
+
+      // Clear any existing errors
+      setError('')
+      setConnectionStatus('Initiating connection...')
+
+      // Use direct OAuth URLs to avoid detectStore issues
+      if (typeof window !== 'undefined') {
+        // Use proper NextAuth callback URLs for each platform
+        const baseUrl = window.location.origin
+        let oauthUrl = ''
+
+        switch (platform) {
+          case 'asana':
+            oauthUrl = `${baseUrl}/api/oauth/asana`
+            break
+          case 'monday':
+            oauthUrl = `${baseUrl}/api/oauth/monday`
+            break
+          case 'trello':
+            const trelloCallback = `${baseUrl}/api/auth/callback/trello`
+            oauthUrl = `https://trello.com/1/authorize?expiration=never&name=Business%20Systemizer&scope=read,write,account&response_type=token&key=${process.env.NEXT_PUBLIC_TRELLO_API_KEY || ''}&return_url=${encodeURIComponent(trelloCallback)}`
+            break
+          case 'clickup':
+            oauthUrl = `${baseUrl}/api/oauth/clickup`
+            break
+          case 'notion':
+            const notionCallback = `${baseUrl}/api/auth/callback/notion`
+            oauthUrl = `https://api.notion.com/v1/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_NOTION_CLIENT_ID || ''}&redirect_uri=${encodeURIComponent(notionCallback)}&response_type=code&owner=user`
+            break
+          default:
+            // Fallback to NextAuth for unsupported platforms
+            const { signIn } = await import('next-auth/react')
+            await signIn(platform, {
+              callbackUrl: `${baseUrl}/export-manager?connected=true`,
+              redirect: true
+            })
+            return
+        }
+
+        if (oauthUrl) {
+          console.log(`[OAuth] Redirecting directly to ${platform} OAuth:`, oauthUrl)
+          window.location.href = oauthUrl
+        } else {
+          throw new Error(`No OAuth configuration found for ${platform}`)
+        }
+      }
+
     } catch (err) {
-      setError(`Failed to connect to ${platform}`)
+      console.error(`[OAuth] Connection error for ${platform}:`, err)
+      setError(`Failed to connect to ${platform}: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setConnectionStatus('')
     }
   }
 
@@ -267,16 +334,14 @@ export default function ExportManagerPage() {
   const isConnected = !!platformConnection
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            🚀 Export Manager
-          </h1>
-          <p className="text-purple-200">
-            Export your workflows to external project management platforms
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900">
+      <NavigationHeader
+        title="🚀 Export Manager"
+        subtitle="Export your workflows to external project management platforms"
+      />
+
+      <div className="p-8">
+        <div className="max-w-6xl mx-auto">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Step 1: Select Workflow */}
@@ -608,6 +673,7 @@ export default function ExportManagerPage() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

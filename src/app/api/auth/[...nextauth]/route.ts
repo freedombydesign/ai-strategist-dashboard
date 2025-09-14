@@ -8,31 +8,14 @@ const TrelloProvider = {
   type: 'oauth',
   version: '2.0',
   authorization: {
-    url: 'https://trello.com/1/authorize',
+    url: 'https://trello.com/1/OAuthAuthorizeToken',
     params: {
-      response_type: 'code',
+      response_type: 'token',
       scope: 'read,write,account',
       expiration: 'never'
     }
   },
-  token: {
-    url: 'https://api.trello.com/1/OAuthGetAccessToken',
-    async request({ client, params, checks, provider }) {
-      const response = await fetch(`https://api.trello.com/1/OAuthGetAccessToken?${new URLSearchParams({
-        key: process.env.TRELLO_API_KEY!,
-        token: process.env.TRELLO_API_SECRET!,
-        code: params.code!
-      })}`)
-
-      const tokens = await response.text()
-      const tokenParams = new URLSearchParams(tokens)
-
-      return {
-        access_token: tokenParams.get('oauth_token'),
-        token_secret: tokenParams.get('oauth_token_secret')
-      }
-    }
-  },
+  token: 'https://trello.com/1/OAuthGetAccessToken',
   userinfo: {
     url: 'https://api.trello.com/1/members/me',
     async request({ tokens, provider }) {
@@ -61,17 +44,24 @@ const AsanaProvider = {
   authorization: {
     url: 'https://app.asana.com/-/oauth_authorize',
     params: {
-      response_type: 'code',
-      scope: 'default'
+      client_id: process.env.ASANA_CLIENT_ID,
+      redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/asana`,
+      response_type: 'code'
     }
   },
-  token: 'https://app.asana.com/-/oauth_token',
+  token: {
+    url: 'https://app.asana.com/-/oauth_token',
+    params: {
+      grant_type: 'authorization_code'
+    }
+  },
   userinfo: {
     url: 'https://app.asana.com/api/1.0/users/me',
-    async request({ tokens, provider }) {
+    params: {},
+    async request(context) {
       const response = await fetch('https://app.asana.com/api/1.0/users/me', {
         headers: {
-          Authorization: `Bearer ${tokens.access_token}`,
+          Authorization: `Bearer ${context.tokens.access_token}`,
           Accept: 'application/json'
         }
       })
@@ -88,7 +78,15 @@ const AsanaProvider = {
     }
   },
   clientId: process.env.ASANA_CLIENT_ID,
-  clientSecret: process.env.ASANA_CLIENT_SECRET
+  clientSecret: process.env.ASANA_CLIENT_SECRET,
+  style: {
+    logo: '/asana.svg',
+    logoDark: '/asana.svg',
+    bg: '#fff',
+    text: '#000',
+    bgDark: '#000',
+    textDark: '#fff'
+  }
 }
 
 const ClickUpProvider = {
@@ -99,16 +97,24 @@ const ClickUpProvider = {
   authorization: {
     url: 'https://app.clickup.com/api',
     params: {
+      client_id: process.env.CLICKUP_CLIENT_ID,
+      redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/clickup`,
       response_type: 'code',
       scope: 'read write'
     }
   },
-  token: 'https://api.clickup.com/api/v2/oauth/token',
+  token: {
+    url: 'https://api.clickup.com/api/v2/oauth/token',
+    params: {
+      grant_type: 'authorization_code'
+    }
+  },
   userinfo: {
     url: 'https://api.clickup.com/api/v2/user',
-    async request({ tokens, provider }) {
+    params: {},
+    async request(context) {
       const response = await fetch('https://api.clickup.com/api/v2/user', {
-        headers: { Authorization: tokens.access_token }
+        headers: { Authorization: context.tokens.access_token }
       })
       const result = await response.json()
       return result.user
@@ -134,18 +140,25 @@ const MondayProvider = {
   authorization: {
     url: 'https://auth.monday.com/oauth2/authorize',
     params: {
-      response_type: 'code',
-      scope: 'me:read boards:read boards:write'
+      client_id: process.env.MONDAY_CLIENT_ID,
+      redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/monday`,
+      response_type: 'code'
     }
   },
-  token: 'https://auth.monday.com/oauth2/token',
+  token: {
+    url: 'https://auth.monday.com/oauth2/token',
+    params: {
+      grant_type: 'authorization_code'
+    }
+  },
   userinfo: {
     url: 'https://api.monday.com/v2',
-    async request({ tokens, provider }) {
+    params: {},
+    async request(context) {
       const response = await fetch('https://api.monday.com/v2', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${tokens.access_token}`,
+          Authorization: `Bearer ${context.tokens.access_token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -297,9 +310,7 @@ const handler = NextAuth({
       return session
     },
     async redirect({ url, baseUrl }) {
-      // Redirect to export manager after successful OAuth
-      if (url.startsWith('/')) return `${baseUrl}${url}`
-      if (new URL(url).origin === baseUrl) return url
+      // Always redirect to export manager after successful OAuth
       return `${baseUrl}/export-manager?connected=true`
     }
   },
