@@ -366,7 +366,7 @@ export default function SprintDetailPage() {
     }
   }
 
-  const handleCompleteTask = (taskId: string) => {
+  const handleCompleteTask = async (taskId: string) => {
     setCompletedTasks(prev => {
       const newSet = new Set(prev)
       if (newSet.has(taskId)) {
@@ -375,8 +375,97 @@ export default function SprintDetailPage() {
         newSet.add(taskId)
       }
       saveCompletedTasks(newSet)
+      
+      // Check if sprint is now complete after adding this task
+      if (!newSet.has(taskId)) return newSet // If we just removed a task, don't check completion
+      
+      // Calculate new completion stats
+      let totalTasks = 0
+      let completed = 0
+      
+      if (enhancedSteps.length > 0) {
+        totalTasks = enhancedSteps.length
+        const validEnhancedStepIds = new Set(enhancedSteps.map(step => `enhanced-step-${step.id}`))
+        completed = Array.from(newSet).filter(tId => validEnhancedStepIds.has(tId)).length
+      } else {
+        const sprintTasks = getSprintTasks(sprint?.name || 'profitable_service')
+        totalTasks = sprintTasks.reduce((sum, day) => sum + day.tasks.length, 0)
+        completed = newSet.size
+      }
+      
+      // Check if sprint is 100% complete
+      if (completed === totalTasks && totalTasks > 0) {
+        console.log('[SPRINT-COMPLETION] 🎉 Sprint completed! Triggering celebration email...')
+        
+        // Mark this sprint as completed in localStorage
+        if (user?.id) {
+          const completedSprintsKey = `completed_sprints_${user.id}`
+          const completedSprintsData = localStorage.getItem(completedSprintsKey)
+          let completedSprints = []
+          
+          if (completedSprintsData) {
+            try {
+              completedSprints = JSON.parse(completedSprintsData)
+            } catch (error) {
+              console.error('[SPRINT-COMPLETION] Error parsing completed sprints:', error)
+            }
+          }
+          
+          // Only send email if this is the first time completing this sprint
+          if (!completedSprints.includes(params.id)) {
+            completedSprints.push(params.id)
+            localStorage.setItem(completedSprintsKey, JSON.stringify(completedSprints))
+            
+            // Send sprint completion email
+            sendSprintCompletionEmail(completed, totalTasks)
+          }
+        }
+      }
+      
       return newSet
     })
+  }
+
+  const sendSprintCompletionEmail = async (completedTasks: number, totalTasks: number) => {
+    if (!user?.email || !sprint) return
+    
+    try {
+      console.log('[SPRINT-COMPLETION] 📧 Sending sprint completion email...')
+      
+      const response = await fetch('/api/send-sprint-completion-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userEmail: user.email,
+          sprintData: {
+            name: sprint.name,
+            client_facing_title: sprint.client_facing_title || sprint.name,
+            description: sprint.description || '',
+            goal: sprint.goal || '',
+            time_saved_hours: sprint.time_saved_hours || 0
+          },
+          userProgress: {
+            totalStepsCompleted: completedTasks,
+            sprintDuration: Math.ceil(totalTasks / 2) // Estimate based on task count
+          }
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        console.log('[SPRINT-COMPLETION] ✅ Sprint completion email sent! ID:', result.emailId)
+        // Show a nice success message to the user
+        alert('🎉 Sprint Completed! Check your email for your celebration and next steps!')
+      } else {
+        console.error('[SPRINT-COMPLETION] ❌ Email failed:', result.error)
+      }
+      
+    } catch (error) {
+      console.error('[SPRINT-COMPLETION] 💥 Error sending email:', error)
+    }
   }
 
   const handleResetSprint = () => {
