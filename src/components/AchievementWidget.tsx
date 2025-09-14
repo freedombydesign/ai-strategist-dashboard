@@ -11,7 +11,16 @@ interface AchievementWidgetProps {
 }
 
 export default function AchievementWidget({ className = '' }: AchievementWidgetProps) {
+  console.log('[ACHIEVEMENT-WIDGET] 🚀 COMPONENT STARTING - achievementService available:', !!achievementService)
+  console.log('[ACHIEVEMENT-WIDGET] 🚀 REACT COMPONENT RENDERED')
+  
   const { user } = useAuth()
+  console.log('[ACHIEVEMENT-WIDGET] 🔍 USER STATE DEBUG:', { 
+    hasUser: !!user, 
+    userId: user?.id, 
+    userEmail: user?.email,
+    userObject: user 
+  })
   
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [momentumScore, setMomentumScore] = useState<MomentumScore | null>(null)
