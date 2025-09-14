@@ -41,13 +41,13 @@ export interface MomentumScore {
 class AchievementService {
   // Define all achievements
   private achievements: Achievement[] = [
-    // Streak Achievements
+    // Check-in Achievements
     {
       id: 'first_steps',
       name: 'First Steps',
       description: 'Complete your first daily check-in',
       icon: '🚀',
-      category: 'streak',
+      category: 'completion',
       requirement: 1,
       points: 10,
       rarity: 'common'
@@ -275,11 +275,19 @@ class AchievementService {
           return Math.min(streak, achievement.requirement)
 
         case 'completion':
-          const analytics = await implementationService.getImplementationAnalytics(userId)
-          console.log(`[ACHIEVEMENTS] Analytics for ${achievement.id}:`, analytics)
-          const totalTasks = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0)
-          console.log(`[ACHIEVEMENTS] Total tasks for ${achievement.id}:`, totalTasks)
-          return Math.min(totalTasks, achievement.requirement)
+          if (achievement.id === 'first_steps') {
+            // For first steps, count total check-ins, not tasks
+            const analytics = await implementationService.getImplementationAnalytics(userId)
+            console.log(`[ACHIEVEMENTS] Check-ins for ${achievement.id}:`, analytics.totalCheckins)
+            return Math.min(analytics.totalCheckins, achievement.requirement)
+          } else {
+            // For other completion achievements, count completed tasks
+            const analytics = await implementationService.getImplementationAnalytics(userId)
+            console.log(`[ACHIEVEMENTS] Analytics for ${achievement.id}:`, analytics)
+            const totalTasks = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0)
+            console.log(`[ACHIEVEMENTS] Total tasks for ${achievement.id}:`, totalTasks)
+            return Math.min(totalTasks, achievement.requirement)
+          }
 
         case 'business':
           try {
