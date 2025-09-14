@@ -70,10 +70,10 @@ class AchievementService {
     {
       id: 'week_warrior',
       name: 'Week Warrior',
-      description: 'Maintain a 2-day check-in streak (EMAIL TEST)',
+      description: 'Maintain a 7-day check-in streak',
       icon: '⚔️',
       category: 'streak',
-      requirement: 2,
+      requirement: 7,
       points: 50,
       rarity: 'rare'
     },
