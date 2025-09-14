@@ -60,10 +60,10 @@ class AchievementService {
     {
       id: 'getting_started',
       name: 'Getting Started',
-      description: 'Maintain a 3-day check-in streak',
+      description: 'Maintain a 2-day check-in streak (TEST MODE)',
       icon: '🔥',
       category: 'streak',
-      requirement: 3,
+      requirement: 2,
       points: 25,
       rarity: 'common'
     },
