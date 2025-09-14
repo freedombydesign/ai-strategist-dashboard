@@ -104,16 +104,62 @@ export const diagnosticService = {
         // Continue anyway - we can still return the calculated score
       }
 
-      // Schedule diagnostic results email if user is authenticated
+      // Send diagnostic results email directly if user is authenticated
       if (userId && responseData?.id) {
         try {
-          await emailService.scheduleDiagnosticResultsEmail(userId, {
-            scoreResult,
-            assessmentId: responseData.id,
-            completedAt: new Date().toISOString()
-          });
+          // Get user email from Supabase
+          const { data: userData } = await supabase.auth.admin.getUserById(userId)
+          const userEmail = userData?.user?.email
+          
+          if (userEmail) {
+            const { Resend } = await import('resend')
+            const resend = new Resend(process.env.RESEND_API_KEY)
+            
+            const emailResult = await resend.emails.send({
+              from: process.env.EMAIL_FROM || 'coach@scalewithruth.com',
+              to: userEmail,
+              subject: '🎯 Your Freedom Diagnostic Results Are Ready!',
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+                    <h1 style="margin: 0; font-size: 28px;">🎯 Your Freedom Diagnostic Results</h1>
+                    <p style="margin: 10px 0 0 0; font-size: 16px;">Your business transformation roadmap is ready!</p>
+                  </div>
+                  
+                  <div style="background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0; color: #333;">📊 Your Business Health Score</h3>
+                    <div style="font-size: 48px; font-weight: bold; color: #3B82F6; text-align: center; margin-bottom: 15px;">
+                      ${scoreResult?.percent || 'N/A'}%
+                    </div>
+                    <p style="text-align: center; color: #666; margin: 0;">Total: ${scoreResult?.totalScore || 0}/60</p>
+                  </div>
+                  
+                  <div style="text-align: center; margin-bottom: 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://suite.scalewithruth.com'}/dashboard" 
+                       style="display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                      View Your Complete Sprint Plan →
+                    </a>
+                  </div>
+                  
+                  <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px;">
+                    <p style="margin: 0 0 10px 0; font-weight: bold; color: #856404;">What's Next?</p>
+                    <ul style="color: #856404; margin: 0; padding-left: 20px;">
+                      <li>Review your personalized sprint sequence</li>
+                      <li>Start with your highest-impact sprint</li>
+                      <li>Use daily check-ins to track progress</li>
+                      <li>Get AI coaching support when needed</li>
+                    </ul>
+                  </div>
+                </div>
+              `
+            })
+            
+            console.log(`[DIAGNOSTIC] ✅ Assessment email sent successfully:`, emailResult)
+          } else {
+            console.log(`[DIAGNOSTIC] ⚠️ No email found for user ${userId}`)
+          }
         } catch (emailError) {
-          console.error('[DIAGNOSTIC] Error scheduling results email:', emailError);
+          console.error('[DIAGNOSTIC] Error sending results email:', emailError);
           // Don't fail the main operation for email issues
         }
       }
