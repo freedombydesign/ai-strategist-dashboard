@@ -373,11 +373,18 @@ class AchievementService {
 
   async checkAndUnlockAchievements(userId: string): Promise<Achievement[]> {
     try {
+      console.log('[ACHIEVEMENTS] checkAndUnlockAchievements called for user:', userId)
       const achievements = await this.getUserAchievements(userId)
       const newlyUnlocked: Achievement[] = []
 
+      console.log('[ACHIEVEMENTS] Checking', achievements.length, 'achievements for unlocks')
+      
       for (const achievement of achievements) {
+        console.log(`[ACHIEVEMENTS] Checking ${achievement.id}: unlocked=${achievement.unlocked}, progress=${achievement.progress}/${achievement.requirement}`)
+        
         if (!achievement.unlocked && achievement.progress! >= achievement.requirement) {
+          console.log(`[ACHIEVEMENTS] 🎉 UNLOCKING ACHIEVEMENT: ${achievement.id} - ${achievement.name}`)
+          
           // Unlock achievement
           const { error } = await supabase
             .from('user_achievements')
@@ -394,19 +401,24 @@ class AchievementService {
 
             // Schedule milestone celebration email
             try {
+              console.log(`[ACHIEVEMENTS] 📧 Scheduling celebration email for ${achievement.name}`)
               await emailService.scheduleMilestoneCelebrationEmail(userId, {
                 achievement: unlockedAchievement,
                 totalPoints: achievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0) + achievement.points,
                 unlockedAt: new Date().toISOString()
               });
+              console.log(`[ACHIEVEMENTS] ✅ Email scheduled successfully for ${achievement.name}`)
             } catch (emailError) {
-              console.error('[ACHIEVEMENTS] Error scheduling celebration email:', emailError);
+              console.error('[ACHIEVEMENTS] ❌ Error scheduling celebration email:', emailError);
               // Don't fail achievement unlock for email issues
             }
+          } else {
+            console.error('[ACHIEVEMENTS] Error unlocking achievement:', error)
           }
         }
       }
 
+      console.log(`[ACHIEVEMENTS] Unlock check complete. Found ${newlyUnlocked.length} newly unlocked achievements`)
       return newlyUnlocked
 
     } catch (error) {
