@@ -102,10 +102,10 @@ class AchievementService {
     {
       id: 'task_master',
       name: 'Task Master',
-      description: 'Complete 50 total tasks',
+      description: 'Complete 6 total tasks (EMAIL TEST)',
       icon: '✅',
       category: 'completion',
-      requirement: 50,
+      requirement: 6,
       points: 75,
       rarity: 'rare'
     },
