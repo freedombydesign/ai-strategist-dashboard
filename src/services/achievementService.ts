@@ -186,10 +186,10 @@ class AchievementService {
     {
       id: 'momentum_master',
       name: 'Momentum Master',
-      description: 'Achieve 500+ momentum score',
+      description: 'Achieve 70+ momentum score (EMAIL TEST)',
       icon: '🎯',
       category: 'consistency',
-      requirement: 500,
+      requirement: 70,
       points: 300,
       rarity: 'epic'
     },
