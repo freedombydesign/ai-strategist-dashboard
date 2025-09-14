@@ -36,12 +36,14 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
       setLoading(true)
       
       console.log('[ACHIEVEMENT-WIDGET] About to call achievementService methods...')
+      console.log('[ACHIEVEMENT-WIDGET] 🔍 CALLING checkAndUnlockAchievements NOW')
       const [userAchievements, momentum, newlyUnlocked] = await Promise.all([
         achievementService.getUserAchievements(user!.id),
         achievementService.calculateMomentumScore(user!.id),
         achievementService.checkAndUnlockAchievements(user!.id)
       ])
       console.log('[ACHIEVEMENT-WIDGET] Service calls completed')
+      console.log('[ACHIEVEMENT-WIDGET] 📧 newlyUnlocked results:', newlyUnlocked)
       
       if (newlyUnlocked.length > 0) {
         console.log('[ACHIEVEMENT-WIDGET] Newly unlocked achievements:', newlyUnlocked)
