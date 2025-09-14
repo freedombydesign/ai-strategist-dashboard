@@ -11,7 +11,8 @@ interface AchievementWidgetProps {
 }
 
 export default function AchievementWidget({ className = '' }: AchievementWidgetProps) {
-  console.log('[ACHIEVEMENT-WIDGET] Component initializing, achievementService available:', !!achievementService)
+  console.log('[ACHIEVEMENT-WIDGET] 🚀 COMPONENT STARTING - achievementService available:', !!achievementService)
+  console.log('[ACHIEVEMENT-WIDGET] 🚀 REACT COMPONENT RENDERED')
   
   const { user } = useAuth()
   const [achievements, setAchievements] = useState<Achievement[]>([])
