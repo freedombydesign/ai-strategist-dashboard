@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Button gradient styles */
+.btn-gradient-gold {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+}
+
+.btn-gradient-gold:hover {
+  background: linear-gradient(135deg, #B8860B 0%, #D4AF37 100%);
+}
+
+.btn-gradient-rose {
+  background: linear-gradient(135deg, #B76E79 0%, #A0495A 100%);
+}
+
+.btn-gradient-rose:hover {
+  background: linear-gradient(135deg, #A0495A 0%, #B76E79 100%);
+}
+
+/* Color variables for consistency */
+:root {
+  --rich-gold: #D4AF37;
+  --rose-gold: #B76E79;
+  --foreground: #1a1a1a;
+  --background: #ffffff;
+  --surface: #f8f9fa;
+  --light-gray: #f3f4f6;
+  --medium-gray: #6b7280;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+}

@@ -1,0 +1,328 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+
+interface ProfitMetrics {
+  monthlyRevenue: number
+  monthlyExpenses: number
+  grossProfit: number
+  netProfit: number
+  profitMargin: number
+  expenseRatio: number
+  revenueGrowth: number
+  expenseGrowth: number
+  profitGrowth: number
+  avgTransactionValue: number
+  customersCount: number
+  revenuePerCustomer: number
+  healthScore: number
+}
+
+interface ClientProfitability {
+  customerId: string
+  customerName: string
+  revenue: number
+  estimatedExpenses: number
+  profit: number
+  profitMargin: number
+  transactionCount: number
+  avgOrderValue: number
+  lastTransaction: number
+}
+
+interface ProfitInsight {
+  type: 'opportunity' | 'warning' | 'success' | 'optimization'
+  title: string
+  message: string
+  impact: 'low' | 'medium' | 'high' | 'critical'
+  potentialSavings?: number
+  recommendedAction: string
+}
+
+export default function ProfitPulsePage() {
+  const [metrics, setMetrics] = useState<ProfitMetrics | null>(null)
+  const [clients, setClients] = useState<ClientProfitability[]>([])
+  const [insights, setInsights] = useState<ProfitInsight[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState('overview')
+  const [lastSync, setLastSync] = useState<Date | null>(null)
+  const [syncing, setSyncing] = useState(false)
+
+  // Mock data for demonstration
+  const mockMetrics = {
+    monthlyRevenue: 247500,
+    monthlyExpenses: 162675,
+    grossProfit: 84825,
+    netProfit: 84675,
+    profitMargin: 34.2,
+    expenseRatio: 65.8,
+    revenueGrowth: 12.5,
+    expenseGrowth: 8.3,
+    profitGrowth: 18.7,
+    avgTransactionValue: 2850,
+    customersCount: 87,
+    revenuePerCustomer: 2845,
+    healthScore: 92
+  }
+
+  const mockInsights = [
+    {
+      type: 'success' as const,
+      title: 'Exceptional Margin Performance',
+      message: 'Your 34.2% profit margin exceeds industry benchmarks by 12 percentage points.',
+      impact: 'high' as const,
+      recommendedAction: 'Maintain current operational efficiency while scaling revenue.'
+    },
+    {
+      type: 'opportunity' as const,
+      title: 'Revenue Acceleration Identified',
+      message: 'Client acquisition costs have decreased 15% while retention increased 8%.',
+      impact: 'critical' as const,
+      potentialSavings: 23500,
+      recommendedAction: 'Double investment in current acquisition channels.'
+    },
+    {
+      type: 'optimization' as const,
+      title: 'Expense Optimization Window',
+      message: 'Technology infrastructure costs can be reduced by 18% without impact.',
+      impact: 'medium' as const,
+      potentialSavings: 5200,
+      recommendedAction: 'Audit cloud services and software licenses quarterly.'
+    }
+  ]
+
+  useEffect(() => {
+    setMetrics(mockMetrics)
+    setInsights(mockInsights)
+    setLoading(false)
+  }, [])
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Executive Header */}
+      <div className="bg-white/80 backdrop-blur-xl shadow-xl border-b border-slate-200/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center space-x-6">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+                ProfitPulse
+              </h1>
+              <div className="flex items-center space-x-3">
+                <span className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-bold rounded-full shadow-lg">
+                  {mockMetrics.healthScore}% EXECUTIVE HEALTH
+                </span>
+                <span className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-bold rounded-full shadow-lg">
+                  INTELLIGENCE
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link
+                href="/freedom-suite"
+                className="bg-gradient-to-r from-slate-600 to-slate-700 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg"
+              >
+                ← BACK TO SYSTEMS
+              </Link>
+              <Link
+                href="https://suite.scalewithruth.com"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg"
+              >
+                EXECUTIVE SUITE
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Executive Metrics Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-200/50 p-8 hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-2">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <span className="text-white font-bold text-2xl">$</span>
+                </div>
+              </div>
+              <div className="ml-6">
+                <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">MONTHLY REVENUE</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                  ${mockMetrics.monthlyRevenue.toLocaleString()}
+                </p>
+                <p className="text-sm text-emerald-600 font-semibold mt-1">+{mockMetrics.revenueGrowth}% Growth</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-200/50 p-8 hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-2">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <span className="text-white font-bold text-2xl">%</span>
+                </div>
+              </div>
+              <div className="ml-6">
+                <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">PROFIT MARGIN</p>
+                <p className="text-3xl font-bold text-emerald-600">
+                  {mockMetrics.profitMargin}%
+                </p>
+                <p className="text-sm text-slate-600 font-semibold mt-1">Industry Leading</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-200/50 p-8 hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-2">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <span className="text-white font-bold text-2xl">↗</span>
+                </div>
+              </div>
+              <div className="ml-6">
+                <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">NET PROFIT</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                  ${mockMetrics.netProfit.toLocaleString()}
+                </p>
+                <p className="text-sm text-purple-600 font-semibold mt-1">+{mockMetrics.profitGrowth}% Growth</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-200/50 p-8 hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-2">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <span className="text-white font-bold text-2xl">↗</span>
+                </div>
+              </div>
+              <div className="ml-6">
+                <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">REVENUE GROWTH</p>
+                <p className="text-3xl font-bold text-emerald-600">
+                  +{mockMetrics.revenueGrowth}%
+                </p>
+                <p className="text-sm text-amber-600 font-semibold mt-1">Accelerating</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+          {/* Executive Intelligence */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-200/50 p-10">
+            <div className="flex items-center mb-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg mr-4">
+                <span className="text-white font-bold text-xl">AI</span>
+              </div>
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">EXECUTIVE INTELLIGENCE</h3>
+            </div>
+            <div className="space-y-6">
+              {mockInsights.map((insight, index) => (
+                <div key={index} className={`p-6 rounded-xl border-l-4 ${
+                  insight.type === 'success' 
+                    ? 'border-emerald-400 bg-gradient-to-r from-emerald-50 to-teal-50' 
+                    : insight.type === 'opportunity'
+                    ? 'border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50'
+                    : 'border-amber-400 bg-gradient-to-r from-amber-50 to-orange-50'
+                } shadow-lg`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-slate-900">{insight.title}</h4>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                      insight.impact === 'critical' ? 'bg-red-100 text-red-800' :
+                      insight.impact === 'high' ? 'bg-orange-100 text-orange-800' :
+                      insight.impact === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {insight.impact}
+                    </span>
+                  </div>
+                  <p className="text-slate-700 mb-3">{insight.message}</p>
+                  {insight.potentialSavings && (
+                    <p className="text-emerald-600 font-semibold mb-2">
+                      Potential Savings: ${insight.potentialSavings.toLocaleString()}
+                    </p>
+                  )}
+                  <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">
+                    ACTION: {insight.recommendedAction}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Executive Commands */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-200/50 p-10">
+            <div className="flex items-center mb-8">
+              <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl flex items-center justify-center shadow-lg mr-4">
+                <span className="text-white font-bold text-xl">⚡</span>
+              </div>
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">EXECUTIVE COMMANDS</h3>
+            </div>
+            <div className="space-y-6">
+              <button className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 font-bold text-lg">
+                GENERATE PROFIT INTELLIGENCE
+              </button>
+              <button className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-8 py-4 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 font-bold text-lg">
+                ANALYZE EXPENSE PATTERNS
+              </button>
+              <button className="w-full bg-gradient-to-r from-purple-500 to-violet-600 text-white px-8 py-4 rounded-xl hover:from-purple-600 hover:to-violet-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 font-bold text-lg">
+                REVENUE OPTIMIZATION
+              </button>
+              <button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white px-8 py-4 rounded-xl hover:from-amber-600 hover:to-orange-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 font-bold text-lg">
+                SET PROFIT TARGETS
+              </button>
+            </div>
+            
+            {/* Additional Executive Metrics */}
+            <div className="mt-10 pt-8 border-t border-slate-200">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-900">${mockMetrics.avgTransactionValue.toLocaleString()}</p>
+                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide">Avg Transaction</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-900">{mockMetrics.customersCount}</p>
+                  <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide">Active Clients</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Executive Performance Summary */}
+        <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 rounded-3xl p-12 shadow-2xl">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-3xl flex items-center justify-center shadow-xl">
+                <span className="text-white font-bold text-3xl">↗</span>
+              </div>
+            </div>
+            <div className="ml-8 flex-1">
+              <h3 className="text-3xl font-bold text-white mb-6">
+                EXCEPTIONAL EXECUTIVE PERFORMANCE
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
+                  <div className="text-white font-bold text-lg mb-2">PROFIT MARGIN</div>
+                  <div className="text-emerald-400 text-3xl font-bold mb-1">{mockMetrics.profitMargin}%</div>
+                  <div className="text-slate-300">Executive Tier</div>
+                </div>
+                <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
+                  <div className="text-white font-bold text-lg mb-2">REVENUE GROWTH</div>
+                  <div className="text-emerald-400 text-3xl font-bold mb-1">+{mockMetrics.revenueGrowth}%</div>
+                  <div className="text-slate-300">Strong Trajectory</div>
+                </div>
+                <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
+                  <div className="text-white font-bold text-lg mb-2">HEALTH SCORE</div>
+                  <div className="text-emerald-400 text-3xl font-bold mb-1">{mockMetrics.healthScore}%</div>
+                  <div className="text-slate-300">Exceptional</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
