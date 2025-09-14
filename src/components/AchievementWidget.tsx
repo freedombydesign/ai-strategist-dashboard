@@ -15,6 +15,13 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
   console.log('[ACHIEVEMENT-WIDGET] 🚀 REACT COMPONENT RENDERED')
   
   const { user } = useAuth()
+  console.log('[ACHIEVEMENT-WIDGET] 🔍 USER STATE DEBUG:', { 
+    hasUser: !!user, 
+    userId: user?.id, 
+    userEmail: user?.email,
+    userObject: user 
+  })
+  
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [momentumScore, setMomentumScore] = useState<MomentumScore | null>(null)
   const [loading, setLoading] = useState(true)
