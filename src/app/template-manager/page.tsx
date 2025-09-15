@@ -95,12 +95,21 @@ export default function TemplateManagerPage() {
     setIsGenerating(true)
     setError('')
 
+    // Add a timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      setError('Template generation timed out. Please try again.')
+      setIsGenerating(false)
+    }, 30000) // 30 second timeout
+
     try {
       const customization = {
         ...(companyName && { companyName }),
         ...(brandVoice && { brandVoice }),
         ...(industryTerms && { industryTerms: industryTerms.split(',').map(term => term.trim()).filter(Boolean) })
       }
+
+      const controller = new AbortController()
+      const timeoutSignal = setTimeout(() => controller.abort(), 25000) // 25 second request timeout
 
       const response = await fetch('/api/systemizer/generate-templates', {
         method: 'POST',
@@ -110,11 +119,19 @@ export default function TemplateManagerPage() {
           templateTypes: ['email', 'document', 'checklist', 'task_list'],
           personalityMode,
           customization
-        })
+        }),
+        signal: controller.signal
       })
 
+      clearTimeout(timeoutSignal)
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
       const data = await response.json()
-      if (data.success) {
+      if (data?.success) {
         // Show success message
         setSuccessMessage('Templates generated successfully! Click "View Analytics & Impact" to see the results.')
         setError('')
@@ -125,11 +142,18 @@ export default function TemplateManagerPage() {
         // Don't auto-redirect to avoid errors - user can click the button instead
         // Show success message and let user navigate manually
       } else {
-        setError('Template generation failed')
+        setError(data?.error || 'Template generation failed')
         setSuccessMessage('')
       }
     } catch (err) {
-      setError('Failed to generate templates')
+      clearTimeout(timeoutId)
+      console.error('Template generation error:', err)
+
+      if (err.name === 'AbortError') {
+        setError('Template generation timed out. Please try again.')
+      } else {
+        setError('Failed to generate templates. Please check your connection and try again.')
+      }
       setSuccessMessage('')
     } finally {
       setIsGenerating(false)

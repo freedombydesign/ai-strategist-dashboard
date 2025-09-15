@@ -14,6 +14,35 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Global error handler to prevent client-side errors from breaking the app
+              window.addEventListener('error', function(e) {
+                console.warn('Global error caught:', e.message);
+                // Prevent certain extension errors from propagating
+                if (e.message.includes('detectStore') ||
+                    e.message.includes('chrome-extension') ||
+                    e.message.includes('safari-extension')) {
+                  e.preventDefault();
+                  return false;
+                }
+              });
+
+              window.addEventListener('unhandledrejection', function(e) {
+                console.warn('Unhandled promise rejection caught:', e.reason);
+                // Prevent extension promise rejections from breaking the app
+                if (e.reason && typeof e.reason === 'string' &&
+                    (e.reason.includes('detectStore') ||
+                     e.reason.includes('extension'))) {
+                  e.preventDefault();
+                }
+              });
+            `
+          }}
+        />
+      </head>
       <body>
         <ClientAuthProvider>
           {children}
