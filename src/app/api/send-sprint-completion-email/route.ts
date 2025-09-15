@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userEmail, sprintData, userProgress, completionData } = await request.json()
+    const { userEmail, sprintData, userProgress, completionData, userName } = await request.json()
     
     if (!userEmail || !sprintData) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -87,6 +87,11 @@ export async function POST(request: NextRequest) {
           <div style="background: linear-gradient(135deg, ${personalizedContent.color} 0%, ${personalizedContent.color}dd 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
             <h1 style="margin: 0; font-size: 28px;">${personalizedContent.title}</h1>
             <p style="margin: 10px 0 0 0; font-size: 16px;">${personalizedContent.message}</p>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #1e293b;">🎉 Hey ${userName || 'there'}!</h3>
+            <p style="color: #475569; margin: 0; font-size: 16px;">You just completed another step toward business freedom! This is exactly how transformation happens - one focused sprint at a time.</p>
           </div>
           
           ${completionData?.consecutiveSprintsCompleted > 1 ? `

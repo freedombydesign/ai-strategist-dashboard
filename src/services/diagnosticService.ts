@@ -130,7 +130,8 @@ export const diagnosticService = {
               },
               body: JSON.stringify({
                 userEmail,
-                scoreResult
+                scoreResult,
+                userName: currentUser?.user_metadata?.name || userEmail?.split('@')[0]?.replace(/[._]/g, ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'there'
               })
             })
             

@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userEmail, scoreResult, previousScore, isRetake } = await request.json()
+    const { userEmail, scoreResult, previousScore, isRetake, userName } = await request.json()
     
     if (!userEmail || !scoreResult) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -72,6 +72,11 @@ export async function POST(request: NextRequest) {
           <div style="background: linear-gradient(135deg, ${personalizedContent.color} 0%, ${personalizedContent.color}dd 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
             <h1 style="margin: 0; font-size: 28px;">${personalizedContent.title}</h1>
             <p style="margin: 10px 0 0 0; font-size: 16px;">${personalizedContent.message}</p>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 15px 0; color: #1e293b;">👋 Hey ${userName || 'there'}!</h3>
+            <p style="color: #475569; margin: 0; font-size: 16px;">Your Freedom Diagnostic results are ready and they reveal some exciting insights about your business transformation journey!</p>
           </div>
           
           ${previousScore ? `

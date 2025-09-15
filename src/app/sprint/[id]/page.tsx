@@ -439,6 +439,7 @@ export default function SprintDetailPage() {
         },
         body: JSON.stringify({
           userEmail: user.email,
+          userName: user.user_metadata?.name || user.email?.split('@')[0]?.replace(/[._]/g, ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'there',
           sprintData: {
             name: sprint.name,
             client_facing_title: sprint.client_facing_title || sprint.name,

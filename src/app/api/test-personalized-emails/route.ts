@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
               userEmail,
               scoreResult: test.scoreResult,
               previousScore: test.previousScore,
-              isRetake: test.isRetake
+              isRetake: test.isRetake,
+              userName: userEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
             })
           })
           const result = await response.json()
@@ -127,7 +128,8 @@ export async function POST(request: NextRequest) {
               userEmail,
               sprintData: test.sprintData,
               userProgress: test.userProgress,
-              completionData: test.completionData
+              completionData: test.completionData,
+              userName: userEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
             })
           })
           const result = await response.json()
