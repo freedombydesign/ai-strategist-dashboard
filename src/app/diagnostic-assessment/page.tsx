@@ -317,6 +317,7 @@ export default function DiagnosticAssessment() {
   const submitAssessment = async (finalResponses: DiagnosticResponse[]) => {
     try {
       setLoading(true)
+      console.log('[DIAGNOSTIC] Starting submission with responses:', finalResponses)
 
       // Try to submit to database first
       if (!assessmentId.startsWith('fallback-')) {
@@ -343,7 +344,9 @@ export default function DiagnosticAssessment() {
       }
 
       // Fallback mode - calculate results locally
+      console.log('[DIAGNOSTIC] Using fallback mode, calculating results locally')
       const localResults = calculateLocalResults(finalResponses)
+      console.log('[DIAGNOSTIC] Local results calculated:', localResults)
       setResults(localResults)
       setStep('results')
     } catch (err) {
@@ -368,7 +371,7 @@ export default function DiagnosticAssessment() {
     Object.keys(componentScores).forEach(key => componentCounts[key] = 0)
 
     responses.forEach(response => {
-      const question = questions.find(q => q.question_id === response.question_id)
+      const question = questions.find(q => q.question_id == response.question_id) // Use == to handle string/number comparison
       if (question) {
         let normalizedScore = response.score * 10 // Convert 1-10 to 10-100 scale
 
