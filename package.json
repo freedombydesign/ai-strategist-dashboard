@@ -43,7 +43,7 @@
     "react-dom": "^18.2.0",
     "react-email": "^4.2.8",
     "recharts": "^3.1.2",
-    "resend": "^6.0.2",
+    "resend": "^6.0.3",
     "stripe": "^18.5.0",
     "tailwind-merge": "^3.3.1",
     "uuid": "^11.1.0",
@@ -60,6 +60,6 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "5.9.2"
   }
 }
