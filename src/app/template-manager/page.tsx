@@ -95,11 +95,11 @@ export default function TemplateManagerPage() {
     setIsGenerating(true)
     setError('')
 
-    // Add a timeout to prevent hanging
+    // Add a longer timeout for OpenAI template generation
     const timeoutId = setTimeout(() => {
-      setError('Template generation timed out. Please try again.')
+      setError('Template generation timed out. AI generation can take up to 2 minutes.')
       setIsGenerating(false)
-    }, 30000) // 30 second timeout
+    }, 120000) // 2 minute timeout for AI generation
 
     try {
       const customization = {
@@ -109,7 +109,7 @@ export default function TemplateManagerPage() {
       }
 
       const controller = new AbortController()
-      const timeoutSignal = setTimeout(() => controller.abort(), 25000) // 25 second request timeout
+      const timeoutSignal = setTimeout(() => controller.abort(), 90000) // 90 second request timeout
 
       const response = await fetch('/api/systemizer/generate-templates', {
         method: 'POST',

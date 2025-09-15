@@ -129,25 +129,39 @@ export async function POST(request: NextRequest) {
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
-    // 6. Generate Templates
+    // 6. Generate Templates (Optimized for Speed)
     const generatedTemplates = []
     let totalTokensUsed = 0
 
-    for (const step of stepsData) {
-      console.log(`[GENERATE-TEMPLATES] Processing step ${step.step_number}: ${step.title}`)
+    // Limit processing to prevent timeouts
+    const maxStepsToProcess = Math.min(stepsData.length, 3) // Process max 3 steps at once
+    const limitedSteps = stepsData.slice(0, maxStepsToProcess)
+    const limitedTemplateTypes = requestedTypes.slice(0, 2) // Max 2 template types at once
 
-      for (const templateType of requestedTypes) {
-        try {
-          console.log(`[GENERATE-TEMPLATES] Generating ${templateType} template for step ${step.step_number}`)
+    console.log(`[GENERATE-TEMPLATES] Processing ${limitedSteps.length} steps with ${limitedTemplateTypes.length} template types (limited to prevent timeout)`)
 
-          const templateContent = await generateTemplate(
-            openai,
-            workflow,
-            step,
+    // Process templates in parallel batches for speed
+    const templatePromises = []
+
+    for (const step of limitedSteps) {
+      for (const templateType of limitedTemplateTypes) {
+        const templatePromise = generateTemplate(
+          openai,
+          workflow,
+          step,
+          templateType,
+          personalityMode || 'professional',
+          customization || {}
+        ).then(async (templateContent) => {
+          const result = {
+            stepId: step.id,
+            stepNumber: step.step_number,
             templateType,
-            personalityMode || 'professional',
-            customization || {}
-          )
+            success: false,
+            error: null,
+            content: null,
+            assetId: null
+          }
 
           if (templateContent.success) {
             // Save to database
@@ -167,59 +181,77 @@ export async function POST(request: NextRequest) {
               status: 'generated'
             }
 
-            const { data: savedAsset, error: saveError } = await supabase
-              .from('service_template_assets')
-              .insert(assetData)
-              .select()
-              .single()
+            try {
+              const { data: savedAsset, error: saveError } = await supabase
+                .from('service_template_assets')
+                .insert(assetData)
+                .select()
+                .single()
 
-            if (saveError) {
-              console.error(`[GENERATE-TEMPLATES] Failed to save ${templateType} for step ${step.step_number}:`, saveError)
-              generatedTemplates.push({
-                stepId: step.id,
-                stepNumber: step.step_number,
-                templateType,
-                success: false,
-                error: saveError.message,
-                content: templateContent.template // Still return the generated content
-              })
-            } else {
-              console.log(`[GENERATE-TEMPLATES] Saved ${templateType} template for step ${step.step_number}`)
-              generatedTemplates.push({
-                stepId: step.id,
-                stepNumber: step.step_number,
-                templateType,
-                success: true,
-                assetId: savedAsset.id,
-                content: templateContent.template
-              })
+              if (saveError) {
+                result.error = saveError.message
+                result.content = templateContent.template
+              } else {
+                result.success = true
+                result.assetId = savedAsset.id
+                result.content = templateContent.template
+              }
+            } catch (dbError) {
+              result.error = 'Database save failed'
+              result.content = templateContent.template
             }
 
             totalTokensUsed += templateContent.tokensUsed
           } else {
-            console.error(`[GENERATE-TEMPLATES] Failed to generate ${templateType} for step ${step.step_number}:`, templateContent.error)
-            generatedTemplates.push({
-              stepId: step.id,
-              stepNumber: step.step_number,
-              templateType,
-              success: false,
-              error: templateContent.error
-            })
+            result.error = templateContent.error
           }
 
-          // Small delay to avoid rate limits
-          await new Promise(resolve => setTimeout(resolve, 100))
+          return result
+        }).catch((error) => ({
+          stepId: step.id,
+          stepNumber: step.step_number,
+          templateType,
+          success: false,
+          error: error instanceof Error ? error.message : 'Generation failed',
+          content: null,
+          assetId: null
+        }))
 
-        } catch (error) {
-          console.error(`[GENERATE-TEMPLATES] Error generating ${templateType} for step ${step.step_number}:`, error)
-          generatedTemplates.push({
-            stepId: step.id,
-            stepNumber: step.step_number,
-            templateType,
-            success: false,
-            error: error instanceof Error ? error.message : 'Generation failed'
-          })
+        templatePromises.push(templatePromise)
+      }
+    }
+
+    // Wait for all templates with timeout protection
+    try {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Template generation timeout')), 60000) // 60 second max
+      )
+
+      const results = await Promise.race([
+        Promise.allSettled(templatePromises),
+        timeoutPromise
+      ])
+
+      if (Array.isArray(results)) {
+        for (const result of results) {
+          if (result.status === 'fulfilled') {
+            generatedTemplates.push(result.value)
+          } else {
+            generatedTemplates.push({
+              success: false,
+              error: result.reason?.message || 'Template generation failed'
+            })
+          }
         }
+      }
+    } catch (timeoutError) {
+      console.error('[GENERATE-TEMPLATES] Batch generation timeout:', timeoutError)
+      // Return partial results if we have any
+      if (generatedTemplates.length === 0) {
+        return NextResponse.json({
+          error: 'Template generation timed out - no templates were generated',
+          details: 'The AI generation process took longer than expected. Please try again with fewer steps or template types.'
+        }, { status: 408 })
       }
     }
 
@@ -487,8 +519,8 @@ Format as JSON:
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      max_tokens: 600,
-      temperature: 0.3
+      max_tokens: 400, // Reduced for faster generation
+      temperature: 0.1 // Lower temperature for more consistent, faster responses
     })
 
     const content = response.choices[0]?.message?.content

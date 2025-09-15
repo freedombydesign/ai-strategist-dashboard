@@ -24,20 +24,28 @@ export default function HomePage() {
         {/* Main Value Proposition */}
         <div className="bg-white rounded-2xl shadow-xl border border-purple-100 p-12 mb-20 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">
-            Stop Reinventing Your Workflows Every Time
+            Discover Your Business Freedom Score & Systemize Everything
           </h2>
           <p className="text-lg text-gray-600 mb-10 max-w-3xl mx-auto">
-            Analyze your current service delivery process, identify bottlenecks, and generate
-            customized workflow templates that integrate seamlessly with Trello, Asana, ClickUp, Monday.com, and Notion.
+            Take our Freedom Diagnostic to discover your business archetype and get personalized sprint recommendations.
+            Then analyze workflows, generate custom templates, and export to Trello, Asana, ClickUp, Monday.com, and Notion.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
+              href="/diagnostic-assessment"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-5 rounded-xl inline-flex items-center gap-3 text-lg font-semibold shadow-lg transition-all"
+            >
+              <ChartBarIcon className="w-6 h-6" />
+              Take Freedom Diagnostic
+            </Link>
+
+            <Link
               href="/service-delivery-systemizer"
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-10 py-5 rounded-xl inline-flex items-center gap-3 text-lg font-semibold shadow-lg transition-all"
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-10 py-5 rounded-xl inline-flex items-center gap-3 text-lg font-semibold shadow-lg transition-all"
             >
               <ArrowPathIcon className="w-6 h-6" />
-              Analyze My Workflow
+              Analyze Workflow
             </Link>
 
             <Link
@@ -53,14 +61,24 @@ export default function HomePage() {
         {/* How It Works */}
         <div className="mb-20">
           <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">How It Works</h3>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-pink-100 mb-6 flex items-center justify-center mx-auto">
+                <ChartBarIcon className="w-8 h-8 text-pink-600" />
+              </div>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">1. Diagnose</h4>
+              <p className="text-gray-600">
+                Take our 15-question Freedom Diagnostic to discover your business archetype and get personalized recommendations.
+              </p>
+            </div>
+
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-purple-100 mb-6 flex items-center justify-center mx-auto">
-                <ChartBarIcon className="w-8 h-8 text-purple-600" />
+                <CogIcon className="w-8 h-8 text-purple-600" />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-4">1. Analyze</h4>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">2. Analyze</h4>
               <p className="text-gray-600">
-                Describe your current service delivery process. Our AI identifies inefficiencies and improvement opportunities.
+                Describe your current workflows. Our AI identifies inefficiencies and generates sprint recommendations.
               </p>
             </div>
 
@@ -68,9 +86,9 @@ export default function HomePage() {
               <div className="w-16 h-16 rounded-2xl bg-indigo-100 mb-6 flex items-center justify-center mx-auto">
                 <BoltIcon className="w-8 h-8 text-indigo-600" />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-4">2. Generate</h4>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">3. Generate</h4>
               <p className="text-gray-600">
-                Get customized workflow templates optimized for your specific service delivery needs and constraints.
+                Get customized templates, SOPs, and automation workflows optimized for your business freedom goals.
               </p>
             </div>
 
@@ -78,7 +96,7 @@ export default function HomePage() {
               <div className="w-16 h-16 rounded-2xl bg-violet-100 mb-6 flex items-center justify-center mx-auto">
                 <ShareIcon className="w-8 h-8 text-violet-600" />
               </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-4">3. Export</h4>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">4. Export</h4>
               <p className="text-gray-600">
                 One-click export to Trello, Asana, ClickUp, Monday.com, or Notion. Your team starts using it immediately.
               </p>
