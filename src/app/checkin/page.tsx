@@ -51,6 +51,8 @@ export default function DailyCheckin() {
   const checkTodaysCheckin = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
+      console.log('[CHECKIN] 🔍 Checking for today\'s check-in:', today)
+      
       const { data, error } = await supabase
         .from('daily_checkins')
         .select('*')
@@ -58,7 +60,10 @@ export default function DailyCheckin() {
         .eq('checkin_date', today)
         .single()
 
+      console.log('[CHECKIN] 🔍 Query result:', { data, error })
+
       if (data && !error) {
+        console.log('[CHECKIN] ✅ Found today\'s check-in, loading data')
         setHasCheckedInToday(true)
         setTodaysCheckin(data)
         setCheckinData({
@@ -68,6 +73,8 @@ export default function DailyCheckin() {
           business_updates: data.business_updates || {},
           notes: data.notes || ''
         })
+      } else {
+        console.log('[CHECKIN] ⚠️ No check-in found for today, showing fresh form')
       }
     } catch (error) {
       // No checkin today - that's fine
