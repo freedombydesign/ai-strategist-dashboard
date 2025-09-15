@@ -49,9 +49,15 @@ export default function ServiceDeliverySystemizerPage() {
         setWorkflowName('')
         setWorkflowSteps('')
 
-        // Auto-redirect to template manager after 2 seconds
+        // Auto-redirect to template manager after 2 seconds with fallback
         setTimeout(() => {
-          router.push('/template-manager')
+          try {
+            router.push('/template-manager')
+          } catch (error) {
+            console.error('Navigation error:', error)
+            // Fallback to window.location if router fails
+            window.location.href = '/template-manager'
+          }
         }, 2000)
       } else {
         setMessage(data.error || 'Failed to upload workflow')

@@ -36,6 +36,7 @@ export default function TemplateManagerPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
   // New personalization states
   const [personalityMode, setPersonalityMode] = useState<string>('professional')
@@ -113,18 +114,31 @@ export default function TemplateManagerPage() {
 
       const data = await response.json()
       if (data.success) {
+        // Show success message
+        setSuccessMessage('Templates generated successfully! Redirecting to analytics...')
+        setError('')
+
         // Refresh templates list
         await fetchTemplates(selectedWorkflow)
 
         // Auto-redirect to analytics after successful template generation
+        // Use a more robust redirect method
         setTimeout(() => {
-          router.push('/workflow-analytics')
+          try {
+            router.push('/workflow-analytics')
+          } catch (error) {
+            console.error('Navigation error:', error)
+            // Fallback to window.location if router fails
+            window.location.href = '/workflow-analytics'
+          }
         }, 3000)
       } else {
         setError('Template generation failed')
+        setSuccessMessage('')
       }
     } catch (err) {
       setError('Failed to generate templates')
+      setSuccessMessage('')
     } finally {
       setIsGenerating(false)
     }
@@ -453,6 +467,12 @@ export default function TemplateManagerPage() {
                   <div className="text-sm text-purple-200 text-center">
                     {templates.length} templates found
                   </div>
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="bg-green-500/20 border border-green-400/30 text-green-200 p-4 rounded-lg text-sm">
+                  {successMessage}
                 </div>
               )}
 
