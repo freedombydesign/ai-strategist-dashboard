@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import NavigationHeader from '../../components/NavigationHeader'
 
 export default function ServiceDeliverySystemizerPage() {
+  const router = useRouter()
   const [workflowSteps, setWorkflowSteps] = useState('')
   const [workflowName, setWorkflowName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -42,10 +44,15 @@ export default function ServiceDeliverySystemizerPage() {
       console.log('Response data:', data)
 
       if (response.ok) {
-        setMessage('Workflow uploaded successfully! AI processing will begin shortly.')
+        setMessage('Workflow analyzed successfully! Redirecting to template generation...')
         setMessageType('success')
         setWorkflowName('')
         setWorkflowSteps('')
+
+        // Auto-redirect to template manager after 2 seconds
+        setTimeout(() => {
+          router.push('/template-manager')
+        }, 2000)
       } else {
         setMessage(data.error || 'Failed to upload workflow')
         setMessageType('error')

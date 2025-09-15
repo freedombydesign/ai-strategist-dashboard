@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import NavigationHeader from '../../components/NavigationHeader'
 
 interface Template {
@@ -27,6 +28,7 @@ interface Workflow {
 }
 
 export default function TemplateManagerPage() {
+  const router = useRouter()
   const [workflows, setWorkflows] = useState<Workflow[]>([])
   const [selectedWorkflow, setSelectedWorkflow] = useState<string>('')
   const [templates, setTemplates] = useState<Template[]>([])
@@ -113,6 +115,11 @@ export default function TemplateManagerPage() {
       if (data.success) {
         // Refresh templates list
         await fetchTemplates(selectedWorkflow)
+
+        // Auto-redirect to analytics after successful template generation
+        setTimeout(() => {
+          router.push('/workflow-analytics')
+        }, 3000)
       } else {
         setError('Template generation failed')
       }
@@ -433,6 +440,15 @@ export default function TemplateManagerPage() {
                   >
                     {isGenerating ? '🤔 Generating...' : `🚀 Generate ${personalityMode.charAt(0).toUpperCase() + personalityMode.slice(1)} Templates`}
                   </button>
+
+                  {templates.length > 0 && (
+                    <button
+                      onClick={() => router.push('/workflow-analytics')}
+                      className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200"
+                    >
+                      📊 View Analytics & Impact
+                    </button>
+                  )}
 
                   <div className="text-sm text-purple-200 text-center">
                     {templates.length} templates found
