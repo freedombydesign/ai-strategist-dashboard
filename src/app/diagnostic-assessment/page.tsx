@@ -709,16 +709,16 @@ export default function DiagnosticAssessment() {
 
             {/* Sprint Recommendations */}
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-8">
-              <h3 className="text-2xl font-bold text-white mb-6">🎯 Recommended Sprints</h3>
+              <h3 className="text-2xl font-bold text-white mb-6">🎯 Recommended Actions</h3>
 
               <div className="space-y-6">
                 {results.recommendations.slice(0, 5).map((rec, index) => (
-                  <div key={rec.recommendation_id} className="bg-white/5 border border-white/10 rounded-lg p-6">
+                  <div key={rec.recommendation_id || rec.title || index} className="bg-white/5 border border-white/10 rounded-lg p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
                           <span className="bg-purple-600 text-white px-2 py-1 rounded text-sm font-semibold">
-                            #{rec.priority_rank}
+                            #{rec.priority_rank || rec.priority || (index + 1)}
                           </span>
                           {rec.sprints?.difficulty_level && (
                             <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(rec.sprints.difficulty_level)}`}>
@@ -726,29 +726,37 @@ export default function DiagnosticAssessment() {
                             </span>
                           )}
                           <span className="text-purple-300 text-sm">
-                            {rec.sprints?.category || 'System Building'}
+                            {rec.sprints?.category || 'Priority Action'}
                           </span>
                         </div>
 
                         <h4 className="text-lg font-semibold text-white mb-2">
-                          {rec.sprints?.sprint_title || `Sprint ${rec.priority_rank}`}
+                          {rec.sprints?.sprint_title || rec.title || `Action ${index + 1}`}
                         </h4>
                         <p className="text-purple-200 mb-3">
-                          {rec.sprints?.description || rec.reasoning}
+                          {rec.sprints?.description || rec.description || rec.reasoning}
                         </p>
-                        <p className="text-sm text-gray-300">
-                          {rec.reasoning}
-                        </p>
+                        {rec.reasoning && (
+                          <p className="text-sm text-gray-300">
+                            {rec.reasoning}
+                          </p>
+                        )}
                       </div>
 
-                      <div className="text-right ml-4">
-                        <div className="text-green-400 font-semibold">
-                          +{rec.estimated_impact_points} points
+                      {(rec.estimated_impact_points || rec.estimated_time_to_complete) && (
+                        <div className="text-right ml-4">
+                          {rec.estimated_impact_points && (
+                            <div className="text-green-400 font-semibold">
+                              +{rec.estimated_impact_points} points
+                            </div>
+                          )}
+                          {rec.estimated_time_to_complete && (
+                            <div className="text-purple-300 text-sm">
+                              ~{rec.estimated_time_to_complete} days
+                            </div>
+                          )}
                         </div>
-                        <div className="text-purple-300 text-sm">
-                          ~{rec.estimated_time_to_complete} days
-                        </div>
-                      </div>
+                      )}
                     </div>
 
                     {rec.sprints?.assets_generated && (
