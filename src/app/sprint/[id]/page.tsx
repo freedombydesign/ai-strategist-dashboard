@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { sprintService, type EnhancedStep } from '@/services/sprintService'
+import { achievementService } from '@/services/achievementService'
 import EnhancedProgressTracker from '@/components/EnhancedProgressTracker'
 import SprintCheckinPrompt from '@/components/SprintCheckinPrompt'
 import { CheckCircle2, Circle, Clock, ArrowLeft, Target, ExternalLink } from 'lucide-react'
@@ -418,12 +419,33 @@ export default function SprintDetailPage() {
             
             // Send sprint completion email
             sendSprintCompletionEmail(completed, totalTasks)
+            
+            // Check for achievement unlocks
+            checkAchievements()
           }
         }
       }
       
       return newSet
     })
+  }
+
+  const checkAchievements = async () => {
+    if (!user?.id) return
+    
+    try {
+      console.log('[SPRINT-COMPLETION] 🏆 Checking for achievement unlocks...')
+      const newlyUnlocked = await achievementService.checkAndUnlockAchievements(user.id)
+      
+      if (newlyUnlocked.length > 0) {
+        console.log('[SPRINT-COMPLETION] ✨ New achievements unlocked:', newlyUnlocked.map(a => a.name))
+        // Achievements will automatically send their own emails
+      } else {
+        console.log('[SPRINT-COMPLETION] No new achievements to unlock')
+      }
+    } catch (error) {
+      console.error('[SPRINT-COMPLETION] ❌ Error checking achievements:', error)
+    }
   }
 
   const sendSprintCompletionEmail = async (completedTasks: number, totalTasks: number) => {

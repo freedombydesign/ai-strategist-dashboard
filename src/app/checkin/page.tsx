@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import MobileOptimizedLayout from '@/components/MobileOptimizedLayout'
 import { supabase } from '@/lib/supabase'
+import { achievementService } from '@/services/achievementService'
 import { CheckCircle2, Target, Zap, TrendingUp, ArrowRight, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -118,6 +119,19 @@ export default function DailyCheckin() {
 
       setHasCheckedInToday(true)
       console.log('[CHECKIN] Daily check-in saved successfully')
+      
+      // Check for achievement unlocks
+      try {
+        console.log('[CHECKIN] 🏆 Checking for achievement unlocks...')
+        const newlyUnlocked = await achievementService.checkAndUnlockAchievements(user!.id)
+        
+        if (newlyUnlocked.length > 0) {
+          console.log('[CHECKIN] ✨ New achievements unlocked:', newlyUnlocked.map(a => a.name))
+        }
+      } catch (achievementError) {
+        console.error('[CHECKIN] ❌ Error checking achievements:', achievementError)
+        // Don't fail the check-in for achievement errors
+      }
       
       // Show success message or redirect
       alert('Daily check-in saved! Great work today! 🎉')
