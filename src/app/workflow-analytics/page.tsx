@@ -53,17 +53,40 @@ export default function WorkflowAnalytics() {
     try {
       setRefreshing(true)
       const response = await fetch('/api/systemizer/analytics')
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const result = await response.json()
 
-      if (result.success) {
+      if (result?.success && result?.data) {
         setData(result.data)
         setError('')
       } else {
-        setError(result.error || 'Failed to fetch analytics')
+        setError(result?.error || 'Failed to fetch analytics data')
       }
     } catch (err) {
-      setError('Error fetching analytics data')
       console.error('Analytics fetch error:', err)
+      setError('Unable to load analytics. Please try refreshing the page.')
+      // Set fallback data to prevent crashes
+      setData({
+        summary: {
+          totalWorkflows: 0,
+          totalTimeSaved: '0 hours',
+          averageAutomationPercentage: 0,
+          mostUsedWorkflow: { id: null, name: 'No workflows yet', usageCount: 0 }
+        },
+        trends: {
+          timeSavedTrend: 'stable',
+          automationTrend: 'stable',
+          usageTrend: 'stable'
+        },
+        recommendations: [],
+        period: '30d',
+        generatedAt: new Date().toISOString(),
+        hasExecutionData: false
+      })
     } finally {
       setLoading(false)
       setRefreshing(false)

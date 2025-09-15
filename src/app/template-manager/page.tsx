@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import NavigationHeader from '../../components/NavigationHeader'
 
 interface Template {
@@ -115,23 +116,14 @@ export default function TemplateManagerPage() {
       const data = await response.json()
       if (data.success) {
         // Show success message
-        setSuccessMessage('Templates generated successfully! Redirecting to analytics...')
+        setSuccessMessage('Templates generated successfully! Click "View Analytics & Impact" to see the results.')
         setError('')
 
         // Refresh templates list
         await fetchTemplates(selectedWorkflow)
 
-        // Auto-redirect to analytics after successful template generation
-        // Use a more robust redirect method
-        setTimeout(() => {
-          try {
-            router.push('/workflow-analytics')
-          } catch (error) {
-            console.error('Navigation error:', error)
-            // Fallback to window.location if router fails
-            window.location.href = '/workflow-analytics'
-          }
-        }, 3000)
+        // Don't auto-redirect to avoid errors - user can click the button instead
+        // Show success message and let user navigate manually
       } else {
         setError('Template generation failed')
         setSuccessMessage('')
@@ -456,12 +448,12 @@ export default function TemplateManagerPage() {
                   </button>
 
                   {templates.length > 0 && (
-                    <button
-                      onClick={() => router.push('/workflow-analytics')}
-                      className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200"
+                    <Link
+                      href="/workflow-analytics"
+                      className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 animate-pulse block text-center"
                     >
-                      📊 View Analytics & Impact
-                    </button>
+                      📊 View Analytics & Impact {successMessage && '← Click Here!'}
+                    </Link>
                   )}
 
                   <div className="text-sm text-purple-200 text-center">
