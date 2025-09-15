@@ -412,6 +412,13 @@ export default function SprintDetailPage() {
             }
           }
           
+          console.log('[SPRINT-COMPLETION] 🔍 Debug - Sprint already completed?', completedSprints.includes(params.id))
+          console.log('[SPRINT-COMPLETION] 🔍 Debug - Completed sprints:', completedSprints)
+          console.log('[SPRINT-COMPLETION] 🔍 Debug - Current sprint ID:', params.id)
+          
+          // Always check achievements when sprint is completed
+          checkAchievements()
+          
           // Only send email if this is the first time completing this sprint
           if (!completedSprints.includes(params.id)) {
             completedSprints.push(params.id)
@@ -419,9 +426,8 @@ export default function SprintDetailPage() {
             
             // Send sprint completion email
             sendSprintCompletionEmail(completed, totalTasks)
-            
-            // Check for achievement unlocks
-            checkAchievements()
+          } else {
+            console.log('[SPRINT-COMPLETION] ⚠️ Sprint already completed before, skipping email but checked achievements')
           }
         }
       }
