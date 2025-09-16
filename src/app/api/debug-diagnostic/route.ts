@@ -5,6 +5,33 @@ export async function GET(request: NextRequest) {
   try {
     console.log('[DEBUG-DIAGNOSTIC] Testing complete diagnostic data pipeline...')
 
+    // EMERGENCY CLEANUP: Delete broken recommendations first
+    const { data: brokenRecommendations, error: checkError } = await supabase
+      .from('recommendations')
+      .select(`
+        recommendation_id,
+        sprint_id,
+        sprints (
+          sprint_id,
+          sprint_key
+        )
+      `)
+
+    if (!checkError && brokenRecommendations) {
+      const broken = brokenRecommendations.filter(rec => !rec.sprints)
+      if (broken.length > 0) {
+        console.log('[DEBUG-DIAGNOSTIC] CLEANING UP broken recommendations:', broken.length)
+        const { error: deleteError } = await supabase
+          .from('recommendations')
+          .delete()
+          .in('recommendation_id', broken.map(r => r.recommendation_id))
+
+        if (!deleteError) {
+          console.log('[DEBUG-DIAGNOSTIC] Successfully deleted broken recommendations:', broken.length)
+        }
+      }
+    }
+
     // 1. Check if sprints table has data
     const { data: sprintsData, error: sprintsError } = await supabase
       .from('sprints')
