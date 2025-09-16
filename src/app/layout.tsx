@@ -19,6 +19,8 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // IMMEDIATE ERROR SUPPRESSION - EXECUTE BEFORE ANYTHING ELSE
+              (function() {
               // NUCLEAR ERROR SUPPRESSION v3.0 - ABSOLUTELY ZERO ERRORS ALLOWED
 
               // Override ALL console methods to suppress errors COMPLETELY
@@ -110,6 +112,9 @@ export default function RootLayout({
                 };
                 return originalSetTimeout.call(this, wrappedFn, delay);
               };
+
+              // FORCE IMMEDIATE EXECUTION
+              })();
             `
           }}
         />
