@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+// CACHE BUST v2.1 - Force fresh deployment with all fixes applied
+
 export default function DiagnosticAssessment() {
   const [currentStep, setCurrentStep] = useState('start')
   const [currentQuestion, setCurrentQuestion] = useState(0)
