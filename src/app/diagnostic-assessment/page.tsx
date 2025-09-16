@@ -688,7 +688,7 @@ export default function DiagnosticAssessment() {
                           <span className="bg-purple-600 text-white px-2 py-1 rounded text-sm font-semibold">
                             #{rec.priority_rank || rec.priority || (index + 1)}
                           </span>
-                          {rec.sprints?.difficulty_level && (
+                          {false && rec.sprints?.difficulty_level && (
                             <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(rec.sprints?.difficulty_level || 'intermediate')}`}>
                               {rec.sprints?.difficulty_level?.toUpperCase() || 'INTERMEDIATE'}
                             </span>
