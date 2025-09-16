@@ -10,7 +10,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOi
 
 function getSupabaseInstance(): SupabaseClient {
   if (!supabaseInstance) {
-    console.log('[SUPABASE-CLIENT] Creating SINGLE Supabase instance v4.0 with URL:', supabaseUrl?.slice(0, 30) + '...')
+    // console.log('[SUPABASE-CLIENT] Creating SINGLE Supabase instance v4.0 with URL:', supabaseUrl?.slice(0, 30) + '...')
     
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
