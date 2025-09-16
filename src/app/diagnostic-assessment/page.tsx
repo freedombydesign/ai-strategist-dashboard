@@ -187,23 +187,23 @@ export default function DiagnosticAssessment() {
                 {questions[currentQuestion]}
               </h2>
 
-              <div className="space-y-3">
+              {/* Rating Scale - Original Horizontal Layout */}
+              <div className="grid grid-cols-10 gap-2 mb-8">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
                   <button
                     key={score}
                     onClick={() => handleAnswer(score)}
-                    className="w-full text-left p-4 rounded-lg bg-white/5 hover:bg-white/20 text-white transition-colors border border-white/10 hover:border-white/30"
+                    className="h-16 bg-white/10 hover:bg-purple-600 border border-white/20 rounded-lg font-semibold text-white transition-all hover:scale-105"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{score}</span>
-                      <span className="text-sm opacity-75">
-                        {score <= 3 ? 'Needs significant improvement' :
-                         score <= 6 ? 'Could be better' :
-                         score <= 8 ? 'Pretty good' : 'Excellent'}
-                      </span>
-                    </div>
+                    {score}
                   </button>
                 ))}
+              </div>
+
+              <div className="flex justify-between items-center">
+                <div className="text-purple-300 text-sm">
+                  Click a number from 1 (lowest) to 10 (highest)
+                </div>
               </div>
             </div>
           </div>
