@@ -7,25 +7,31 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Only redirect from the root path, never redirect deep links
-    const currentPath = window.location.pathname
-    console.log('[HOME-PAGE] Current path:', currentPath)
-
-    // NEVER redirect if we're not on root - this protects /diagnostic-assessment
-    if (currentPath !== '/') {
-      console.log('[HOME-PAGE] Not root path, no redirect')
-      return
-    }
-
-    console.log('[HOME-PAGE] Root path detected, redirecting to AI Intelligence')
-    router.replace('/ai-intelligence')
+    // COMPLETELY DISABLED - No automatic redirects
+    // This prevents interference with /diagnostic-assessment and other routes
+    console.log('[HOME-PAGE] Redirect disabled for launch - no automatic redirects')
   }, [router])
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Redirecting to AI Intelligence...</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-6">Business Systemizer</h1>
+        <p className="text-xl text-gray-600 mb-8">Transform your service delivery workflows into streamlined, repeatable systems.</p>
+        <div className="space-y-4">
+          <a
+            href="/ai-intelligence"
+            className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Go to AI Intelligence
+          </a>
+          <br />
+          <a
+            href="/diagnostic-assessment"
+            className="inline-block bg-purple-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-purple-700 transition-colors"
+          >
+            Take Diagnostic Assessment
+          </a>
+        </div>
       </div>
     </div>
   )
