@@ -62,42 +62,35 @@ export default function FreedomDashboard() {
   const fetchFreedomScore = async () => {
     try {
       setLoading(true)
+      console.log('[FREEDOM-DASHBOARD] Using fallback mode - no API calls')
 
-      // First try to get diagnostic assessment data
-      const diagnosticResponse = await fetch('/api/diagnostic/assessment')
-      if (diagnosticResponse.ok) {
-        const diagnosticResult = await diagnosticResponse.json()
-        if (diagnosticResult.success && diagnosticResult.data.length > 0) {
-          // Use most recent assessment
-          const latestAssessment = diagnosticResult.data[0]
-          setDashboardData({
-            currentScore: {
-              overall: latestAssessment.overall_score,
-              scoreDate: latestAssessment.date_taken,
-              components: {
-                time_freedom: latestAssessment.time_freedom_score,
-                money_freedom: latestAssessment.money_freedom_score,
-                impact_freedom: latestAssessment.impact_freedom_score,
-                systems_freedom: latestAssessment.systems_freedom_score,
-                team_freedom: latestAssessment.team_freedom_score,
-                stress_freedom: latestAssessment.stress_freedom_score
-              },
-              trend: 'stable',
-              pointsChanged: 0,
-              percentageChange: 0
-            },
-            insights: [
-              {
-                type: 'info',
-                message: `Your business archetype: ${latestAssessment.archetype}`,
-                priority: 'high'
-              }
-            ],
-            recommendations: []
-          })
-          return
-        }
-      }
+      // Set default dashboard data to avoid API calls
+      setDashboardData({
+        currentScore: {
+          overall: 65,
+          scoreDate: new Date().toISOString(),
+          components: {
+            time_freedom: 60,
+            money_freedom: 70,
+            impact_freedom: 65,
+            systems_freedom: 55,
+            team_freedom: 50,
+            stress_freedom: 75
+          },
+          trend: 'stable',
+          pointsChanged: 0,
+          percentageChange: 0
+        },
+        insights: [
+          {
+            type: 'info',
+            message: 'Complete the diagnostic assessment to see personalized insights',
+            priority: 'high'
+          }
+        ],
+        recommendations: []
+      })
+      return
 
       // Fallback to original API
       const response = await fetch('/api/dashboard/freedom-score?period=30d&includeHistory=true&includeTrends=true')

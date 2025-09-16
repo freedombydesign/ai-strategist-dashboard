@@ -494,7 +494,18 @@ async function generateSprintRecommendations(
         return recommendations
       }
 
-      return fullRecommendations || recommendations
+      // Ensure sprints data is properly structured to prevent client-side errors
+      const safeRecommendations = (fullRecommendations || recommendations).map(rec => ({
+        ...rec,
+        sprints: rec.sprints ? {
+          ...rec.sprints,
+          difficulty_level: rec.sprints?.difficulty_level || 'intermediate',
+          category: rec.sprints?.category || 'General',
+          assets_generated: rec.sprints?.assets_generated || { templates: [], sops: [], automations: [] }
+        } : null
+      }))
+
+      return safeRecommendations
     }
 
     return recommendations

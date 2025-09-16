@@ -109,13 +109,13 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
         setCurrentProgress(currentProgress)
         
         // Load enhanced steps for current sprint
-        if (currentProgress.sprint_id) {
-          console.log('[SPRINT-TRACKER] Loading enhanced steps for sprint:', currentProgress.sprints.name)
+        if (currentProgress.sprint_id && currentProgress.sprints) {
+          console.log('[SPRINT-TRACKER] Loading enhanced steps for sprint:', currentProgress.sprints?.name || 'Unknown Sprint')
           
           try {
             // Import sprintService dynamically to get enhanced steps
             const { sprintService } = await import('../services/sprintService')
-            const enhancedSteps = await sprintService.getEnhancedStepsForOldSprint(currentProgress.sprints.name)
+            const enhancedSteps = await sprintService.getEnhancedStepsForOldSprint(currentProgress.sprints?.name || '')
             
             if (enhancedSteps.length > 0) {
               console.log('[SPRINT-TRACKER] Found enhanced steps:', enhancedSteps.length)
@@ -340,8 +340,8 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
               {currentSprintIndex + 1}
             </div>
             <div className="flex-1">
-              <h4 className="font-medium text-blue-900">{currentProgress.sprints.full_title}</h4>
-              <p className="text-sm text-blue-700 mt-1">{currentProgress.sprints.description}</p>
+              <h4 className="font-medium text-blue-900">{currentProgress.sprints?.full_title || 'Current Sprint'}</h4>
+              <p className="text-sm text-blue-700 mt-1">{currentProgress.sprints?.description || 'Sprint in progress'}</p>
               {freedomScore?.recommendedOrder && freedomScore.recommendedOrder[currentSprintIndex] && (
                 <p className="text-sm text-blue-600 mt-2 font-medium">
                   Why this sprint: {freedomScore.recommendedOrder[currentSprintIndex].why}

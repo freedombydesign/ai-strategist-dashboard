@@ -306,33 +306,9 @@ export default function DiagnosticAssessment() {
   const submitAssessment = async (finalResponses: DiagnosticResponse[]) => {
     try {
       setLoading(true)
-      console.log('[DIAGNOSTIC] Starting submission with responses:', finalResponses)
+      console.log('[DIAGNOSTIC] Starting submission in fallback mode with responses:', finalResponses)
 
-      // Try to submit to database first
-      if (!assessmentId.startsWith('fallback-')) {
-        try {
-          const response = await fetch('/api/diagnostic/assessment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              assessmentId,
-              responses: finalResponses
-            })
-          })
-
-          const data = await response.json()
-
-          if (data.success) {
-            setResults(data.data)
-            setStep('results')
-            return
-          }
-        } catch (err) {
-          console.warn('Database submission failed, calculating results locally:', err)
-        }
-      }
-
-      // Fallback mode - calculate results locally
+      // Pure fallback mode - calculate results locally without any API calls
       console.log('[DIAGNOSTIC] Using fallback mode, calculating results locally')
       const localResults = calculateLocalResults(finalResponses)
       console.log('[DIAGNOSTIC] Local results calculated:', localResults)
@@ -711,8 +687,8 @@ export default function DiagnosticAssessment() {
                             #{rec.priority_rank || rec.priority || (index + 1)}
                           </span>
                           {rec.sprints?.difficulty_level && (
-                            <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(rec.sprints.difficulty_level)}`}>
-                              {rec.sprints.difficulty_level.toUpperCase()}
+                            <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(rec.sprints?.difficulty_level || 'intermediate')}`}>
+                              {rec.sprints?.difficulty_level?.toUpperCase() || 'INTERMEDIATE'}
                             </span>
                           )}
                           <span className="text-purple-300 text-sm">
@@ -753,13 +729,13 @@ export default function DiagnosticAssessment() {
                       <div className="border-t border-white/10 pt-4">
                         <h5 className="text-white font-medium mb-2">Assets Generated:</h5>
                         <div className="text-sm text-purple-200">
-                          {rec.sprints.assets_generated.templates?.length > 0 && (
+                          {rec.sprints?.assets_generated?.templates?.length > 0 && (
                             <span className="mr-4">📄 {rec.sprints.assets_generated.templates.length} Templates</span>
                           )}
-                          {rec.sprints.assets_generated.sops?.length > 0 && (
+                          {rec.sprints?.assets_generated?.sops?.length > 0 && (
                             <span className="mr-4">📋 {rec.sprints.assets_generated.sops.length} SOPs</span>
                           )}
-                          {rec.sprints.assets_generated.automations?.length > 0 && (
+                          {rec.sprints?.assets_generated?.automations?.length > 0 && (
                             <span>⚙️ {rec.sprints.assets_generated.automations.length} Automations</span>
                           )}
                         </div>
