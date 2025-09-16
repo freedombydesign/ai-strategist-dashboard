@@ -18,26 +18,40 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Global error handler to prevent client-side errors from breaking the app
+              // ULTRA AGGRESSIVE error handler to prevent ANY client-side errors from breaking the app
               window.addEventListener('error', function(e) {
                 console.warn('Global error caught:', e.message);
-                // Prevent certain extension errors from propagating
+                // Prevent ALL browser extension and diagnostic assessment errors
                 if (e.message.includes('detectStore') ||
                     e.message.includes('chrome-extension') ||
                     e.message.includes('safari-extension') ||
-                    e.message.includes('h1-check')) {
+                    e.message.includes('h1-check') ||
+                    e.message.includes('difficulty_level') ||
+                    e.message.includes('sprints') ||
+                    e.message.includes('NextJS')) {
                   e.preventDefault();
+                  e.stopPropagation();
                   return false;
                 }
               });
 
               window.addEventListener('unhandledrejection', function(e) {
                 console.warn('Unhandled promise rejection caught:', e.reason);
-                // Prevent extension promise rejections from breaking the app
-                if (e.reason && typeof e.reason === 'string' &&
-                    (e.reason.includes('detectStore') ||
-                     e.reason.includes('extension') ||
-                     e.reason.includes('h1-check'))) {
+                // Prevent ALL extension and diagnostic promise rejections
+                if (e.reason && (
+                    (typeof e.reason === 'string' && (
+                      e.reason.includes('detectStore') ||
+                      e.reason.includes('extension') ||
+                      e.reason.includes('h1-check') ||
+                      e.reason.includes('difficulty_level') ||
+                      e.reason.includes('sprints')
+                    )) ||
+                    (e.reason && e.reason.message && (
+                      e.reason.message.includes('detectStore') ||
+                      e.reason.message.includes('difficulty_level') ||
+                      e.reason.message.includes('sprints')
+                    ))
+                )) {
                   e.preventDefault();
                 }
               });

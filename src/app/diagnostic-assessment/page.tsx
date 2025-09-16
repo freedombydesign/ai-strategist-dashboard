@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import ErrorBoundary from '../../components/ErrorBoundary'
 
 interface DiagnosticQuestion {
   question_id: string
@@ -446,7 +447,8 @@ export default function DiagnosticAssessment() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
       {/* Header */}
       <div className="bg-white/10 backdrop-blur-sm border-b border-white/20">
         <div className="max-w-4xl mx-auto px-6 py-4">
@@ -791,5 +793,6 @@ export default function DiagnosticAssessment() {
         )}
       </div>
     </div>
+    </ErrorBoundary>
   )
 }
