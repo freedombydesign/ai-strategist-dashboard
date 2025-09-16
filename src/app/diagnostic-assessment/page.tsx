@@ -68,7 +68,7 @@ export default function DiagnosticAssessment() {
       archetypeDescription = 'You have solid fundamentals. Time to optimize and scale.';
     } else if (overallScore > 80) {
       archetype = 'Freedom Achiever';
-      archetypeDescription = 'You\\'ve mastered business freedom. Focus on growth and impact.';
+      archetypeDescription = 'You have mastered business freedom. Focus on growth and impact.';
     }
 
     // Create safe recommendations without sprints dependency
