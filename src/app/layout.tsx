@@ -26,7 +26,9 @@ export default function RootLayout({
               window.console.info = function() {};
               window.console.log = function() {};
 
+              // 🚨 EMERGENCY v4.0 - DEPLOYMENT TIMESTAMP: 2025-09-16T20:41:30Z
               // NUCLEAR ERROR SUPPRESSION - BLOCK ALL ERRORS COMPLETELY
+              console.log('🚀 EMERGENCY DEPLOYMENT ACTIVE - BUILD: 177c9b3');
               window.addEventListener('error', function(e) {
                 console.log('🚫 ERROR BLOCKED:', e.message);
                 e.preventDefault();
