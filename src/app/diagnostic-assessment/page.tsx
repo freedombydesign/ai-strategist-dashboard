@@ -62,7 +62,7 @@ export default function DiagnosticAssessment() {
 
     if (overallScore < 40) {
       archetype = 'Scattered Starter';
-      archetypeDescription = 'You\\'re building your foundation. Focus on systems and processes.';
+      archetypeDescription = 'You are building your foundation. Focus on systems and processes.';
     } else if (overallScore < 60) {
       archetype = 'Steady Operator';
       archetypeDescription = 'You have solid fundamentals. Time to optimize and scale.';
