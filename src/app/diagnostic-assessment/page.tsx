@@ -305,10 +305,15 @@ export default function DiagnosticAssessment() {
     const updatedResponses = [...responses, newResponse]
     setResponses(updatedResponses)
 
+    console.log(`[DIAGNOSTIC] Question ${currentQuestionIndex + 1} of ${questions.length} answered`)
+    console.log(`[DIAGNOSTIC] Total responses so far:`, updatedResponses.length)
+
     if (currentQuestionIndex < questions.length - 1) {
+      console.log(`[DIAGNOSTIC] Moving to next question: ${currentQuestionIndex + 2}`)
       setCurrentQuestionIndex(currentQuestionIndex + 1)
       setQuestionStartTime(Date.now())
     } else {
+      console.log('[DIAGNOSTIC] Assessment complete! Starting submission...')
       // Assessment complete - submit responses
       submitAssessment(updatedResponses)
     }
@@ -350,7 +355,8 @@ export default function DiagnosticAssessment() {
       setResults(localResults)
       setStep('results')
     } catch (err) {
-      setError('Could not submit assessment')
+      console.error('[DIAGNOSTIC] Submission error:', err)
+      setError('Could not submit assessment: ' + (err instanceof Error ? err.message : 'Unknown error'))
     } finally {
       setLoading(false)
     }
