@@ -424,20 +424,20 @@ async function generateSprintRecommendations(
       }
     }
 
-    // Archetype-specific recommendations
+    // Archetype-specific recommendations (using only existing sprint keys)
     const archetypeSprintMap: { [key: string]: string[] } = {
-      bottleneck_boss: ['S7', 'S4', 'S5'], // Delegation, Onboarding, Service Delivery
-      custom_queen: ['S3', 'S5', 'S2'], // Offer Stabilization, Service Delivery, Pricing
-      scattered_starter: ['S1', 'S4', 'S11'], // Acquisition, Onboarding, Time Management
-      steady_operator: ['S13', 'S1', 'S15'], // Growth Priority, Acquisition, Vision
-      freedom_achiever: ['S13', 'S15', 'S9'] // Growth Priority, Vision, Reporting
+      bottleneck_boss: ['S3', 'S1'], // Systems & Acquisition focus
+      custom_queen: ['S3', 'S2'], // Offer Stabilization, Pricing
+      scattered_starter: ['S1', 'S2'], // Acquisition, Pricing
+      steady_operator: ['S1', 'S3'], // Acquisition, Systems
+      freedom_achiever: ['S3', 'S2'] // Systems, Pricing optimization
     }
 
     const archetypeRecommendedSprints = archetypeSprintMap[archetype.name] || []
 
     for (const sprintKey of archetypeRecommendedSprints) {
       const sprint = sprints.find(s => s.sprint_key === sprintKey)
-      if (sprint && !recommendations.find(r => r.sprint_id === sprint.sprint_id)) {
+      if (sprint && sprint.sprint_id && !recommendations.find(r => r.sprint_id === sprint.sprint_id)) {
         recommendations.push({
           assessment_id: assessmentId,
           sprint_id: sprint.sprint_id,

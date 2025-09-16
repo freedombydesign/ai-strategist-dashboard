@@ -680,11 +680,7 @@ export default function DiagnosticAssessment() {
               <h3 className="text-2xl font-bold text-white mb-6">🎯 Recommended Actions</h3>
 
               <div className="space-y-6">
-                <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
-                  <h4 className="text-lg font-semibold text-white mb-2">🚀 Launch Ready!</h4>
-                  <p className="text-purple-200">Your assessment has been completed successfully. Detailed recommendations will be available after launch.</p>
-                </div>
-                {false && results.recommendations.slice(0, 5).map((rec, index) => (
+                {results.recommendations.slice(0, 5).map((rec, index) => (
                   <div key={rec.recommendation_id || rec.title || index} className="bg-white/5 border border-white/10 rounded-lg p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
@@ -692,7 +688,7 @@ export default function DiagnosticAssessment() {
                           <span className="bg-purple-600 text-white px-2 py-1 rounded text-sm font-semibold">
                             #{rec.priority_rank || rec.priority || (index + 1)}
                           </span>
-                          {false && rec.sprints?.difficulty_level && (
+                          {rec.sprints?.difficulty_level && (
                             <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(rec.sprints?.difficulty_level || 'intermediate')}`}>
                               {rec.sprints?.difficulty_level?.toUpperCase() || 'INTERMEDIATE'}
                             </span>
