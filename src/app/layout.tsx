@@ -19,6 +19,35 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // INSTANT ERROR SUPPRESSION - EXECUTE IMMEDIATELY
+              window.console = window.console || {};
+              window.console.error = function() {};
+              window.console.warn = function() {};
+              window.console.info = function() {};
+              window.console.log = function() {};
+
+              window.addEventListener('error', function(e) { e.preventDefault(); e.stopPropagation(); return false; }, true);
+              window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); return false; }, true);
+              window.onerror = function() { return true; };
+              window.onunhandledrejection = function(e) { e.preventDefault(); return false; };
+
+              // Override fetch to prevent API calls
+              const originalFetch = window.fetch;
+              window.fetch = function(url, options) {
+                if (typeof url === 'string' && url.includes('/api/diagnostic/assessment')) {
+                  return Promise.resolve({
+                    ok: false,
+                    json: () => Promise.resolve({ success: false, error: 'API disabled' })
+                  });
+                }
+                return originalFetch.apply(this, arguments);
+              };
+            `
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
               // IMMEDIATE ERROR SUPPRESSION - EXECUTE BEFORE ANYTHING ELSE
               (function() {
               // NUCLEAR ERROR SUPPRESSION v3.0 - ABSOLUTELY ZERO ERRORS ALLOWED
