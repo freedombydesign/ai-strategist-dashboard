@@ -7,11 +7,18 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Only redirect if we're on the exact root path
-    // This prevents breaking deep links like /diagnostic-assessment
-    if (window.location.pathname === '/') {
-      router.replace('/ai-intelligence')
+    // Only redirect from the root path, never redirect deep links
+    const currentPath = window.location.pathname
+    console.log('[HOME-PAGE] Current path:', currentPath)
+
+    // NEVER redirect if we're not on root - this protects /diagnostic-assessment
+    if (currentPath !== '/') {
+      console.log('[HOME-PAGE] Not root path, no redirect')
+      return
     }
+
+    console.log('[HOME-PAGE] Root path detected, redirecting to AI Intelligence')
+    router.replace('/ai-intelligence')
   }, [router])
   
   return (
