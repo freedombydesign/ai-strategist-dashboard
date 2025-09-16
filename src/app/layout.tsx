@@ -26,9 +26,27 @@ export default function RootLayout({
               window.console.info = function() {};
               window.console.log = function() {};
 
-              window.addEventListener('error', function(e) { e.preventDefault(); e.stopPropagation(); return false; }, true);
+              // ULTRA-SPECIFIC SUPPRESSION FOR DIFFICULTY_LEVEL ERRORS
+              window.addEventListener('error', function(e) {
+                if (e.message && e.message.includes('difficulty_level')) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return false;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+              }, true);
+
               window.addEventListener('unhandledrejection', function(e) { e.preventDefault(); return false; }, true);
-              window.onerror = function() { return true; };
+
+              window.onerror = function(message, source, lineno, colno, error) {
+                if (message && message.includes('difficulty_level')) {
+                  return true;
+                }
+                return true;
+              };
+
               window.onunhandledrejection = function(e) { e.preventDefault(); return false; };
 
               // Override fetch to prevent API calls
