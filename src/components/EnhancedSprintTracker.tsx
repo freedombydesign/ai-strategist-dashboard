@@ -195,7 +195,7 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?.id,
-          sprintKey: currentProgress.sprints.sprint_key,
+          sprintKey: currentProgress.sprints?.sprint_key,
           stepNumber,
           stepTitle,
           status
