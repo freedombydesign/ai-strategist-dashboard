@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ClientAuthProvider from '../components/ClientAuthProvider';
+import SubdomainRedirect from '../components/SubdomainRedirect';
 
 export const metadata: Metadata = {
   title: "Freedom by Design - AI Business Strategist",
@@ -80,6 +81,7 @@ export default function RootLayout({
       </head>
       <body>
         <ClientAuthProvider>
+          <SubdomainRedirect />
           {children}
         </ClientAuthProvider>
       </body>
