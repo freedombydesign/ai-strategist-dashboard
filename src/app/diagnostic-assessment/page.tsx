@@ -265,27 +265,16 @@ export default function DiagnosticAssessment() {
   const startAssessment = async () => {
     try {
       setLoading(true)
+      console.log('[DIAGNOSTIC] Starting assessment in fallback mode (bypassing database)')
 
-      // Try to create new assessment in database
-      try {
-        const response = await fetch('/api/diagnostic/assessment')
-        const data = await response.json()
-
-        if (data.success) {
-          setAssessmentId(data.data.assessment_id)
-          setStep('questions')
-          setQuestionStartTime(Date.now())
-          return
-        }
-      } catch (err) {
-        console.warn('Database assessment creation failed, using fallback mode:', err)
-      }
-
-      // Fallback mode - proceed without database
+      // Skip database for now and go straight to fallback mode
       setAssessmentId('fallback-' + Date.now())
       setStep('questions')
       setQuestionStartTime(Date.now())
+
+      console.log('[DIAGNOSTIC] Assessment started successfully in fallback mode')
     } catch (err) {
+      console.error('[DIAGNOSTIC] Error starting assessment:', err)
       setError('Could not start assessment')
     } finally {
       setLoading(false)
