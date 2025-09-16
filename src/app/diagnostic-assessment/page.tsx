@@ -39,7 +39,7 @@ export default function DiagnosticAssessment() {
   }
 
   const calculateResults = (allAnswers: number[]) => {
-    console.log('[DIAGNOSTIC] Calculating results for answers:', allAnswers)
+    console.log('[DIAGNOSTIC] Calculating results for answers:', allAnswers);
 
     // Calculate component scores (1-10 scale to 0-100)
     const componentScores = {
@@ -48,10 +48,10 @@ export default function DiagnosticAssessment() {
       team_freedom: Math.round((allAnswers.slice(6, 9).reduce((sum, a) => sum + a, 0) / 3 - 1) * 100 / 9),
       stress_freedom: Math.round((allAnswers.slice(9, 12).reduce((sum, a) => sum + a, 0) / 3 - 1) * 100 / 9),
       time_freedom: Math.round((allAnswers.slice(12, 15).reduce((sum, a) => sum + a, 0) / 3 - 1) * 100 / 9),
-      impact_freedom: 75 // Default for missing questions
-    }
+      impact_freedom: 75
+    };
 
-    const overallScore = Math.round(Object.values(componentScores).reduce((sum, score) => sum + score, 0) / 6)
+    const overallScore = Math.round(Object.values(componentScores).reduce((sum, score) => sum + score, 0) / 6);
 
     // Determine archetype
     let archetype = 'Balanced Achiever';
@@ -59,13 +59,13 @@ export default function DiagnosticAssessment() {
 
     if (overallScore < 40) {
       archetype = 'Scattered Starter';
-      archetypeDescription = 'You're building your foundation. Focus on systems and processes.';
+      archetypeDescription = 'You\'re building your foundation. Focus on systems and processes.';
     } else if (overallScore < 60) {
       archetype = 'Steady Operator';
       archetypeDescription = 'You have solid fundamentals. Time to optimize and scale.';
     } else if (overallScore > 80) {
       archetype = 'Freedom Achiever';
-      archetypeDescription = 'You've mastered business freedom. Focus on growth and impact.';
+      archetypeDescription = 'You\'ve mastered business freedom. Focus on growth and impact.';
     }
 
     // Create recommendations with proper sprints structure
