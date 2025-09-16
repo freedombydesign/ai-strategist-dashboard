@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
   const router = useRouter()
-  
+
   useEffect(() => {
-    // ai.scalewithruth.com should redirect to AI Intelligence
-    router.replace('/ai-intelligence')
+    // Only redirect if we're on the exact root path
+    // This prevents breaking deep links like /diagnostic-assessment
+    if (window.location.pathname === '/') {
+      router.replace('/ai-intelligence')
+    }
   }, [router])
   
   return (
