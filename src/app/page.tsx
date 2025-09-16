@@ -13,24 +13,22 @@ export default function HomePage() {
   }, [router])
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6">Business Systemizer</h1>
-        <p className="text-xl text-gray-600 mb-8">Transform your service delivery workflows into streamlined, repeatable systems.</p>
-        <div className="space-y-4">
-          <a
-            href="/ai-intelligence"
-            className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Go to AI Intelligence
-          </a>
-          <br />
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="text-center max-w-4xl mx-auto px-4">
+        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">Business Systemizer</h1>
+        <p className="text-xl text-purple-200 mb-12 max-w-2xl mx-auto">
+          Transform your service delivery workflows into streamlined, repeatable systems that scale your business.
+        </p>
+        <div className="space-y-6">
           <a
             href="/diagnostic-assessment"
-            className="inline-block bg-purple-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-purple-700 transition-colors"
+            className="inline-block bg-white text-purple-900 px-12 py-4 rounded-lg text-xl font-bold hover:bg-purple-50 transition-colors shadow-lg"
           >
-            Take Diagnostic Assessment
+            Start Your Freedom Assessment
           </a>
+          <p className="text-purple-300 text-sm">
+            Discover your Business Freedom Score in 5 minutes
+          </p>
         </div>
       </div>
     </div>

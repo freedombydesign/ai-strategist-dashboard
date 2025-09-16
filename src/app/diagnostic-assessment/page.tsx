@@ -292,7 +292,7 @@ export default function DiagnosticAssessment() {
             {/* CTA */}
             <div className="text-center mt-12">
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => window.location.href = '/dashboard'}
                 className="bg-white text-purple-900 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-purple-50 transition-colors"
               >
                 Continue to Dashboard
