@@ -86,17 +86,12 @@ export default function DiagnosticAssessment() {
   const loadQuestions = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/diagnostic/questions')
-      const data = await response.json()
+      console.log('[DIAGNOSTIC] Loading questions in fallback mode (bypassing database)')
 
-      if (data.success) {
-        setQuestions(data.data.questions)
-      } else {
-        console.warn('Database not set up, using fallback questions:', data.error)
-        loadFallbackQuestions()
-      }
+      // Skip database and load fallback questions directly
+      loadFallbackQuestions()
     } catch (err) {
-      console.warn('Could not connect to diagnostic system, using fallback questions:', err)
+      console.error('[DIAGNOSTIC] Error loading questions:', err)
       loadFallbackQuestions()
     } finally {
       setLoading(false)
