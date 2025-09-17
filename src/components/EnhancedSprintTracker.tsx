@@ -110,12 +110,12 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
         
         // Load enhanced steps for current sprint
         if (currentProgress.sprint_id) {
-          console.log('[SPRINT-TRACKER] Loading enhanced steps for sprint:', currentProgress.sprints.name)
+          console.log('[SPRINT-TRACKER] Loading enhanced steps for sprint:', currentProgress.sprints?.name)
           
           try {
             // Import sprintService dynamically to get enhanced steps
             const { sprintService } = await import('../services/sprintService')
-            const enhancedSteps = await sprintService.getEnhancedStepsForOldSprint(currentProgress.sprints.name)
+            const enhancedSteps = await sprintService.getEnhancedStepsForOldSprint(currentProgress.sprints?.name || '')
             
             if (enhancedSteps.length > 0) {
               console.log('[SPRINT-TRACKER] Found enhanced steps:', enhancedSteps.length)
@@ -195,7 +195,7 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?.id,
-          sprintKey: currentProgress.sprints.sprint_key,
+          sprintKey: currentProgress.sprints?.sprint_key,
           stepNumber,
           stepTitle,
           status
@@ -340,8 +340,8 @@ export default function EnhancedSprintTracker({ freedomScore, className = '' }: 
               {currentSprintIndex + 1}
             </div>
             <div className="flex-1">
-              <h4 className="font-medium text-blue-900">{currentProgress.sprints.full_title}</h4>
-              <p className="text-sm text-blue-700 mt-1">{currentProgress.sprints.description}</p>
+              <h4 className="font-medium text-blue-900">{currentProgress.sprints?.full_title}</h4>
+              <p className="text-sm text-blue-700 mt-1">{currentProgress.sprints?.description}</p>
               {freedomScore?.recommendedOrder && freedomScore.recommendedOrder[currentSprintIndex] && (
                 <p className="text-sm text-blue-600 mt-2 font-medium">
                   Why this sprint: {freedomScore.recommendedOrder[currentSprintIndex].why}

@@ -67,6 +67,127 @@ interface AssessmentResult {
 
 type AssessmentStep = 'intro' | 'questions' | 'results'
 
+interface ActionStep {
+  title: string
+  description: string
+  timeEstimate?: string
+}
+
+const getActionSteps = (sprintKey: string): ActionStep[] => {
+  const actionStepsMap: Record<string, ActionStep[]> = {
+    'process-documentation': [
+      {
+        title: 'Document Your Core Workflows',
+        description: 'Map out your 3-5 most critical business processes step by step',
+        timeEstimate: '2-3 hours'
+      },
+      {
+        title: 'Create Process Templates',
+        description: 'Build reusable templates for your most common workflows',
+        timeEstimate: '3-4 hours'
+      },
+      {
+        title: 'Standardize Documentation Format',
+        description: 'Create a consistent format for all process documentation',
+        timeEstimate: '1-2 hours'
+      },
+      {
+        title: 'Train Team on New Processes',
+        description: 'Walk your team through the documented processes and gather feedback',
+        timeEstimate: '2-3 hours'
+      },
+      {
+        title: 'Implement Process Review Cycle',
+        description: 'Set up monthly reviews to refine and improve your processes',
+        timeEstimate: '30 minutes'
+      }
+    ],
+    'workflow-optimization': [
+      {
+        title: 'Analyze Current Bottlenecks',
+        description: 'Identify the 3 biggest slowdowns in your service delivery',
+        timeEstimate: '2 hours'
+      },
+      {
+        title: 'Map Ideal Workflow',
+        description: 'Design the optimal flow from client contact to project completion',
+        timeEstimate: '3 hours'
+      },
+      {
+        title: 'Eliminate Redundant Steps',
+        description: 'Remove or combine steps that add no value to your process',
+        timeEstimate: '2 hours'
+      },
+      {
+        title: 'Create Automation Triggers',
+        description: 'Set up automated handoffs between workflow stages',
+        timeEstimate: '3-4 hours'
+      },
+      {
+        title: 'Test and Refine',
+        description: 'Run your optimized workflow with 2-3 projects and adjust',
+        timeEstimate: '1 week'
+      }
+    ],
+    'team-training': [
+      {
+        title: 'Assess Current Skills',
+        description: 'Evaluate your team\'s current capabilities and knowledge gaps',
+        timeEstimate: '1-2 hours'
+      },
+      {
+        title: 'Create Training Materials',
+        description: 'Develop step-by-step training guides for key processes',
+        timeEstimate: '4-6 hours'
+      },
+      {
+        title: 'Conduct Training Sessions',
+        description: 'Run interactive training sessions with your team',
+        timeEstimate: '2-3 hours'
+      },
+      {
+        title: 'Implement Practice Period',
+        description: 'Allow team members to practice with supervision and feedback',
+        timeEstimate: '1 week'
+      },
+      {
+        title: 'Establish Ongoing Development',
+        description: 'Set up regular skill development and knowledge sharing',
+        timeEstimate: '30 minutes weekly'
+      }
+    ],
+    'default': [
+      {
+        title: 'Assess Current State',
+        description: 'Evaluate your current systems and identify improvement opportunities',
+        timeEstimate: '2 hours'
+      },
+      {
+        title: 'Design Improvement Plan',
+        description: 'Create a detailed plan for implementing this sprint',
+        timeEstimate: '3 hours'
+      },
+      {
+        title: 'Implement Changes',
+        description: 'Execute your improvement plan step by step',
+        timeEstimate: '1-2 weeks'
+      },
+      {
+        title: 'Test and Refine',
+        description: 'Test your new system and make necessary adjustments',
+        timeEstimate: '3-5 days'
+      },
+      {
+        title: 'Document and Train',
+        description: 'Document your new process and train your team',
+        timeEstimate: '2-4 hours'
+      }
+    ]
+  }
+
+  return actionStepsMap[sprintKey] || actionStepsMap['default']
+}
+
 export default function DiagnosticAssessment() {
   const [step, setStep] = useState<AssessmentStep>('intro')
   const [questions, setQuestions] = useState<DiagnosticQuestion[]>([])
@@ -74,13 +195,33 @@ export default function DiagnosticAssessment() {
   const [responses, setResponses] = useState<DiagnosticResponse[]>([])
   const [assessmentId, setAssessmentId] = useState<string | null>(null)
   const [results, setResults] = useState<AssessmentResult | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true) // Start with loading to check localStorage first
   const [error, setError] = useState<string | null>(null)
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
+  const [selectedSprint, setSelectedSprint] = useState<Recommendation | null>(null)
 
-  // Load questions on component mount
+  // Load questions and saved results on component mount
   useEffect(() => {
-    loadQuestions()
+    // Check for saved results FIRST, before loading questions
+    let hasResults = false
+    try {
+      const savedResults = localStorage.getItem('businessSystemizerResults')
+      if (savedResults) {
+        const parsedResults = JSON.parse(savedResults)
+        setResults(parsedResults)
+        setStep('results')
+        setLoading(false)
+        hasResults = true
+        console.log('Found saved results, showing immediately')
+      }
+    } catch (err) {
+      console.warn('Could not load saved results:', err)
+    }
+
+    // Only load questions if no saved results found
+    if (!hasResults) {
+      loadQuestions()
+    }
   }, [])
 
   const loadQuestions = async () => {
@@ -334,6 +475,12 @@ export default function DiagnosticAssessment() {
 
           if (data.success) {
             setResults(data.data)
+            // Save results to localStorage
+            try {
+              localStorage.setItem('businessSystemizerResults', JSON.stringify(data.data))
+            } catch (err) {
+              console.warn('Could not save results to localStorage:', err)
+            }
             setStep('results')
             return
           }
@@ -345,6 +492,12 @@ export default function DiagnosticAssessment() {
       // Fallback mode - calculate results locally
       const localResults = calculateLocalResults(finalResponses)
       setResults(localResults)
+      // Save results to localStorage
+      try {
+        localStorage.setItem('businessSystemizerResults', JSON.stringify(localResults))
+      } catch (err) {
+        console.warn('Could not save results to localStorage:', err)
+      }
       setStep('results')
     } catch (err) {
       setError('Could not submit assessment')
@@ -413,9 +566,67 @@ export default function DiagnosticAssessment() {
       },
       recommendations: [
         {
-          title: 'Start with highest impact areas',
-          description: 'Focus on your lowest scoring components first for maximum impact',
-          priority: 1
+          recommendation_id: 'fallback-1',
+          sprint_id: 'process-documentation',
+          priority_rank: 1,
+          confidence_score: 0.9,
+          reasoning: 'Based on your assessment, systematizing your processes will provide the highest impact.',
+          estimated_impact_points: 25,
+          estimated_time_to_complete: 7,
+          sprints: {
+            sprint_key: 'process-documentation',
+            sprint_title: 'Process Documentation Sprint',
+            description: 'Document and systematize your core business processes',
+            category: 'Systems Building',
+            difficulty_level: 'beginner',
+            assets_generated: {
+              templates: ['Process Template', 'SOP Template'],
+              sops: ['Documentation SOP'],
+              automations: []
+            }
+          }
+        },
+        {
+          recommendation_id: 'fallback-2',
+          sprint_id: 'workflow-optimization',
+          priority_rank: 2,
+          confidence_score: 0.85,
+          reasoning: 'Optimizing your workflows will reduce bottlenecks and improve efficiency.',
+          estimated_impact_points: 20,
+          estimated_time_to_complete: 5,
+          sprints: {
+            sprint_key: 'workflow-optimization',
+            sprint_title: 'Workflow Optimization Sprint',
+            description: 'Analyze and optimize your service delivery workflows',
+            category: 'Operations',
+            difficulty_level: 'intermediate',
+            assets_generated: {
+              templates: ['Workflow Template'],
+              sops: ['Optimization SOP'],
+              automations: ['Process Automation']
+            }
+          }
+        },
+        {
+          recommendation_id: 'fallback-3',
+          sprint_id: 'team-training',
+          priority_rank: 3,
+          confidence_score: 0.8,
+          reasoning: 'Training your team on systematized processes will increase consistency.',
+          estimated_impact_points: 15,
+          estimated_time_to_complete: 3,
+          sprints: {
+            sprint_key: 'team-training',
+            sprint_title: 'Team Training Sprint',
+            description: 'Train your team on standardized processes and procedures',
+            category: 'Team Development',
+            difficulty_level: 'beginner',
+            assets_generated: {
+              templates: ['Training Template'],
+              sops: ['Training SOP', 'Onboarding SOP'],
+              automations: []
+            }
+          }
         }
       ]
     }
@@ -465,10 +676,26 @@ export default function DiagnosticAssessment() {
     }
   }
 
+  const retakeAssessment = () => {
+    // Clear localStorage and reset state
+    try {
+      localStorage.removeItem('businessSystemizerResults')
+    } catch (err) {
+      console.warn('Could not clear saved results:', err)
+    }
+
+    setStep('intro')
+    setCurrentQuestionIndex(0)
+    setResponses([])
+    setResults(null)
+    setAssessmentId(null)
+    setError(null)
+  }
+
   const currentQuestion = questions[currentQuestionIndex]
   const progress = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0
 
-  if (loading && step === 'intro') {
+  if (loading && step === 'intro' && !results) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
         <div className="text-white text-xl">Loading diagnostic system...</div>
@@ -718,8 +945,8 @@ export default function DiagnosticAssessment() {
                             #{rec.priority_rank}
                           </span>
                           {rec.sprints?.difficulty_level && (
-                            <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(rec.sprints.difficulty_level)}`}>
-                              {rec.sprints.difficulty_level.toUpperCase()}
+                            <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(rec.sprints?.difficulty_level)}`}>
+                              {rec.sprints?.difficulty_level?.toUpperCase()}
                             </span>
                           )}
                           <span className="text-purple-300 text-sm">
@@ -749,53 +976,213 @@ export default function DiagnosticAssessment() {
                     </div>
 
                     {rec.sprints?.assets_generated && (
-                      <div className="border-t border-white/10 pt-4">
+                      <div className="border-t border-white/10 pt-4 mb-4">
                         <h5 className="text-white font-medium mb-2">Assets Generated:</h5>
-                        <div className="text-sm text-purple-200">
-                          {rec.sprints.assets_generated.templates?.length > 0 && (
-                            <span className="mr-4">📄 {rec.sprints.assets_generated.templates.length} Templates</span>
+                        <div className="space-y-2">
+                          {rec.sprints?.assets_generated?.templates?.length > 0 && (
+                            <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-3">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-blue-400">📄</span>
+                                <span className="text-purple-200 text-sm">
+                                  {rec.sprints?.assets_generated?.templates?.length} Templates
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => window.open('/template-manager', '_blank')}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+                              >
+                                View Templates
+                              </button>
+                            </div>
                           )}
-                          {rec.sprints.assets_generated.sops?.length > 0 && (
-                            <span className="mr-4">📋 {rec.sprints.assets_generated.sops.length} SOPs</span>
+                          {rec.sprints?.assets_generated?.sops?.length > 0 && (
+                            <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-3">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-green-400">📋</span>
+                                <span className="text-purple-200 text-sm">
+                                  {rec.sprints?.assets_generated?.sops?.length} SOPs
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => window.open('/template-manager?type=sops', '_blank')}
+                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+                              >
+                                View SOPs
+                              </button>
+                            </div>
                           )}
-                          {rec.sprints.assets_generated.automations?.length > 0 && (
-                            <span>⚙️ {rec.sprints.assets_generated.automations.length} Automations</span>
+                          {rec.sprints?.assets_generated?.automations?.length > 0 && (
+                            <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-3">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-purple-400">⚙️</span>
+                                <span className="text-purple-200 text-sm">
+                                  {rec.sprints?.assets_generated?.automations?.length} Automations
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => window.open('/service-delivery-systemizer?focus=automations', '_blank')}
+                                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+                              >
+                                View Automations
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
                     )}
+
+                    {/* Action Steps Section */}
+                    <div className="border-t border-white/10 pt-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <h5 className="text-white font-medium">📋 Action Steps</h5>
+                        <button
+                          onClick={() => setSelectedSprint(selectedSprint?.recommendation_id === rec.recommendation_id ? null : rec)}
+                          className="text-purple-300 hover:text-purple-200 text-sm"
+                        >
+                          {selectedSprint?.recommendation_id === rec.recommendation_id ? '▼ Hide Steps' : '▶ Show Steps'}
+                        </button>
+                      </div>
+
+                      {selectedSprint?.recommendation_id === rec.recommendation_id && (
+                        <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
+                          {getActionSteps(rec.sprints?.sprint_key || 'default').map((step, stepIndex) => (
+                            <div key={stepIndex} className="flex items-start space-x-3">
+                              <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded font-semibold min-w-[24px] text-center">
+                                {stepIndex + 1}
+                              </span>
+                              <div className="flex-1">
+                                <p className="text-purple-200 text-sm">{step.title}</p>
+                                <p className="text-gray-300 text-xs mt-1">{step.description}</p>
+                                {step.timeEstimate && (
+                                  <span className="text-purple-300 text-xs">⏱️ {step.timeEstimate}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+
+                          <div className="border-t border-white/10 pt-3 mt-4">
+                            <button
+                              onClick={() => window.open('/service-delivery-systemizer', '_blank')}
+                              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-all"
+                            >
+                              🚀 Start This Sprint
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
 
               <div className="mt-8 text-center">
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  <div className="text-purple-200 text-lg font-medium">
+                    🎯 Ready to systematize your business?
+                  </div>
+
                   <Link
-                    href="/freedom-dashboard"
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-12 py-4 rounded-lg font-semibold transition-all inline-block text-lg"
+                    href="/service-delivery-systemizer"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-4 rounded-lg font-semibold transition-all inline-block text-lg"
                   >
-                    🚀 View Your Freedom Dashboard
+                    ⚙️ Start Workflow Systemizer
                   </Link>
 
                   <div className="text-purple-200 text-sm">
-                    or continue your optimization journey:
+                    Analyze your workflows and generate templates, SOPs, and automations
                   </div>
 
-                  <div className="space-x-4">
-                    <Link
-                      href="/workflow-analytics"
-                      className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3 rounded-lg font-medium transition-all inline-block"
-                    >
-                      📊 Analytics
-                    </Link>
-                    <Link
-                      href="/service-delivery-systemizer"
-                      className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3 rounded-lg font-medium transition-all inline-block"
-                    >
-                      ⚙️ Analyze Workflow
-                    </Link>
+                  <div className="border-t border-white/20 pt-6">
+                    <div className="text-purple-200 text-sm mb-4">
+                      or explore other tools:
+                    </div>
+
+                    <div className="space-x-4">
+                      <Link
+                        href="/freedom-dashboard"
+                        className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3 rounded-lg font-medium transition-all inline-block"
+                      >
+                        🚀 Freedom Dashboard
+                      </Link>
+                      <Link
+                        href="/workflow-analytics"
+                        className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3 rounded-lg font-medium transition-all inline-block"
+                      >
+                        📊 Analytics
+                      </Link>
+                      <button
+                        onClick={retakeAssessment}
+                        className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3 rounded-lg font-medium transition-all"
+                      >
+                        🔄 Retake Assessment
+                      </button>
+                    </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Comprehensive Asset Manager */}
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-8">
+              <h3 className="text-2xl font-bold text-white mb-6">📚 Your Asset Library</h3>
+              <p className="text-purple-200 mb-6">
+                Access all your generated templates, SOPs, and automations in one place
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+                  <div className="text-4xl mb-4">📄</div>
+                  <h4 className="text-white font-semibold mb-2">Templates</h4>
+                  <p className="text-purple-200 text-sm mb-4">
+                    Ready-to-use templates for all your business processes
+                  </p>
+                  <Link
+                    href="/template-manager"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all inline-block"
+                  >
+                    View Templates
+                  </Link>
+                </div>
+
+                <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+                  <div className="text-4xl mb-4">📋</div>
+                  <h4 className="text-white font-semibold mb-2">SOPs</h4>
+                  <p className="text-purple-200 text-sm mb-4">
+                    Standard Operating Procedures for consistent execution
+                  </p>
+                  <Link
+                    href="/template-manager?type=sops"
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-all inline-block"
+                  >
+                    View SOPs
+                  </Link>
+                </div>
+
+                <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+                  <div className="text-4xl mb-4">⚙️</div>
+                  <h4 className="text-white font-semibold mb-2">Automations</h4>
+                  <p className="text-purple-200 text-sm mb-4">
+                    Automated workflows to streamline your operations
+                  </p>
+                  <Link
+                    href="/service-delivery-systemizer?focus=automations"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-all inline-block"
+                  >
+                    View Automations
+                  </Link>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
+                <Link
+                  href="/export-manager"
+                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-all inline-block"
+                >
+                  📤 Export All Assets
+                </Link>
+                <p className="text-purple-300 text-sm mt-2">
+                  Export your complete asset library to popular platforms
+                </p>
               </div>
             </div>
           </div>
