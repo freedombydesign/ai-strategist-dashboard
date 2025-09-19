@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ClientAuthProvider from '../components/ClientAuthProvider';
-import SubdomainRedirect from '../components/SubdomainRedirect';
 
 export const metadata: Metadata = {
   title: "Freedom by Design - AI Business Strategist",
-  description: "Your personal business coach with Freedom Score integration - Nuclear Clean v2.0",
+  description: "Your personal business coach with Freedom Score integration - Nuclear Clean v3.0",
 };
 
 export default function RootLayout({
@@ -16,12 +14,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              console.log('[LAYOUT] Clean layout loaded - no error suppression');
+            `
+          }}
+        />
       </head>
       <body>
-        <ClientAuthProvider>
-          <SubdomainRedirect />
-          {children}
-        </ClientAuthProvider>
+        {children}
       </body>
     </html>
   );
