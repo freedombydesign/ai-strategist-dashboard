@@ -19,17 +19,31 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Fix detectStore error by providing a fallback
+              // COMPREHENSIVE detectStore fix
               (function() {
                 try {
                   if (typeof window !== 'undefined') {
-                    // Provide detectStore fallback if missing
-                    if (!window.detectStore) {
-                      window.detectStore = function() {
-                        return Promise.resolve({ success: true, detected: false });
-                      };
+                    // Create a robust detectStore function
+                    const mockDetectStore = function() {
+                      return Promise.resolve({ success: true, detected: false });
+                    };
+
+                    // Set detectStore in multiple ways to catch all access patterns
+                    window.detectStore = mockDetectStore;
+
+                    // Also set it as a default export pattern
+                    if (!window.a) window.a = {};
+                    if (!window.a.default) window.a.default = {};
+                    window.a.default.detectStore = mockDetectStore;
+
+                    // Override any potential module access
+                    if (typeof module !== 'undefined' && module.exports) {
+                      module.exports.detectStore = mockDetectStore;
+                      if (!module.exports.default) module.exports.default = {};
+                      module.exports.default.detectStore = mockDetectStore;
                     }
-                    console.log('[LAYOUT] DetectStore fallback provided');
+
+                    console.log('[LAYOUT] Comprehensive DetectStore fallback provided');
                   }
                 } catch (e) {
                   console.warn('[LAYOUT] DetectStore setup failed:', e);
