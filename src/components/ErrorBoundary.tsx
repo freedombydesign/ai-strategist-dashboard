@@ -22,13 +22,24 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     // Update state so the next render will show the fallback UI.
     console.warn('ErrorBoundary caught error:', error.message)
 
-    // Suppress specific errors that shouldn't break the app
+    // Handle detectStore errors specifically
+    if (error.message.includes('detectStore')) {
+      console.warn('DetectStore error caught, providing fallback:', error.message)
+      // Provide detectStore fallback immediately
+      if (typeof window !== 'undefined' && !window.detectStore) {
+        window.detectStore = function() {
+          return Promise.resolve({ success: true, detected: false });
+        };
+      }
+      return { hasError: false } // Don't show error UI for detectStore
+    }
+
+    // Suppress other non-critical errors
     if (error.message.includes('difficulty_level') ||
         error.message.includes('sprints') ||
-        error.message.includes('detectStore') ||
         error.message.includes('extension')) {
       console.warn('Suppressing non-critical error:', error.message)
-      return { hasError: false } // Don't show error UI for these
+      return { hasError: false }
     }
 
     return { hasError: true, error }

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ClientAuthProvider from '../components/ClientAuthProvider';
+import SubdomainRedirect from '../components/SubdomainRedirect';
 
 export const metadata: Metadata = {
   title: "Freedom by Design - AI Business Strategist",
-  description: "Your personal business coach with Freedom Score integration - Nuclear Clean v3.0",
+  description: "Your personal business coach with Freedom Score integration - Fixed detectStore v4.0",
 };
 
 export default function RootLayout({
@@ -17,13 +19,31 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              console.log('[LAYOUT] Clean layout loaded - no error suppression');
+              // Fix detectStore error by providing a fallback
+              (function() {
+                try {
+                  if (typeof window !== 'undefined') {
+                    // Provide detectStore fallback if missing
+                    if (!window.detectStore) {
+                      window.detectStore = function() {
+                        return Promise.resolve({ success: true, detected: false });
+                      };
+                    }
+                    console.log('[LAYOUT] DetectStore fallback provided');
+                  }
+                } catch (e) {
+                  console.warn('[LAYOUT] DetectStore setup failed:', e);
+                }
+              })();
             `
           }}
         />
       </head>
       <body>
-        {children}
+        <ClientAuthProvider>
+          <SubdomainRedirect />
+          {children}
+        </ClientAuthProvider>
       </body>
     </html>
   );
