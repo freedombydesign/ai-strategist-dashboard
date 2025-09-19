@@ -226,7 +226,7 @@ export default function Dashboard() {
 
                   <div className="flex space-x-3">
                     <Link
-                      href="/diagnostic-assessment"
+                      href="/assessment"
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
                     >
                       Retake Assessment
@@ -293,7 +293,7 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
                   <div className="space-y-3">
                     <Link
-                      href="/diagnostic-assessment"
+                      href="/assessment"
                       className="flex items-center text-gray-600 hover:text-gray-900"
                     >
                       <ChartBarIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
@@ -345,7 +345,7 @@ export default function Dashboard() {
                   Discover your business bottlenecks and get personalized recommendations
                 </p>
                 <Link
-                  href="/diagnostic-assessment"
+                  href="/assessment"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center"
                 >
                   Start Assessment
