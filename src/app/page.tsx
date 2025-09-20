@@ -60,11 +60,11 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
-              href="/diagnostic-assessment"
+              href="/login"
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg inline-flex items-center gap-3 text-lg font-semibold"
             >
               <RocketLaunchIcon className="w-6 h-6" />
-              Start Your Business Assessment
+              Get Started
             </Link>
 
             <Link
@@ -78,25 +78,25 @@ export default function HomePage() {
 
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
             <Link
-              href="/workflow-analyzer"
+              href="/login"
               className="text-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50 px-4 py-3 rounded-lg transition-colors"
             >
               <div className="text-xs text-gray-600 font-medium">Analyze Workflow</div>
             </Link>
             <Link
-              href="/templates"
+              href="/login"
               className="text-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50 px-4 py-3 rounded-lg transition-colors"
             >
               <div className="text-xs text-gray-600 font-medium">Browse Templates</div>
             </Link>
             <Link
-              href="/checkin"
+              href="/login"
               className="text-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50 px-4 py-3 rounded-lg transition-colors"
             >
               <div className="text-xs text-gray-600 font-medium">Track Daily Activity</div>
             </Link>
             <Link
-              href="/business-metrics"
+              href="/login"
               className="text-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50 px-4 py-3 rounded-lg transition-colors"
             >
               <div className="text-xs text-gray-600 font-medium">View Analytics</div>
