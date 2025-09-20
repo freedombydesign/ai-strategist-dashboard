@@ -11,39 +11,56 @@ interface AchievementWidgetProps {
 }
 
 export default function AchievementWidget({ className = '' }: AchievementWidgetProps) {
-  console.log('[ACHIEVEMENT-WIDGET] Component initializing, achievementService available:', !!achievementService)
+  console.log('[ACHIEVEMENT-WIDGET] 🚀 COMPONENT STARTING - achievementService available:', !!achievementService)
+  console.log('[ACHIEVEMENT-WIDGET] 🚀 REACT COMPONENT RENDERED')
   
   const { user } = useAuth()
+  console.log('[ACHIEVEMENT-WIDGET] 🔍 USER STATE DEBUG:', { 
+    hasUser: !!user, 
+    userId: user?.id, 
+    userEmail: user?.email,
+    userObject: user 
+  })
+  
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [momentumScore, setMomentumScore] = useState<MomentumScore | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    console.log('[ACHIEVEMENT-WIDGET] useEffect triggered with user:', user?.id)
+    console.log('[ACHIEVEMENT-WIDGET] ⚡ useEffect TRIGGERED - user?.id:', user?.id)
     if (user?.id) {
-      console.log('[ACHIEVEMENT-WIDGET] User ID found, starting data load for:', user.id)
+      console.log('[ACHIEVEMENT-WIDGET] 🔄 Calling loadAchievementData...')
       loadAchievementData()
     } else {
-      console.log('[ACHIEVEMENT-WIDGET] No user ID available, user state:', user)
+      console.log('[ACHIEVEMENT-WIDGET] ❌ No user ID, setting loading false')
       setLoading(false)
     }
   }, [user?.id])
 
+  // Force trigger if user is available but useEffect didn't run
+  useEffect(() => {
+    if (user?.id && loading) {
+      loadAchievementData()
+    }
+  }, [user, loading])
+
   const loadAchievementData = async () => {
     try {
-      console.log('[ACHIEVEMENT-WIDGET] loadAchievementData called for user:', user?.id)
       setLoading(true)
-      
-      console.log('[ACHIEVEMENT-WIDGET] About to call achievementService methods...')
+      console.log('[ACHIEVEMENT-WIDGET] 🔄 Starting achievement check process...')
       const [userAchievements, momentum, newlyUnlocked] = await Promise.all([
         achievementService.getUserAchievements(user!.id),
         achievementService.calculateMomentumScore(user!.id),
         achievementService.checkAndUnlockAchievements(user!.id)
       ])
-      console.log('[ACHIEVEMENT-WIDGET] Service calls completed')
+      
+      console.log('[ACHIEVEMENT-WIDGET] 🎯 Achievement check results:', {
+        userAchievements: userAchievements.length,
+        newlyUnlocked: newlyUnlocked.length,
+        newAchievements: newlyUnlocked.map(a => a.name)
+      })
       
       if (newlyUnlocked.length > 0) {
-        console.log('[ACHIEVEMENT-WIDGET] Newly unlocked achievements:', newlyUnlocked)
         // Refresh achievements after unlocking new ones
         const refreshedAchievements = await achievementService.getUserAchievements(user!.id)
         setAchievements(refreshedAchievements)
@@ -53,17 +70,8 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
 
       setMomentumScore(momentum)
       
-      console.log('[ACHIEVEMENT-WIDGET] Loaded data:', {
-        achievementCount: userAchievements.length,
-        unlockedAchievements: userAchievements.filter(a => a.unlocked),
-        totalPoints: userAchievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0),
-        momentumScore: momentum,
-        achievementSample: userAchievements.slice(0, 3)
-      })
-      
     } catch (error) {
-      console.error('[ACHIEVEMENT-WIDGET] Error loading data:', error)
-      console.error('[ACHIEVEMENT-WIDGET] Error details:', error?.message, error?.stack)
+      console.error('AchievementWidget error loading data:', error)
       // Set empty data so widget doesn't stay in loading state
       setAchievements([])
       setMomentumScore({
@@ -78,7 +86,6 @@ export default function AchievementWidget({ className = '' }: AchievementWidgetP
         }
       })
     } finally {
-      console.log('[ACHIEVEMENT-WIDGET] Finally block - setting loading to false')
       setLoading(false)
     }
   }

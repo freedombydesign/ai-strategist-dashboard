@@ -1,7 +1,36 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CogIcon, DocumentTextIcon, RocketLaunchIcon, SparklesIcon } from '@heroicons/react/24/outline'
 
 export default function HomePage() {
+  const router = useRouter()
+  const [isAISubdomain, setIsAISubdomain] = useState(false)
+  
+  useEffect(() => {
+    // Check if we're on the ai.scalewithruth.com subdomain
+    const hostname = window.location.hostname
+    if (hostname === 'ai.scalewithruth.com') {
+      setIsAISubdomain(true)
+      router.replace('/ai-intelligence')
+    }
+  }, [router])
+  
+  // If we're on the AI subdomain, show loading
+  if (isAISubdomain) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to AI Intelligence...</p>
+        </div>
+      </div>
+    )
+  }
+  
+  // For main domain, show Business Systemizer homepage
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       <div className="max-w-6xl mx-auto px-6 py-12">

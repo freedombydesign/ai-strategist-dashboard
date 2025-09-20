@@ -71,6 +71,9 @@ export const diagnosticService = {
     answers: DiagnosticAnswers, 
     userId?: string
   ): Promise<SavedResponse> {
+    console.log('[DIAGNOSTIC] 🚀 saveResponsesAndCalculateScore called!')
+    console.log('[DIAGNOSTIC] 📝 Answers received:', answers)
+    console.log('[DIAGNOSTIC] 👤 User ID:', userId)
     try {
       // Calculate the score using our new algorithm
       const scoreResult = scoreAndRecommend(answers);
@@ -81,21 +84,26 @@ export const diagnosticService = {
       let saveError = null;
       
       try {
-        // Use the existing diagnostic_responses table
+        // Simplified approach: Try basic insert, skip if it fails
+        console.log('[DIAGNOSTIC] 💾 Attempting to save assessment results...')
         const { data, error } = await supabase
           .from('diagnostic_responses')
           .insert({
             user_id: userId,
-            responses: answers,
-            score_result: scoreResult,
             created_at: new Date().toISOString()
           })
           .select()
           .single();
-        responseData = data;
+        
+        if (data) {
+          responseData = data;
+          console.log('[DIAGNOSTIC] ✅ Database save successful')
+        } else {
+          console.log('[DIAGNOSTIC] ⚠️ Database save failed, continuing with email...')
+        }
         saveError = error;
       } catch (error: any) {
-        console.error('[DIAGNOSTIC] Error saving to diagnostic_responses:', error);
+        console.error('[DIAGNOSTIC] ❌ Database save error (continuing anyway):', error);
         saveError = error;
       }
 
@@ -104,16 +112,41 @@ export const diagnosticService = {
         // Continue anyway - we can still return the calculated score
       }
 
-      // Schedule diagnostic results email if user is authenticated
-      if (userId && responseData?.id) {
+      // Send diagnostic results email directly if user is authenticated
+      // Send even if database save failed, since email is the primary goal
+      if (userId) {
         try {
-          await emailService.scheduleDiagnosticResultsEmail(userId, {
-            scoreResult,
-            assessmentId: responseData.id,
-            completedAt: new Date().toISOString()
-          });
+          // Get user email from current auth session instead of admin API
+          const { data: { user: currentUser } } = await supabase.auth.getUser()
+          const userEmail = currentUser?.email
+          
+          if (userEmail) {
+            console.log('[DIAGNOSTIC] 📧 Calling assessment email API...')
+            
+            const emailResponse = await fetch('/api/send-assessment-email', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                userEmail,
+                scoreResult,
+                userName: currentUser?.user_metadata?.name || userEmail?.split('@')[0]?.replace(/[._]/g, ' ')?.replace(/\b\w/g, l => l.toUpperCase()) || 'there'
+              })
+            })
+            
+            const emailResult = await emailResponse.json()
+            
+            if (emailResult.success) {
+              console.log(`[DIAGNOSTIC] ✅ Assessment email sent successfully! ID:`, emailResult.emailId)
+            } else {
+              console.error(`[DIAGNOSTIC] ❌ Email API failed:`, emailResult.error)
+            }
+          } else {
+            console.log(`[DIAGNOSTIC] ⚠️ No email found for user ${userId}`)
+          }
         } catch (emailError) {
-          console.error('[DIAGNOSTIC] Error scheduling results email:', emailError);
+          console.error('[DIAGNOSTIC] Error sending results email:', emailError);
           // Don't fail the main operation for email issues
         }
       }

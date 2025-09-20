@@ -1,7 +1,6 @@
 import { supabase } from '../lib/supabase'
 import { implementationService } from './implementationService'
 import { businessMetricsService } from './businessMetricsService'
-import { emailService } from './emailService'
 
 export interface Achievement {
   id: string
@@ -102,20 +101,20 @@ class AchievementService {
     {
       id: 'task_master',
       name: 'Task Master',
-      description: 'Complete 50 total tasks',
+      description: 'Complete 5 total tasks (EMAIL TEST)',
       icon: '✅',
       category: 'completion',
-      requirement: 50,
+      requirement: 5,
       points: 75,
       rarity: 'rare'
     },
     {
       id: 'productivity_king',
       name: 'Productivity King',
-      description: 'Complete 200 total tasks',
+      description: 'Complete 5 total tasks (EMAIL TEST)',
       icon: '👑',
       category: 'completion',
-      requirement: 200,
+      requirement: 5,
       points: 200,
       rarity: 'epic'
     },
@@ -134,10 +133,10 @@ class AchievementService {
     {
       id: 'profit_tracker',
       name: 'Profit Tracker',
-      description: 'Track business metrics for 3 consecutive months',
+      description: 'Track business metrics for 6 months',
       icon: '📈',
       category: 'business',
-      requirement: 3,
+      requirement: 6,
       points: 100,
       rarity: 'rare'
     },
@@ -176,10 +175,10 @@ class AchievementService {
     {
       id: 'energy_champion',
       name: 'Energy Champion',
-      description: 'Maintain 8+ average energy for 2 weeks',
+      description: 'Maintain 8+ average energy for 2 weeks (EMAIL TEST)',
       icon: '⚡',
       category: 'consistency',
-      requirement: 14,
+      requirement: 0,
       points: 100,
       rarity: 'epic'
     },
@@ -275,13 +274,11 @@ class AchievementService {
     const cached = this.streakCache.get(userId)
     
     if (cached && (now - cached.timestamp) < this.cacheTimeout) {
-      console.log(`[ACHIEVEMENTS] Using cached streak for ${userId}:`, cached.value)
       return cached.value
     }
     
     const streak = await implementationService.calculateStreakDays(userId)
     this.streakCache.set(userId, { value: streak, timestamp: now })
-    console.log(`[ACHIEVEMENTS] Calculated and cached new streak for ${userId}:`, streak)
     return streak
   }
 
@@ -291,38 +288,31 @@ class AchievementService {
     const cached = this.analyticsCache.get(userId)
     
     if (cached && (now - cached.timestamp) < this.cacheTimeout) {
-      console.log(`[ACHIEVEMENTS] Using cached analytics for ${userId}`)
       return cached.value
     }
     
     const analytics = await implementationService.getImplementationAnalytics(userId)
     this.analyticsCache.set(userId, { value: analytics, timestamp: now })
-    console.log(`[ACHIEVEMENTS] Calculated and cached new analytics for ${userId}`)
     return analytics
   }
 
   private async calculateProgress(userId: string, achievement: Achievement): Promise<number> {
     try {
-      console.log(`[ACHIEVEMENTS] Calculating progress for ${achievement.id} (${achievement.category})`)
       
       switch (achievement.category) {
         case 'streak':
           const streak = await this.getCachedStreak(userId)
-          console.log(`[ACHIEVEMENTS] Streak for ${achievement.id}:`, streak)
           return Math.min(streak, achievement.requirement)
 
         case 'completion':
           if (achievement.id === 'first_steps') {
             // For first steps, count total check-ins, not tasks
             const analytics = await this.getCachedAnalytics(userId)
-            console.log(`[ACHIEVEMENTS] Check-ins for ${achievement.id}:`, analytics.totalCheckins)
             return Math.min(analytics.totalCheckins, achievement.requirement)
           } else {
             // For other completion achievements, count completed tasks
             const analytics = await this.getCachedAnalytics(userId)
-            console.log(`[ACHIEVEMENTS] Analytics for ${achievement.id}:`, analytics)
             const totalTasks = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0)
-            console.log(`[ACHIEVEMENTS] Total tasks for ${achievement.id}:`, totalTasks)
             return Math.min(totalTasks, achievement.requirement)
           }
 
@@ -333,7 +323,7 @@ class AchievementService {
               return Math.min(businessData.totalSnapshots || 0, achievement.requirement)
             }
           } catch (error) {
-            console.log(`[ACHIEVEMENTS] Business data not available for ${achievement.id}:`, error.message)
+            // Business data not available
           }
           return 0
 
@@ -343,9 +333,7 @@ class AchievementService {
             return 0
           } else if (achievement.id === 'energy_champion') {
             const recentCheckins = await implementationService.getRecentCheckins(userId, 14)
-            console.log(`[ACHIEVEMENTS] Recent checkins for ${achievement.id}:`, recentCheckins.length)
             const highEnergyDays = recentCheckins.filter(c => (c.energy_level || 0) >= 8).length
-            console.log(`[ACHIEVEMENTS] High energy days for ${achievement.id}:`, highEnergyDays)
             return Math.min(highEnergyDays, achievement.requirement)
           } else if (achievement.id === 'momentum_master') {
             // Use cached analytics to avoid recursive momentum calculation
@@ -353,7 +341,6 @@ class AchievementService {
             const streak = await this.getCachedStreak(userId)
             const baseScore = analytics.completionTrend.reduce((sum: number, count: number) => sum + count, 0) * 10
             const momentum = baseScore + (streak * 5)
-            console.log(`[ACHIEVEMENTS] Momentum for ${achievement.id}:`, momentum)
             return Math.min(momentum, achievement.requirement)
           }
           return 0
@@ -366,7 +353,7 @@ class AchievementService {
           return 0
       }
     } catch (error) {
-      console.error(`[ACHIEVEMENTS] Error calculating progress for ${achievement.id}:`, error)
+      console.error(`Error calculating progress for ${achievement.id}:`, error)
       return 0
     }
   }
@@ -375,9 +362,10 @@ class AchievementService {
     try {
       const achievements = await this.getUserAchievements(userId)
       const newlyUnlocked: Achievement[] = []
-
+      
       for (const achievement of achievements) {
         if (!achievement.unlocked && achievement.progress! >= achievement.requirement) {
+          
           // Unlock achievement
           const { error } = await supabase
             .from('user_achievements')
@@ -392,17 +380,56 @@ class AchievementService {
             const unlockedAchievement = { ...achievement, unlocked: true, unlockedAt: new Date().toISOString() }
             newlyUnlocked.push(unlockedAchievement)
 
-            // Schedule milestone celebration email
+            // Send achievement email directly
             try {
-              await emailService.scheduleMilestoneCelebrationEmail(userId, {
-                achievement: unlockedAchievement,
-                totalPoints: achievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0) + achievement.points,
-                unlockedAt: new Date().toISOString()
-              });
+              console.log(`[ACHIEVEMENTS] 📧 Sending achievement email directly for ${achievement.name}`)
+              
+              // Get user email from Supabase
+              const { data: userData } = await supabase.auth.admin.getUserById(userId)
+              const userEmail = userData?.user?.email
+              
+              if (userEmail) {
+                const { Resend } = await import('resend')
+                const resend = new Resend(process.env.RESEND_API_KEY)
+                
+                const emailResult = await resend.emails.send({
+                  from: process.env.EMAIL_FROM || 'coach@scalewithruth.com',
+                  to: userEmail,
+                  subject: `🎉 Achievement Unlocked: ${unlockedAchievement.name}!`,
+                  html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+                        <h1 style="margin: 0; font-size: 28px;">${unlockedAchievement.icon} Achievement Unlocked!</h1>
+                        <h2 style="margin: 10px 0 0 0; font-size: 24px; font-weight: normal;">${unlockedAchievement.name}</h2>
+                      </div>
+                      
+                      <div style="background: #f8f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="font-size: 16px; color: #333; margin: 0 0 10px 0;"><strong>Description:</strong> ${unlockedAchievement.description}</p>
+                        <p style="font-size: 16px; color: #333; margin: 0 0 10px 0;"><strong>Points Earned:</strong> +${achievement.points} points</p>
+                        <p style="font-size: 16px; color: #333; margin: 0;"><strong>Rarity:</strong> ${unlockedAchievement.rarity.toUpperCase()}</p>
+                      </div>
+                      
+                      <div style="text-align: center;">
+                        <p style="font-size: 16px; color: #666;">Keep up the great work! Check your dashboard to see your progress.</p>
+                        <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://suite.scalewithruth.com'}/achievements" 
+                           style="display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">
+                          View All Achievements
+                        </a>
+                      </div>
+                    </div>
+                  `
+                })
+                
+                console.log(`[ACHIEVEMENTS] ✅ Email sent successfully:`, emailResult)
+              } else {
+                console.log(`[ACHIEVEMENTS] ⚠️ No email found for user ${userId}`)
+              }
             } catch (emailError) {
-              console.error('[ACHIEVEMENTS] Error scheduling celebration email:', emailError);
+              console.error('Error sending celebration email:', emailError);
               // Don't fail achievement unlock for email issues
             }
+          } else {
+            console.error('Error unlocking achievement:', error)
           }
         }
       }

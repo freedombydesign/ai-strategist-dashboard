@@ -17,6 +17,7 @@ import {
   UserGroupIcon
 } from '@heroicons/react/24/outline'
 import { MobileNavigation, FloatingActionButton } from '@/components/MobileNavigation'
+import { useRouter } from 'next/navigation'
 
 // Import all the missing components
 import SimpleSprintPlanner from '@/components/SimpleSprintPlanner'
@@ -33,14 +34,23 @@ export default function Dashboard() {
   const [freedomScore, setFreedomScore] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showBusinessOnboarding, setShowBusinessOnboarding] = useState<boolean | null>(null) // null = loading, false = don't show, true = show
-
+  const [showBusinessOnboarding, setShowBusinessOnboarding] = useState(false)
+  const [isAISubdomain, setIsAISubdomain] = useState(false)
+  const router = useRouter()
+  
   useEffect(() => {
+    // Check if we're on the ai.scalewithruth.com subdomain
+    const hostname = window.location.hostname
+    if (hostname === 'ai.scalewithruth.com') {
+      setIsAISubdomain(true)
+      router.replace('/ai-intelligence')
+      return
+    }
+    
     if (user?.id) {
       loadUserDiagnosticData()
-      checkBusinessContext()
     }
-  }, [user?.id])
+  }, [user?.id, router])
 
   const loadUserDiagnosticData = async () => {
     try {
@@ -72,25 +82,16 @@ export default function Dashboard() {
     }
   }
 
-  const checkBusinessContext = async () => {
-    try {
-      console.log('[DASHBOARD] Checking business context for user:', user?.id)
-      const response = await fetch(`/api/business-context?userId=${user?.id}`)
-      const result = await response.json()
-      console.log('[DASHBOARD] Business context API response:', result)
-      
-      if (result.success && result.data && result.data.business_name) {
-        console.log('[DASHBOARD] Found business context, not showing onboarding')
-        setShowBusinessOnboarding(false)
-      } else {
-        console.log('[DASHBOARD] No business context found, showing onboarding')
-        setShowBusinessOnboarding(true)
-      }
-    } catch (error) {
-      console.error('[DASHBOARD] Error checking business context:', error)
-      // Show onboarding if there's an error checking
-      setShowBusinessOnboarding(true)
-    }
+  // If we're on the AI subdomain, show loading
+  if (isAISubdomain) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to AI Intelligence...</p>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
@@ -115,32 +116,6 @@ export default function Dashboard() {
           >
             Retry
           </button>
-        </div>
-      </div>
-    )
-  }
-
-  // Show business context onboarding if needed (original approach)
-  if (showBusinessOnboarding === true) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50 py-8">
-          <BusinessContextOnboarding 
-            onComplete={() => setShowBusinessOnboarding(false)}
-            onSkip={() => setShowBusinessOnboarding(false)}
-          />
-        </div>
-      </ProtectedRoute>
-    )
-  }
-
-  // Show loading while determining business context state
-  if (showBusinessOnboarding === null) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     )
@@ -379,6 +354,42 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Business Context Onboarding Modal */}
+        {showBusinessOnboarding && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              {/* Background overlay */}
+              <div 
+                className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                onClick={() => setShowBusinessOnboarding(false)}
+              ></div>
+
+              {/* Modal container */}
+              <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full sm:p-6">
+                {/* Close button */}
+                <div className="absolute top-0 right-0 pt-4 pr-4">
+                  <button
+                    type="button"
+                    className="bg-white rounded-md text-gray-400 hover:text-gray-600 focus:outline-none"
+                    onClick={() => setShowBusinessOnboarding(false)}
+                  >
+                    <span className="sr-only">Close</span>
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Business onboarding content */}
+                <BusinessContextOnboarding 
+                  onComplete={() => setShowBusinessOnboarding(false)}
+                  onClose={() => setShowBusinessOnboarding(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mobile Navigation */}
         <MobileNavigation />

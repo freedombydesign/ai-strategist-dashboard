@@ -31,52 +31,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Only run auth logic on the client side
     if (!isClient) return
-    
-    // Get initial session
+
+    // Get initial session with timeout and error handling
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
+      try {
+        console.log('[AUTH] Starting session fetch...')
+
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Auth timeout')), 10000)
+        )
+
+        const sessionPromise = supabase.auth.getSession()
+
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any
+
+        console.log('[AUTH] Session fetched successfully:', !!session)
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+      } catch (error) {
+        console.error('[AUTH] Error fetching session:', error)
+        // Set loading to false even on error to prevent infinite loading
+        setSession(null)
+        setUser(null)
+        setLoading(false)
+      }
     }
 
     getInitialSession()
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('[AUTH-CONTEXT] Auth state change:', event, session?.user?.id)
-        
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-
-        // Handle sign in - create/update user profile
-        if (event === 'SIGNED_IN' && session?.user) {
+    // Listen for auth changes with error handling
+    let subscription: any = null
+    try {
+      const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
           try {
-            const { error } = await supabase
-              .from('users')
-              .upsert({
-                id: session.user.id,
-                email: session.user.email,
-                updated_at: new Date().toISOString(),
-              }, {
-                onConflict: 'id'
-              })
+            console.log('[AUTH] Auth state change:', event, !!session)
 
-            if (error) {
-              console.error('[AUTH-CONTEXT] Error upserting user profile:', error)
-            } else {
-              console.log('[AUTH-CONTEXT] User profile updated successfully')
+            setSession(session)
+            setUser(session?.user ?? null)
+            setLoading(false)
+
+            // Handle sign in - create/update user profile
+            if (event === 'SIGNED_IN' && session?.user) {
+              try {
+                const { error } = await supabase
+                  .from('users')
+                  .upsert({
+                    id: session.user.id,
+                    email: session.user.email,
+                    updated_at: new Date().toISOString(),
+                  }, {
+                    onConflict: 'id'
+                  })
+
+                if (error) {
+                  console.error('[AUTH] Error upserting user profile:', error)
+                } else {
+                  console.log('[AUTH] User profile updated successfully')
+                }
+              } catch (error) {
+                console.error('[AUTH] Error in user profile upsert:', error)
+              }
             }
           } catch (error) {
-            console.error('[AUTH-CONTEXT] Error in user profile upsert:', error)
+            console.error('[AUTH] Error in auth state change handler:', error)
+            setLoading(false)
           }
         }
-      }
-    )
+      )
+      subscription = sub
+    } catch (error) {
+      console.error('[AUTH] Error setting up auth listener:', error)
+      setLoading(false)
+    }
 
-    return () => subscription.unsubscribe()
+    return () => {
+      try {
+        subscription?.unsubscribe()
+      } catch (error) {
+        console.error('[AUTH] Error unsubscribing:', error)
+      }
+    }
   }, [isClient])
 
   const [isSigningOut, setIsSigningOut] = useState(false)
