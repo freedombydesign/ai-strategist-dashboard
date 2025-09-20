@@ -34,21 +34,17 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Header - Enhanced with AI messaging */}
+        {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Business Systemizer
           </h1>
-          <p className="text-2xl font-semibold text-blue-600 mb-4">
-            An AI-powered systemization engine for service businesses
-          </p>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            We use AI to analyze workflows, generate custom SOPs, and export them instantly to your tools.
-            Built with OpenAI + custom workflow engine.
+            Transform your service delivery workflows into streamlined, repeatable systems. Generate custom templates and export to your favorite platforms.
           </p>
         </div>
 
-        {/* Main CTA Section - Original structure with startup positioning */}
+        {/* Main CTA Section */}
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 mb-12 text-center">
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 rounded-xl bg-blue-600 flex items-center justify-center">
@@ -56,51 +52,57 @@ export default function HomePage() {
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-6">
-            Try the AI Systemizer Beta – Free for Early Adopters
+            Discover Your Business Freedom Score & Systemize Everything
           </h2>
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Join 500+ service providers using our AI to get back 10+ hours per week.
-            Unlike static template libraries, our AI diagnoses your workflows and generates tailored sprint plans in minutes.
+            Take our Freedom Diagnostic to discover your business archetype and get personalized sprint recommendations. Then analyze workflows, generate custom templates, and export to Trello, Asana, ClickUp, Monday.com, and Notion.
           </p>
 
-          {/* Traction Metrics */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-8 max-w-2xl mx-auto">
-            <div className="flex justify-center items-center gap-8 text-sm">
-              <div className="text-center">
-                <div className="font-bold text-green-700">1,200+</div>
-                <div className="text-green-600">Workflows Generated</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-green-700">8 Countries</div>
-                <div className="text-green-600">Active Users</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-green-700">12 Hours</div>
-                <div className="text-green-600">Avg. Time Saved/Week</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Original button structure with correct links */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
-              href="/service-delivery-systemizer"
+              href="/diagnostic-assessment"
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg inline-flex items-center gap-3 text-lg font-semibold"
             >
-              <CogIcon className="w-6 h-6" />
-              Start Systemizing
+              <RocketLaunchIcon className="w-6 h-6" />
+              Start Your Business Assessment
             </Link>
 
             <Link
-              href="/dashboard"
+              href="/diagnostic-assessment"
               className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-8 py-4 rounded-lg inline-flex items-center gap-3"
             >
-              <RocketLaunchIcon className="w-6 h-6" />
-              Access Dashboard
+              <CogIcon className="w-6 h-6" />
+              Take Freedom Diagnostic
             </Link>
           </div>
 
-          {/* Original login/signup section */}
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+            <Link
+              href="/workflow-analyzer"
+              className="text-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50 px-4 py-3 rounded-lg transition-colors"
+            >
+              <div className="text-xs text-gray-600 font-medium">Analyze Workflow</div>
+            </Link>
+            <Link
+              href="/templates"
+              className="text-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50 px-4 py-3 rounded-lg transition-colors"
+            >
+              <div className="text-xs text-gray-600 font-medium">Browse Templates</div>
+            </Link>
+            <Link
+              href="/checkin"
+              className="text-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50 px-4 py-3 rounded-lg transition-colors"
+            >
+              <div className="text-xs text-gray-600 font-medium">Track Daily Activity</div>
+            </Link>
+            <Link
+              href="/business-metrics"
+              className="text-center border border-gray-200 hover:border-blue-300 hover:bg-blue-50 px-4 py-3 rounded-lg transition-colors"
+            >
+              <div className="text-xs text-gray-600 font-medium">View Analytics</div>
+            </Link>
+          </div>
+
           <div className="mt-8 flex justify-center items-center gap-4">
             <div className="text-sm text-gray-500">Already have an account?</div>
             <Link
@@ -119,64 +121,97 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Founder Vision Section - New addition */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 md:p-12 mb-16 text-white">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-6">Why We Built This</h2>
-            <p className="text-xl mb-8 text-purple-100">
-              As service business founders ourselves, we were drowning in operational chaos.
-              Every client had different workflows, nothing was documented, and we were working 70+ hour weeks just to keep up.
-            </p>
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="text-2xl font-bold mb-2">The Problem</div>
-                <p className="text-purple-100">Service providers spend 60% of their time on operations instead of growth</p>
-              </div>
-              <div>
-                <div className="text-2xl font-bold mb-2">Our Mission</div>
-                <p className="text-purple-100">Use AI to give back 10+ hours/week to every service business founder</p>
-              </div>
-              <div>
-                <div className="text-2xl font-bold mb-2">The Vision</div>
-                <p className="text-purple-100">Every service business running on intelligent, self-optimizing systems</p>
-              </div>
+        {/* How It Works */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">How It Works</h2>
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Diagnose</h3>
+              <p className="text-gray-600">
+                Take our 15-question Freedom Diagnostic to discover your business archetype and get personalized recommendations.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-purple-600 text-white flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Analyze</h3>
+              <p className="text-gray-600">
+                Describe your current workflows. Our AI identifies inefficiencies and generates sprint recommendations.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-green-600 text-white flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Generate</h3>
+              <p className="text-gray-600">
+                Get customized templates, SOPs, and automation workflows optimized for your business freedom goals.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-orange-600 text-white flex items-center justify-center mx-auto mb-4 text-xl font-bold">4</div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Export</h3>
+              <p className="text-gray-600">
+                One-click export to Trello, Asana, ClickUp, Monday.com, or Notion. Your team starts using it immediately.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Original Features Grid - Enhanced with AI emphasis */}
+        {/* AI Enhanced Features */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-6">Why We Built This</h2>
+          <p className="text-xl text-center text-gray-600 mb-12 max-w-4xl mx-auto">
+            Join service providers using our AI to get back hours per week.
+            Built with OpenAI + custom workflow engine.
+          </p>
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="text-2xl font-bold mb-2 text-gray-900">The Problem</div>
+              <p className="text-gray-600">Service providers spend 60% of their time on operations instead of growth</p>
+            </div>
+            <div>
+              <div className="text-2xl font-bold mb-2 text-gray-900">Our Mission</div>
+              <p className="text-gray-600">Use AI to give back 10+ hours/week to every service business founder</p>
+            </div>
+            <div>
+              <div className="text-2xl font-bold mb-2 text-gray-900">The Vision</div>
+              <p className="text-gray-600">Every service business running on intelligent, self-optimizing systems</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Features Grid */}
         <div className="grid md:grid-cols-3 gap-8">
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <div className="w-12 h-12 rounded-lg bg-blue-100 mb-4 flex items-center justify-center mx-auto">
-              <SparklesIcon className="w-6 h-6 text-blue-600" />
+              <CogIcon className="w-6 h-6 text-blue-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">AI Workflow Analysis</h3>
-            <p className="text-gray-600 mb-4">
-              Our AI analyzes your current workflows, identifies inefficiencies, and generates custom optimization plans
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Service Delivery Systemizer</h3>
+            <p className="text-gray-600">
+              Create comprehensive workflows and standard operating procedures for consistent service delivery
             </p>
-            <div className="text-sm text-blue-600 font-medium">Built with OpenAI GPT-4</div>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <div className="w-12 h-12 rounded-lg bg-purple-100 mb-4 flex items-center justify-center mx-auto">
               <DocumentTextIcon className="w-6 h-6 text-purple-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Smart SOP Generation</h3>
-            <p className="text-gray-600 mb-4">
-              Generate tailored SOPs, templates, and processes based on your specific business context and industry
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Template Manager</h3>
+            <p className="text-gray-600">
+              Generate and customize templates for proposals, onboarding, project management, and more
             </p>
-            <div className="text-sm text-purple-600 font-medium">Custom AI Models</div>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <div className="w-12 h-12 rounded-lg bg-green-100 mb-4 flex items-center justify-center mx-auto">
-              <CogIcon className="w-6 h-6 text-green-600" />
+              <SparklesIcon className="w-6 h-6 text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">One-Click Integration</h3>
-            <p className="text-gray-600 mb-4">
-              Instantly export your AI-generated systems to Trello, Asana, ClickUp, Monday.com, or Notion
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Export Manager</h3>
+            <p className="text-gray-600">
+              Export your systems to Trello, Asana, ClickUp, Monday.com, or Notion with one click
             </p>
-            <div className="text-sm text-green-600 font-medium">API Automation</div>
           </div>
         </div>
       </div>
