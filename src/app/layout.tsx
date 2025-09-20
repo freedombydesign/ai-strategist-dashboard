@@ -19,71 +19,60 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // BULLETPROOF detectStore fix v5.0
+              // NUCLEAR detectStore fix v6.0 - Run before AND after all scripts
               (function() {
-                try {
-                  if (typeof window !== 'undefined') {
-                    // Create bulletproof detectStore function that ALWAYS returns a promise
-                    const mockDetectStore = function(...args) {
-                      console.log('[MOCK] DetectStore called with args:', args);
-                      return Promise.resolve({ success: true, detected: false, result: 'mock' });
-                    };
+                const createMockDetectStore = () => {
+                  const mockFn = function(...args) {
+                    console.log('[MOCK] DetectStore intercepted:', args);
+                    return Promise.resolve({ success: true, detected: false, result: 'mock' });
+                  };
+                  mockFn.then = (resolve) => resolve({ success: true, detected: false });
+                  return mockFn;
+                };
 
-                    // Ensure it has a .then method (make it thenable)
-                    mockDetectStore.then = function(resolve, reject) {
-                      return Promise.resolve({ success: true, detected: false }).then(resolve, reject);
-                    };
+                const setupDetectStore = () => {
+                  try {
+                    const mockDetectStore = createMockDetectStore();
 
-                    // Nuclear option: override EVERYTHING before ANY script loads
+                    // Aggressive override strategy
                     window.detectStore = mockDetectStore;
-
-                    // Create 'a' namespace with multiple fallbacks
                     if (!window.a) window.a = {};
-                    window.a.default = window.a.default || {};
+                    if (!window.a.default) window.a.default = {};
                     window.a.default.detectStore = mockDetectStore;
                     window.a.detectStore = mockDetectStore;
 
-                    // Defensive property definitions that can't be overwritten
-                    Object.defineProperty(window, 'detectStore', {
-                      value: mockDetectStore,
-                      writable: false,
-                      configurable: false
-                    });
-
-                    Object.defineProperty(window.a, 'detectStore', {
-                      value: mockDetectStore,
-                      writable: false,
-                      configurable: false
-                    });
-
-                    Object.defineProperty(window.a.default, 'detectStore', {
-                      value: mockDetectStore,
-                      writable: false,
-                      configurable: false
-                    });
-
-                    // Intercept any future attempts to access detectStore
-                    const handler = {
-                      get: function(target, prop) {
-                        if (prop === 'detectStore') {
-                          return mockDetectStore;
-                        }
-                        return target[prop];
-                      }
-                    };
-
-                    window.a = new Proxy(window.a, handler);
-                    window.a.default = new Proxy(window.a.default, handler);
-
-                    console.log('[LAYOUT] BULLETPROOF DetectStore v5.0 active');
+                    console.log('[LAYOUT] DetectStore setup complete');
+                  } catch (e) {
+                    console.error('[LAYOUT] DetectStore setup failed:', e);
                   }
-                } catch (e) {
-                  console.error('[LAYOUT] DetectStore setup failed:', e);
-                  // Last resort fallback
-                  if (typeof window !== 'undefined') {
-                    window.detectStore = () => Promise.resolve({ success: true, detected: false });
-                  }
+                };
+
+                // Run immediately
+                setupDetectStore();
+
+                // Run after DOM loads
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', setupDetectStore);
+                } else {
+                  setupDetectStore();
                 }
+
+                // Run after ALL scripts load (including h1-check.js)
+                window.addEventListener('load', () => {
+                  setTimeout(setupDetectStore, 100);
+                  setTimeout(setupDetectStore, 500);
+                  setTimeout(setupDetectStore, 1000);
+                });
+
+                // Continuous monitoring and override
+                const monitorInterval = setInterval(() => {
+                  if (window.a?.default?.detectStore && typeof window.a.default.detectStore !== 'function') {
+                    setupDetectStore();
+                  }
+                }, 1000);
+
+                // Stop monitoring after 10 seconds
+                setTimeout(() => clearInterval(monitorInterval), 10000);
               })();
             `
           }}
