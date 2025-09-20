@@ -37,9 +37,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log('[AUTH] Starting session fetch...')
 
-        // Add timeout to prevent hanging
+        // Add timeout to prevent hanging (reduced to 5 seconds)
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth timeout')), 10000)
+          setTimeout(() => reject(new Error('Auth timeout')), 5000)
         )
 
         const sessionPromise = supabase.auth.getSession()
