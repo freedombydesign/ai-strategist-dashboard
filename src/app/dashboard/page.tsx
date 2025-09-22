@@ -152,10 +152,10 @@ export default function Dashboard() {
                   Check-in
                 </Link>
                 <Link
-                  href="/ai-strategist"
+                  href="/export-manager"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
                 >
-                  AI Strategist
+                  Export Manager
                 </Link>
                 <Link
                   href="/admin"

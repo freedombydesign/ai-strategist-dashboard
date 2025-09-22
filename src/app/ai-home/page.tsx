@@ -137,7 +137,7 @@ export default function AIHomePage() {
               Access AI Intelligence Hub
             </Link>
             
-            <Link 
+            <Link
               href="https://scalewithruth.com"
               className="bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 text-white px-8 py-4 rounded-lg"
             >
