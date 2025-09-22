@@ -15,7 +15,7 @@
     webpack: (config: any, { isServer }: { isServer: boolean }) => {
       // Fix for Windows case sensitivity issues
       config.resolve.symlinks = false
-      
+
       // Optimize bundle
       if (!isServer && config.optimization.splitChunks) {
         config.optimization.splitChunks.chunks = 'all'
@@ -28,7 +28,7 @@
           },
         }
       }
-      
+
       return config
     },
     experimental: {

@@ -23,9 +23,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   // Using centralized supabase client
 
-  // Ensure we're on the client side
+  // Ensure we're on the client side and clear conflicting auth storage
   useEffect(() => {
     setIsClient(true)
+
+    // Clear conflicting auth storage keys when on business systemizer domain
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      console.log('[AUTH] Current hostname:', hostname)
+
+      if (hostname === 'business-systemizer.scalewithruth.com') {
+        // Clear AI Strategist auth storage if it exists
+        const aiAuthKey = 'ai-strategist-auth-v2'
+        const oldAuthKey = 'sb-dylzuudcvkcydmdyigcf-auth-token'
+        const businessAuthKey = 'business-systemizer-auth-v1'
+
+        console.log('[AUTH] Business Systemizer domain detected - clearing conflicting storage')
+
+        // SELECTIVE CLEARING - Only remove conflicting auth keys, not all localStorage
+        const conflictingKeys = [
+          'ai-strategist-auth-v2',
+          'sb-dylzuudcvkcydmdyigcf-auth-token',
+          'freedom-by-design-auth'
+        ]
+
+        conflictingKeys.forEach(key => {
+          if (localStorage.getItem(key)) {
+            console.log('[AUTH] Removing conflicting key:', key)
+            localStorage.removeItem(key)
+          }
+        })
+
+        // Remove any Supabase auth tokens that aren't business-systemizer
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('supabase') && key.includes('auth') && !key.includes('business-systemizer')) {
+            console.log('[AUTH] Removing conflicting Supabase auth key:', key)
+            localStorage.removeItem(key)
+          }
+        })
+
+        // Clear all cookies for this domain
+        document.cookie.split(";").forEach(cookie => {
+          const eqPos = cookie.indexOf("=")
+          const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
+          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
+          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname
+          console.log('[AUTH] Cleared cookie:', name.trim())
+        })
+
+        // Clear sessionStorage
+        sessionStorage.clear()
+        console.log('[AUTH] Cleared sessionStorage')
+
+        console.log('[AUTH] Business Systemizer auth key in use:', businessAuthKey)
+        console.log('[AUTH] Storage clearing completed - no reload needed')
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -72,6 +125,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setSession(session)
             setUser(session?.user ?? null)
             setLoading(false)
+
+            // Ensure business systemizer users stay on their domain
+            if (session?.user && typeof window !== 'undefined') {
+              const hostname = window.location.hostname
+              if (hostname === 'business-systemizer.scalewithruth.com') {
+                console.log('[AUTH] Business systemizer user authenticated - ensuring domain lock')
+                // Additional protection: if user somehow gets to wrong domain, redirect back
+                if (window.location.href.includes('scalewithruth.com') && !window.location.href.includes('business-systemizer')) {
+                  console.log('[AUTH] CRITICAL: Business user detected on wrong domain, redirecting back')
+                  window.location.href = 'https://business-systemizer.scalewithruth.com/dashboard'
+                  return
+                }
+              }
+            }
 
             // Handle sign in - create/update user profile
             if (event === 'SIGNED_IN' && session?.user) {
@@ -159,15 +226,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('[AUTH-CONTEXT] Error clearing localStorage:', storageError)
         }
         
-        // Force redirect
-        console.log('[AUTH-CONTEXT] Redirecting to home page')
-        window.location.href = '/'
+        // Force redirect to stay on current domain
+        const hostname = window.location.hostname
+        if (hostname === 'business-systemizer.scalewithruth.com') {
+          console.log('[AUTH-CONTEXT] Redirecting to business systemizer home page')
+          window.location.href = 'https://business-systemizer.scalewithruth.com/'
+        } else {
+          console.log('[AUTH-CONTEXT] Redirecting to home page')
+          window.location.href = '/'
+        }
       }
     } catch (error) {
       console.error('[AUTH-CONTEXT] Sign out process failed:', error)
       // Force redirect anyway
       if (typeof window !== 'undefined') {
-        window.location.href = '/'
+        const hostname = window.location.hostname
+        if (hostname === 'business-systemizer.scalewithruth.com') {
+          window.location.href = 'https://business-systemizer.scalewithruth.com/'
+        } else {
+          window.location.href = '/'
+        }
       }
     } finally {
       setIsSigningOut(false)

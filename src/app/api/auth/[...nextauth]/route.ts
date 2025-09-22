@@ -6,22 +6,22 @@ const TrelloProvider = {
   id: 'trello',
   name: 'Trello',
   type: 'oauth',
-  version: '2.0',
   authorization: {
-    url: 'https://trello.com/1/authorize',
+    url: 'https://trello.com/1/OAuthAuthorizeToken',
     params: {
-      response_type: 'code',
       scope: 'read,write,account',
-      expiration: 'never'
+      expiration: 'never',
+      name: 'Business Systemizer'
     }
   },
   token: {
-    url: 'https://api.trello.com/1/OAuthGetAccessToken',
+    url: 'https://trello.com/1/OAuthGetAccessToken',
     async request({ client, params, checks, provider }) {
-      const response = await fetch(`https://api.trello.com/1/OAuthGetAccessToken?${new URLSearchParams({
-        key: process.env.TRELLO_API_KEY!,
-        token: process.env.TRELLO_API_SECRET!,
-        code: params.code!
+      const response = await fetch(`https://trello.com/1/OAuthGetAccessToken?${new URLSearchParams({
+        key: process.env.NEXT_PUBLIC_TRELLO_API_KEY!,
+        secret: process.env.TRELLO_API_SECRET!,
+        token: params.oauth_token!,
+        verifier: params.oauth_verifier!
       })}`)
 
       const tokens = await response.text()
@@ -36,7 +36,7 @@ const TrelloProvider = {
   userinfo: {
     url: 'https://api.trello.com/1/members/me',
     async request({ tokens, provider }) {
-      const response = await fetch(`https://api.trello.com/1/members/me?key=${process.env.TRELLO_API_KEY}&token=${tokens.access_token}`)
+      const response = await fetch(`https://api.trello.com/1/members/me?key=${process.env.NEXT_PUBLIC_TRELLO_API_KEY}&token=${tokens.access_token}`)
       return await response.json()
     }
   },
@@ -49,7 +49,7 @@ const TrelloProvider = {
       username: profile.username
     }
   },
-  clientId: process.env.TRELLO_API_KEY,
+  clientId: process.env.NEXT_PUBLIC_TRELLO_API_KEY,
   clientSecret: process.env.TRELLO_API_SECRET
 }
 
@@ -62,7 +62,7 @@ const AsanaProvider = {
     url: 'https://app.asana.com/-/oauth_authorize',
     params: {
       response_type: 'code',
-      scope: 'default'
+      scope: '' // Asana doesn't use scopes, override NextAuth's default openid
     }
   },
   token: 'https://app.asana.com/-/oauth_token',
@@ -87,7 +87,7 @@ const AsanaProvider = {
       image: profile.photo?.image_128x128
     }
   },
-  clientId: process.env.ASANA_CLIENT_ID,
+  clientId: process.env.NEXT_PUBLIC_ASANA_CLIENT_ID,
   clientSecret: process.env.ASANA_CLIENT_SECRET
 }
 
@@ -95,12 +95,10 @@ const ClickUpProvider = {
   id: 'clickup',
   name: 'ClickUp',
   type: 'oauth',
-  version: '2.0',
   authorization: {
-    url: 'https://app.clickup.com/api',
+    url: 'https://app.clickup.com/api/v2/oauth/authorize',
     params: {
-      response_type: 'code',
-      scope: 'read write'
+      response_type: 'code'
     }
   },
   token: 'https://api.clickup.com/api/v2/oauth/token',
@@ -108,7 +106,7 @@ const ClickUpProvider = {
     url: 'https://api.clickup.com/api/v2/user',
     async request({ tokens, provider }) {
       const response = await fetch('https://api.clickup.com/api/v2/user', {
-        headers: { Authorization: tokens.access_token }
+        headers: { Authorization: `Bearer ${tokens.access_token}` }
       })
       const result = await response.json()
       return result.user
@@ -122,7 +120,7 @@ const ClickUpProvider = {
       image: profile.profilePicture
     }
   },
-  clientId: process.env.CLICKUP_CLIENT_ID,
+  clientId: process.env.NEXT_PUBLIC_CLICKUP_CLIENT_ID,
   clientSecret: process.env.CLICKUP_CLIENT_SECRET
 }
 
@@ -164,7 +162,7 @@ const MondayProvider = {
       image: profile.photo_original
     }
   },
-  clientId: process.env.MONDAY_CLIENT_ID,
+  clientId: process.env.NEXT_PUBLIC_MONDAY_CLIENT_ID,
   clientSecret: process.env.MONDAY_CLIENT_SECRET
 }
 
@@ -201,9 +199,21 @@ const NotionProvider = {
       image: profile.avatar_url
     }
   },
-  clientId: process.env.NOTION_CLIENT_ID,
+  clientId: process.env.NEXT_PUBLIC_NOTION_CLIENT_ID,
   clientSecret: process.env.NOTION_CLIENT_SECRET
 }
+
+// Debug environment variables
+console.log('[NEXTAUTH] Environment check:', {
+  hasAsanaClientId: !!process.env.NEXT_PUBLIC_ASANA_CLIENT_ID,
+  hasAsanaSecret: !!process.env.ASANA_CLIENT_SECRET,
+  hasClickUpClientId: !!process.env.NEXT_PUBLIC_CLICKUP_CLIENT_ID,
+  hasClickUpSecret: !!process.env.CLICKUP_CLIENT_SECRET,
+  hasTrelloKey: !!process.env.NEXT_PUBLIC_TRELLO_API_KEY,
+  hasTrelloSecret: !!process.env.TRELLO_API_SECRET,
+  hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
+  nodeEnv: process.env.NODE_ENV
+})
 
 const handler = NextAuth({
   providers: [
@@ -213,6 +223,7 @@ const handler = NextAuth({
     MondayProvider as any,
     NotionProvider as any
   ],
+  secret: process.env.NEXTAUTH_SECRET || 'business-systemizer-secret-key-2025',
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
       console.log(`[OAuth] Sign in attempt for ${account?.provider}:`, {

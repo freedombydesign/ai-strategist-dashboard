@@ -1,13 +1,51 @@
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
+import React from 'react';
+
+class DetectStoreErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // Check if it's a detectStore related error
+    if (error && error.toString().includes('detectStore')) {
+      console.log('[PROTECTED-ROUTE] Caught detectStore error in boundary:', error);
+      return { hasError: false }; // Don't show error, just continue
+    }
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    if (error && error.toString().includes('detectStore')) {
+      console.log('[PROTECTED-ROUTE] DetectStore error caught and suppressed:', error);
+      return; // Suppress detectStore errors
+    }
+    console.error('[PROTECTED-ROUTE] Unexpected error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-gray-600">Please refresh the page and try again</p>
+        </div>
+      </div>;
+    }
+
+    return this.props.children;
+  }
+}
 
 interface ProtectedRouteProps {
   children: ReactNode;
   redirectTo?: string;
 }
 
-export default function ProtectedRoute({ children, redirectTo = '/login' }: ProtectedRouteProps) {
+function ProtectedRouteInner({ children, redirectTo = '/login' }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -45,4 +83,12 @@ export default function ProtectedRoute({ children, redirectTo = '/login' }: Prot
   }
 
   return <>{children}</>;
+}
+
+export default function ProtectedRoute(props: ProtectedRouteProps) {
+  return (
+    <DetectStoreErrorBoundary>
+      <ProtectedRouteInner {...props} />
+    </DetectStoreErrorBoundary>
+  );
 }

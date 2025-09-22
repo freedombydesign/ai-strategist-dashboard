@@ -47,7 +47,14 @@ export default function AuthForm({ mode = 'login', redirectTo = '/dashboard' }: 
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         console.log('[AUTH] User already logged in, redirecting...')
-        router.push(redirectTo)
+        // Force business domain redirect with full URL to prevent cross-domain issues
+        const hostname = window.location.hostname
+        if (hostname === 'business-systemizer.scalewithruth.com') {
+          console.log('[AUTH] Forcing business systemizer dashboard redirect')
+          window.location.href = 'https://business-systemizer.scalewithruth.com/dashboard'
+        } else {
+          router.push(redirectTo)
+        }
       }
     }
     checkUser()
@@ -56,11 +63,11 @@ export default function AuthForm({ mode = 'login', redirectTo = '/dashboard' }: 
   const handleEmailAuth = async (type: 'login' | 'signup') => {
     setIsLoading(true)
     setMessage('')
-    
+
     try {
       if (type === 'signup') {
         console.log('[AUTH] Attempting signup for:', email)
-        
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -68,31 +75,45 @@ export default function AuthForm({ mode = 'login', redirectTo = '/dashboard' }: 
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         })
-        
+
         if (error) throw error
-        
+
         if (data.user && !data.session) {
           setMessage('Check your email for the confirmation link!')
         } else if (data.session) {
           console.log('[AUTH] Signup successful, user logged in')
           await createUserProfile(data.user.id, data.user.email!)
-          router.push(redirectTo)
+          // Force business domain redirect with full URL to prevent cross-domain issues
+          const hostname = window.location.hostname
+          if (hostname === 'business-systemizer.scalewithruth.com') {
+            console.log('[AUTH] Forcing business systemizer dashboard redirect after signup')
+            window.location.href = 'https://business-systemizer.scalewithruth.com/dashboard'
+          } else {
+            router.push(redirectTo)
+          }
         }
-        
+
       } else {
         console.log('[AUTH] Attempting login for:', email)
-        
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
-        
+
         if (error) throw error
-        
+
         console.log('[AUTH] Login successful')
-        router.push(redirectTo)
+        // Force business domain redirect with full URL to prevent cross-domain issues
+        const hostname = window.location.hostname
+        if (hostname === 'business-systemizer.scalewithruth.com') {
+          console.log('[AUTH] Forcing business systemizer dashboard redirect after login')
+          window.location.href = 'https://business-systemizer.scalewithruth.com/dashboard'
+        } else {
+          router.push(redirectTo)
+        }
       }
-      
+
     } catch (error: any) {
       console.error('[AUTH] Error:', error)
       setMessage(error.message || 'An error occurred')
@@ -108,10 +129,13 @@ export default function AuthForm({ mode = 'login', redirectTo = '/dashboard' }: 
     try {
       console.log('[AUTH] Sending magic link to:', email)
       
+      // Use current domain for redirect instead of hardcoded scalewithruth.com
+      const currentDomain = typeof window !== 'undefined' ? window.location.origin : 'https://scalewithruth.com'
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `https://scalewithruth.com/auth/callback`,
+          emailRedirectTo: `${currentDomain}/auth/callback`,
         },
       })
       
@@ -130,19 +154,19 @@ export default function AuthForm({ mode = 'login', redirectTo = '/dashboard' }: 
   const handleGoogleAuth = async () => {
     setIsLoading(true)
     setMessage('')
-    
+
     try {
       console.log('[AUTH] Starting Google OAuth')
-      
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
-      
+
       if (error) throw error
-      
+
     } catch (error: any) {
       console.error('[AUTH] Google auth error:', error)
       setMessage(error.message || 'An error occurred')

@@ -321,11 +321,11 @@ export default function Dashboard() {
                       View Achievements
                     </Link>
                     <Link
-                      href="/ai-strategist"
+                      href="/export-manager"
                       className="flex items-center text-gray-600 hover:text-gray-900"
                     >
-                      <SparklesIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
-                      AI Strategist
+                      <ArrowTrendingUpIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
+                      Export Manager
                     </Link>
                   </div>
                 </div>

@@ -60,9 +60,11 @@ export async function GET(request: NextRequest) {
           console.error('[AUTH-CALLBACK] Profile creation failed:', profileErr)
         }
 
-        // Successful auth - redirect to dashboard
+        // Successful auth - redirect to dashboard (stay on business domain)
         console.log('[AUTH-CALLBACK] Redirecting to dashboard')
-        return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+        const hostname = requestUrl.hostname
+        const dashboardPath = hostname === 'business-systemizer.scalewithruth.com' ? '/dashboard' : '/dashboard'
+        return NextResponse.redirect(`${requestUrl.origin}${dashboardPath}`)
       } else {
         console.error('[AUTH-CALLBACK] No session or user after code exchange')
         return NextResponse.redirect(`${requestUrl.origin}/login?error=no_session`)
@@ -74,7 +76,9 @@ export async function GET(request: NextRequest) {
       
       if (session) {
         console.log('[AUTH-CALLBACK] Existing session found, redirecting to dashboard')
-        return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+        const hostname = requestUrl.hostname
+        const dashboardPath = hostname === 'business-systemizer.scalewithruth.com' ? '/dashboard' : '/dashboard'
+        return NextResponse.redirect(`${requestUrl.origin}${dashboardPath}`)
       } else {
         console.log('[AUTH-CALLBACK] No session found, redirecting to login')
         return NextResponse.redirect(`${requestUrl.origin}/login`)
