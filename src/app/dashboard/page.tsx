@@ -1,389 +1,407 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { diagnosticService } from '@/services/diagnosticService'
-import BusinessContextOnboarding from '@/components/BusinessContextOnboarding'
-import DailyCheckinPrompt from '@/components/DailyCheckinPrompt'
-import { 
-  ChartBarIcon,
-  TrophyIcon,
-  RocketLaunchIcon,
-  SparklesIcon,
-  ArrowTrendingUpIcon,
-  UserGroupIcon
-} from '@heroicons/react/24/outline'
-import { MobileNavigation, FloatingActionButton } from '@/components/MobileNavigation'
-
-// Import all the missing components
-import SimpleSprintPlanner from '@/components/SimpleSprintPlanner'
-import SimpleDashboardProgress from '@/components/SimpleDashboardProgress'
-import BusinessMetricsWidget from '@/components/BusinessMetricsWidget'
-import ImplementationMetricsOverview from '@/components/ImplementationMetricsOverview'
-import AchievementWidget from '@/components/AchievementWidget'
-import EnhancedSprintTracker from '@/components/EnhancedSprintTracker'
-import SprintDebugWidget from '@/components/SprintDebugWidget'
-import { LogOut } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 export default function Dashboard() {
-  const { user, signOut, isSigningOut } = useAuth()
-  const [freedomScore, setFreedomScore] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [showBusinessOnboarding, setShowBusinessOnboarding] = useState(false)
+  const [activeView, setActiveView] = useState('overview')
+  const [showSettings, setShowSettings] = useState(false)
+  const [theme, setTheme] = useState('light')
 
+  // Apply theme changes
+  const applyTheme = (newTheme: string) => {
+    console.log('[THEME] Applying theme:', newTheme)
+    setTheme(newTheme)
+
+    if (newTheme === 'dark') {
+      console.log('[THEME] Setting dark theme')
+      document.documentElement.classList.add('dark')
+      document.body.style.backgroundColor = '#1f2937'
+      document.body.style.color = '#f9fafb'
+    } else if (newTheme === 'light') {
+      console.log('[THEME] Setting light theme')
+      document.documentElement.classList.remove('dark')
+      document.body.style.backgroundColor = '#ffffff'
+      document.body.style.color = '#1f2937'
+    } else if (newTheme === 'auto') {
+      console.log('[THEME] Setting auto theme')
+      // System preference
+      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+      console.log('[THEME] System prefers dark mode:', isDarkMode)
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark')
+        document.body.style.backgroundColor = '#1f2937'
+        document.body.style.color = '#f9fafb'
+      } else {
+        document.documentElement.classList.remove('dark')
+        document.body.style.backgroundColor = '#ffffff'
+        document.body.style.color = '#1f2937'
+      }
+    }
+
+    // Save to localStorage
+    localStorage.setItem('dashboard-theme', newTheme)
+    console.log('[THEME] Theme saved to localStorage:', newTheme)
+  }
+  const router = useRouter()
+  const { user, signOut } = useAuth()
+
+  // Load saved theme on mount
   useEffect(() => {
-    if (user?.id) {
-      loadUserDiagnosticData()
-    }
-  }, [user?.id])
+    const savedTheme = localStorage.getItem('dashboard-theme') || 'light'
+    console.log('[THEME] Loading saved theme on mount:', savedTheme)
+    setTheme(savedTheme)
 
-  const loadUserDiagnosticData = async () => {
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+      document.body.style.backgroundColor = '#1f2937'
+      document.body.style.color = '#f9fafb'
+    } else if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark')
+      document.body.style.backgroundColor = '#ffffff'
+      document.body.style.color = '#1f2937'
+    } else if (savedTheme === 'auto') {
+      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark')
+        document.body.style.backgroundColor = '#1f2937'
+        document.body.style.color = '#f9fafb'
+      } else {
+        document.documentElement.classList.remove('dark')
+        document.body.style.backgroundColor = '#ffffff'
+        document.body.style.color = '#1f2937'
+      }
+    }
+  }, [])
+
+  const handleLogout = async () => {
     try {
-      setLoading(true)
-      
-      // Try localStorage first
-      const scoreData = localStorage.getItem('lastFreedomScore')
-      if (scoreData) {
-        const parsed = JSON.parse(scoreData)
-        setFreedomScore(parsed)
-        setLoading(false)
-        return
-      }
-
-      // Then try database
-      const userResponses = await diagnosticService.getUserResponses(user!.id)
-      if (userResponses.length > 0) {
-        const mostRecent = userResponses[0]
-        setFreedomScore({
-          ...mostRecent.scoreResult,
-          completedAt: mostRecent.created_at
-        })
-      }
-      setLoading(false)
-    } catch (err) {
-      console.error('Error loading dashboard data:', err)
-      setError('Error loading diagnostic data')
-      setLoading(false)
+      await signOut()
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    )
+  const handleExport = () => {
+    // Export functionality
+    const data = {
+      freedomScore: 78,
+      goals: ['Reduce Hours', 'Increase Revenue', 'Delegate Tasks'],
+      metrics: { hours: 42.5, revenue: 68500, team: 5 }
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'dashboard-data.json'
+    a.click()
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600">Error: {error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    )
+  const handleSettings = () => {
+    console.log('[SETTINGS] Opening settings panel')
+    setShowSettings(true)
   }
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen transition-colors duration-300 ${
+        theme === 'dark'
+          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white'
+          : 'bg-gradient-to-br from-purple-50 via-white to-indigo-50 text-gray-900'
+      }`}>
         {/* Header */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Freedom Dashboard</h1>
-                <p className="text-gray-600">Welcome back, {user?.email?.split('@')[0] || 'User'}!</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/business-metrics"
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-                >
-                  Analytics
-                </Link>
-                <Link
-                  href="/achievements"
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg"
-                >
-                  Achievements
-                </Link>
-                <Link
-                  href="/checkin"
-                  className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg"
-                >
-                  Check-in
-                </Link>
-                <Link
-                  href="/ai-strategist"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-                >
-                  AI Strategist
-                </Link>
-                <Link
-                  href="/admin"
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
-                >
-                  Admin
-                </Link>
-                <button
-                  onClick={signOut}
-                  disabled={isSigningOut}
-                  className={`flex items-center gap-2 font-medium ${
-                    isSigningOut 
-                      ? 'text-gray-400 cursor-not-allowed' 
-                      : 'text-red-600 hover:text-red-800'
-                  }`}
-                >
-                  <LogOut size={16} style={{width: '16px', height: '16px'}} />
-                  {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-                </button>
-              </div>
+        <div className={`border-b px-6 py-6 ${
+          theme === 'dark'
+            ? 'bg-gray-800 border-gray-700'
+            : 'bg-white border-gray-200'
+        }`}>
+          <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <div>
+              <h1 className={`text-4xl font-bold mb-2 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>Executive Dashboard</h1>
+              <p className={`text-lg ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>Your business freedom metrics at a glance</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={handleExport}
+              >
+                📊 Export
+              </button>
+              <button
+                className="px-4 py-2 btn-gradient-gold text-white rounded-lg text-sm font-medium hover:shadow-lg transition-all"
+                onClick={handleSettings}
+              >
+                ⚙️ Settings
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+                onClick={handleLogout}
+              >
+                🚪 Logout
+              </button>
             </div>
           </div>
         </div>
 
+        {/* Navigation Menu */}
+        <div className={`border-b px-6 py-4 ${
+          theme === 'dark'
+            ? 'bg-gray-800 border-gray-700'
+            : 'bg-white border-gray-200'
+        }`}>
+          <div className="max-w-7xl mx-auto flex gap-4 flex-wrap">
+            <button
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={() => router.push('/')}
+            >
+              🏠 Home
+            </button>
+            <button
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={() => router.push('/diagnostic-assessment')}
+            >
+              📋 Take Assessment
+            </button>
+            <button
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={() => router.push('/goals')}
+            >
+              🎯 Manage Goals
+            </button>
+            <button
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={() => router.push('/insights')}
+            >
+              💡 View Insights
+            </button>
+            <button
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={() => router.push('/workflow-analytics')}
+            >
+              📊 Analytics
+            </button>
+            <button
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              onClick={() => router.push('/ai-strategist')}
+            >
+              🤖 AI Business Advisor
+            </button>
+          </div>
+        </div>
+
+        {/* Dashboard Content */}
         <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Welcome */}
-          <div className="mb-8">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-              <h2 className="text-xl font-semibold mb-2">
-                Welcome to your Freedom Operating System!
-              </h2>
-              <p className="text-blue-100">Ready to continue optimizing your business?</p>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Freedom Score Card */}
+            <div className={`lg:col-span-2 border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow ${
+              theme === 'dark'
+                ? 'bg-gray-800 border-gray-700'
+                : 'bg-white border-gray-200'
+            }`}>
+              <h3 className={`text-xl font-semibold mb-6 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>Freedom Score</h3>
+              <div className="flex items-baseline justify-center mb-6">
+                <div className="text-6xl font-bold text-gray-900">78</div>
+                <div className="text-lg text-gray-600 ml-2">/ 100</div>
+              </div>
+              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden mb-6">
+                <div className="h-full bg-gradient-to-r from-purple-600 to-blue-600 rounded-full transition-all duration-1000" style={{width: '78%'}}></div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                  <span>Time Freedom</span>
+                  <span className="font-semibold text-gray-900">82</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                  <span>Money Freedom</span>
+                  <span className="font-semibold text-gray-900">75</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                  <span>Systems Freedom</span>
+                  <span className="font-semibold text-gray-900">71</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Activity Chart */}
+            <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Weekly Activity</h3>
+              <div className="h-48">
+                <div className="flex items-end justify-between h-40 mb-4">
+                  <div className="w-8 bg-gradient-to-t from-purple-600 to-blue-600 rounded-t transition-all duration-700" style={{height: '60%'}}></div>
+                  <div className="w-8 bg-gradient-to-t from-purple-600 to-blue-600 rounded-t transition-all duration-700" style={{height: '80%'}}></div>
+                  <div className="w-8 bg-gradient-to-t from-purple-600 to-blue-600 rounded-t transition-all duration-700" style={{height: '45%'}}></div>
+                  <div className="w-8 bg-gradient-to-t from-purple-600 to-blue-600 rounded-t transition-all duration-700" style={{height: '90%'}}></div>
+                  <div className="w-8 bg-gradient-to-t from-purple-600 to-blue-600 rounded-t transition-all duration-700" style={{height: '70%'}}></div>
+                  <div className="w-8 bg-gradient-to-t from-purple-600 to-blue-600 rounded-t transition-all duration-700" style={{height: '85%'}}></div>
+                  <div className="w-8 bg-gradient-to-t from-purple-600 to-blue-600 rounded-t transition-all duration-700" style={{height: '65%'}}></div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Cards */}
+            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Goals</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="font-medium text-gray-900 text-sm">Reduce Hours</div>
+                    <div className="text-xs text-gray-600">Target: 35 hrs/week</div>
+                  </div>
+                  <div className="font-semibold text-purple-600">78%</div>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="font-medium text-gray-900 text-sm">Increase Revenue</div>
+                    <div className="text-xs text-gray-600">Target: $75K/month</div>
+                  </div>
+                  <div className="font-semibold text-purple-600">83%</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Metrics</h3>
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">42.5h</div>
+                  <div className="text-xs text-gray-600">Hours This Week</div>
+                  <div className="text-xs font-medium text-red-600">-12.5%</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">$68.5K</div>
+                  <div className="text-xs text-gray-600">Monthly Revenue</div>
+                  <div className="text-xs font-medium text-green-600">+8.2%</div>
+                </div>
+              </div>
             </div>
           </div>
-
-          {freedomScore ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Freedom Score */}
-                <div className="bg-white rounded-lg shadow-sm border p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Freedom Score</h3>
-                  
-                  <div className="flex items-center mb-4">
-                    <div className="text-4xl font-bold text-blue-600 mr-4">
-                      {freedomScore.percent}%
-                    </div>
-                    <div>
-                      <div className="text-gray-600">Total: {freedomScore.totalScore}/60</div>
-                      <div className="text-sm text-gray-500">
-                        {freedomScore.completedAt && `Completed ${new Date(freedomScore.completedAt).toLocaleDateString()}`}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Module Breakdown */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                    {Object.entries(freedomScore.moduleAverages || {}).map(([module, score]: [string, any]) => (
-                      <div key={module} className="bg-gray-50 rounded-lg p-3 text-center">
-                        <div className="text-sm text-gray-600 mb-1">
-                          {getModuleName(module)}
-                        </div>
-                        <div className="text-xl font-bold text-gray-900">{score}</div>
-                        <div className="text-xs text-gray-500">out of 10</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex space-x-3">
-                    <Link
-                      href="/assessment"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
-                    >
-                      Retake Assessment
-                    </Link>
-                    <Link
-                      href="/ai-strategist"
-                      className="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm"
-                    >
-                      Discuss with AI
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Debug Widget (temporary) */}
-                <SprintDebugWidget />
-                
-                {/* Daily Check-in Prompt */}
-                <DailyCheckinPrompt />
-                
-                {/* Enhanced Sprint Tracking */}
-                <EnhancedSprintTracker freedomScore={freedomScore} />
-                
-                {/* Simple Sprint Progress */}
-                <SimpleDashboardProgress freedomScore={freedomScore} />
-                
-                {/* Implementation Metrics Overview */}
-                <ImplementationMetricsOverview />
-                
-                {/* Sprint Planning */}
-                <SimpleSprintPlanner freedomScore={freedomScore} />
-              </div>
-
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Achievement Widget */}
-                <AchievementWidget />
-                
-                {/* Business Metrics Widget */}
-                <BusinessMetricsWidget />
-
-                {/* AI Strategist */}
-                <div className="bg-white rounded-lg shadow-sm border p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Coaches</h3>
-                  <div className="space-y-3">
-                    <Link
-                      href="/ai-strategist"
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
-                    >
-                      <SparklesIcon className="w-4 h-4 mr-2" style={{width: '16px', height: '16px'}} />
-                      AI Strategist
-                    </Link>
-                    <Link
-                      href="/implementation-coach"
-                      className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
-                    >
-                      <RocketLaunchIcon className="w-4 h-4 mr-2" style={{width: '16px', height: '16px'}} />
-                      Implementation Coach
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="bg-white rounded-lg shadow-sm border p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                  <div className="space-y-3">
-                    <Link
-                      href="/assessment"
-                      className="flex items-center text-gray-600 hover:text-gray-900"
-                    >
-                      <ChartBarIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
-                      Retake Freedom Score
-                    </Link>
-                    <Link
-                      href="/business-metrics"
-                      className="flex items-center text-gray-600 hover:text-gray-900"
-                    >
-                      <ArrowTrendingUpIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
-                      Business Analytics
-                    </Link>
-                    <button
-                      onClick={() => setShowBusinessOnboarding(true)}
-                      className="flex items-center text-gray-600 hover:text-gray-900 w-full text-left"
-                    >
-                      <UserGroupIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
-                      Update Business Profile
-                    </button>
-                    <Link
-                      href="/achievements"
-                      className="flex items-center text-gray-600 hover:text-gray-900"
-                    >
-                      <TrophyIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
-                      View Achievements
-                    </Link>
-                    <Link
-                      href="/ai-strategist"
-                      className="flex items-center text-gray-600 hover:text-gray-900"
-                    >
-                      <SparklesIcon className="w-4 h-4 mr-3" style={{width: '16px', height: '16px'}} />
-                      AI Strategist
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* No Score Yet */
-            <div className="bg-white rounded-lg shadow-sm border p-8">
-              <div className="text-center">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" style={{width: '64px', height: '64px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Take Your Freedom Score Assessment
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  Discover your business bottlenecks and get personalized recommendations
-                </p>
-                <Link
-                  href="/assessment"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center"
-                >
-                  Start Assessment
-                </Link>
-              </div>
-            </div>
-          )}
         </div>
+      </div>
 
-        {/* Business Context Onboarding Modal */}
-        {showBusinessOnboarding && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              {/* Background overlay */}
-              <div 
-                className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-                onClick={() => setShowBusinessOnboarding(false)}
-              ></div>
+      {/* Settings Panel */}
+      {showSettings && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowSettings(false)} />
+          <div className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-xl shadow-2xl w-11/12 max-w-md max-h-4/5 overflow-hidden z-51 ${
+            theme === 'dark'
+              ? 'bg-gray-800 border border-gray-700'
+              : 'bg-white border border-gray-200'
+          }`}>
+            <div className={`flex justify-between items-center p-6 border-b ${
+              theme === 'dark'
+                ? 'border-gray-700'
+                : 'border-gray-200'
+            }`}>
+              <h3 className={`text-xl font-semibold ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}>Dashboard Settings</h3>
+              <button
+                className={`text-lg hover:opacity-75 ${
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-400'
+                }`}
+                onClick={() => setShowSettings(false)}
+              >
+                ✕
+              </button>
+            </div>
 
-              {/* Modal container */}
-              <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full sm:p-6">
-                {/* Close button */}
-                <div className="absolute top-0 right-0 pt-4 pr-4">
-                  <button
-                    type="button"
-                    className="bg-white rounded-md text-gray-400 hover:text-gray-600 focus:outline-none"
-                    onClick={() => setShowBusinessOnboarding(false)}
-                  >
-                    <span className="sr-only">Close</span>
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+            <div className="p-6 max-h-80 overflow-y-auto">
+              <div className="mb-5">
+                <label className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>Theme</label>
+                <select
+                  className={`w-full p-2 border rounded-md text-sm ${
+                    theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-white border-gray-200 text-gray-900'
+                  }`}
+                  value={theme}
+                  onChange={(e) => applyTheme(e.target.value)}
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="auto">Auto</option>
+                </select>
+              </div>
+
+              <div className="mb-5">
+                <label className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>Refresh Rate</label>
+                <select className={`w-full p-2 border rounded-md text-sm ${
+                  theme === 'dark'
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-200 text-gray-900'
+                }`}>
+                  <option value="30">Every 30 seconds</option>
+                  <option value="60">Every minute</option>
+                  <option value="300">Every 5 minutes</option>
+                </select>
+              </div>
+
+              <div className="mb-5">
+                <label className={`block text-sm font-medium mb-2 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>Notifications</label>
+                <div className="space-y-2">
+                  <label className={`flex items-center gap-2 text-sm cursor-pointer ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <input type="checkbox" defaultChecked className="rounded" /> Goal reminders
+                  </label>
+                  <label className={`flex items-center gap-2 text-sm cursor-pointer ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <input type="checkbox" defaultChecked className="rounded" /> Insight alerts
+                  </label>
+                  <label className={`flex items-center gap-2 text-sm cursor-pointer ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <input type="checkbox" className="rounded" /> Weekly reports
+                  </label>
                 </div>
-
-                {/* Business onboarding content */}
-                <BusinessContextOnboarding 
-                  onComplete={() => setShowBusinessOnboarding(false)}
-                  onClose={() => setShowBusinessOnboarding(false)}
-                />
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Mobile Navigation */}
-        <MobileNavigation />
-        <FloatingActionButton />
-      </div>
+            <div className={`flex justify-end gap-3 p-5 border-t ${
+              theme === 'dark'
+                ? 'border-gray-700'
+                : 'border-gray-200'
+            }`}>
+              <button
+                className={`px-4 py-2 border rounded-md text-sm transition-colors ${
+                  theme === 'dark'
+                    ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => setShowSettings(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 btn-gradient-gold text-white rounded-md text-sm hover:shadow-lg transition-all"
+                onClick={() => setShowSettings(false)}
+              >
+                Save Settings
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </ProtectedRoute>
   )
-}
-
-function getModuleName(module: string) {
-  const names: Record<string, string> = {
-    'M1': 'Position for Profit',
-    'M2': 'Buyer Journey',
-    'M3': 'Systems',
-    'M4': 'Sales System',
-    'M5': 'Delivery',
-    'M6': 'Improvement'
-  }
-  return names[module] || module
 }
