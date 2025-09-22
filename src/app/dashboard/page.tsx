@@ -129,7 +129,7 @@ export default function Dashboard() {
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Freedom Dashboard</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Business Systemizer Dashboard</h1>
                 <p className="text-gray-600">Welcome back, {user?.email?.split('@')[0] || 'User'}!</p>
               </div>
               <div className="flex items-center gap-4">
@@ -185,9 +185,9 @@ export default function Dashboard() {
           <div className="mb-8">
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
               <h2 className="text-xl font-semibold mb-2">
-                Welcome to your Freedom Operating System!
+                Welcome to your Business Systemizer!
               </h2>
-              <p className="text-blue-100">Ready to continue optimizing your business?</p>
+              <p className="text-blue-100">Ready to systemize and optimize your workflows?</p>
             </div>
           </div>
 
