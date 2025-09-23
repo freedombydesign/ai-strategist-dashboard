@@ -54,24 +54,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle sign in - create/update user profile
         if (event === 'SIGNED_IN' && session?.user) {
           try {
-            const { error } = await supabase
-              .from('users')
-              .upsert({
-                id: session.user.id,
-                email: session.user.email,
-                updated_at: new Date().toISOString(),
-              }, {
-                onConflict: 'id'
-              })
-
-            if (error) {
-              console.error('[AUTH-CONTEXT] Error upserting user profile:', error)
-            } else {
-              console.log('[AUTH-CONTEXT] User profile updated successfully')
-            }
-          } catch (error) {
-            console.error('[AUTH-CONTEXT] Error in user profile upsert:', error)
-          }
+//             const { error } = await supabase
+//               .from('users')
+//               .upsert({
+//                 id: session.user.id,
+//                 email: session.user.email,
+//                 updated_at: new Date().toISOString(),
+//               }, {
+//                 onConflict: 'id'
+//               })
+// 
+//             if (error) {
+//               console.error('[AUTH-CONTEXT] Error upserting user profile:', error)
+//             } else {
+//               console.log('[AUTH-CONTEXT] User profile updated successfully')
+//             }
+//           } catch (error) {
+//             console.error('[AUTH-CONTEXT] Error in user profile upsert:', error)
+//           }
         }
       }
     )
