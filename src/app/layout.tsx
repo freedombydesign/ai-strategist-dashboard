@@ -4,8 +4,8 @@ import ClientAuthProvider from '../components/ClientAuthProvider';
 import SubdomainRedirect from '../components/SubdomainRedirect';
 
 export const metadata: Metadata = {
-  title: "Business Systemizer - Scale Your Business Operations",
-  description: "Streamline your business operations with automated workflows and platform integrations",
+  title: "Freedom by Design - AI Business Strategist",
+  description: "Your personal business coach with Freedom Score integration",
   other: {
     'facebook-domain-verification': '6tx6dkk3ri4idfdlhiu5a5wynxzn49'
   }
