@@ -43,7 +43,23 @@ interface ProfitInsight {
 }
 
 export default function ProfitPulsePage() {
-  const [metrics, setMetrics] = useState<ProfitMetrics | null>(null)
+  const [metrics, setMetrics] = useState<ProfitMetrics>({
+    monthlyRevenue: 0,
+    monthlyExpenses: 0,
+    grossProfit: 0,
+    netProfit: 0,
+    profitMargin: 0,
+    expenseRatio: 0,
+    revenueGrowth: 0,
+    expenseGrowth: 0,
+    profitGrowth: 0,
+    avgTransactionValue: 0,
+    customersCount: 0,
+    revenuePerCustomer: 0,
+    healthScore: 0,
+    marketingSpend: 0,
+    averageCAC: 0
+  })
   const [clients, setClients] = useState<ClientProfitability[]>([])
   const [insights, setInsights] = useState<ProfitInsight[]>([])
   const [loading, setLoading] = useState(true)
@@ -148,7 +164,7 @@ export default function ProfitPulsePage() {
               </h1>
               <div className="flex items-center space-x-3">
                 <span className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-bold rounded-full shadow-lg">
-                  {metrics?.healthScore.toFixed(0)}% EXECUTIVE HEALTH
+                  {metrics.healthScore.toFixed(0)}% EXECUTIVE HEALTH
                 </span>
                 <span className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-bold rounded-full shadow-lg">
                   INTELLIGENCE
@@ -186,9 +202,9 @@ export default function ProfitPulsePage() {
               <div className="ml-6">
                 <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">MONTHLY REVENUE</p>
                 <p className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                  ${metrics?.monthlyRevenue.toLocaleString()}
+                  ${metrics.monthlyRevenue.toLocaleString()}
                 </p>
-                <p className="text-sm text-emerald-600 font-semibold mt-1">+{metrics?.revenueGrowth.toFixed(1)}% Growth</p>
+                <p className="text-sm text-emerald-600 font-semibold mt-1">+{metrics.revenueGrowth.toFixed(1)}% Growth</p>
               </div>
             </div>
           </div>
@@ -203,7 +219,7 @@ export default function ProfitPulsePage() {
               <div className="ml-6">
                 <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">PROFIT MARGIN</p>
                 <p className="text-3xl font-bold text-emerald-600">
-                  {metrics?.profitMargin.toFixed(1)}%
+                  {metrics.profitMargin.toFixed(1)}%
                 </p>
                 <p className="text-sm text-slate-600 font-semibold mt-1">Industry Leading</p>
               </div>
@@ -237,10 +253,10 @@ export default function ProfitPulsePage() {
               <div className="ml-6">
                 <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">CUSTOMER ACQ. COST</p>
                 <p className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                  ${metrics?.averageCAC.toFixed(0)}
+                  ${metrics.averageCAC.toFixed(0)}
                 </p>
                 <p className="text-sm text-slate-600 font-semibold mt-1">
-                  Marketing: ${metrics?.marketingSpend.toLocaleString()}
+                  Marketing: ${metrics.marketingSpend.toLocaleString()}
                 </p>
               </div>
             </div>
