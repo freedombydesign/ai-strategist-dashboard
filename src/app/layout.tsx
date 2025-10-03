@@ -6,6 +6,9 @@ import SubdomainRedirect from '../components/SubdomainRedirect';
 export const metadata: Metadata = {
   title: "Business Systemizer - Scale Your Business Operations",
   description: "Streamline your business operations with automated workflows and platform integrations",
+  other: {
+    'facebook-domain-verification': '6tx6dkk3ri4idfdlhiu5a5wynxzn49'
+  }
 };
 
 export default function RootLayout({
@@ -79,6 +82,8 @@ export default function RootLayout({
                 }
                 return element;
               };
+
+              console.log('[AI-STRATEGIST] h1-check.js prevention active v12.0');
             `
           }}
         />

@@ -17,6 +17,8 @@ interface ProfitMetrics {
   customersCount: number
   revenuePerCustomer: number
   healthScore: number
+  marketingSpend: number
+  averageCAC: number
 }
 
 interface ClientProfitability {
@@ -50,54 +52,89 @@ export default function ProfitPulsePage() {
   const [lastSync, setLastSync] = useState<Date | null>(null)
   const [syncing, setSyncing] = useState(false)
 
-  // Mock data for demonstration
-  const mockMetrics = {
-    monthlyRevenue: 247500,
-    monthlyExpenses: 162675,
-    grossProfit: 84825,
-    netProfit: 84675,
-    profitMargin: 34.2,
-    expenseRatio: 65.8,
-    revenueGrowth: 12.5,
-    expenseGrowth: 8.3,
-    profitGrowth: 18.7,
-    avgTransactionValue: 2850,
-    customersCount: 87,
-    revenuePerCustomer: 2845,
-    healthScore: 92
-  }
-
-  const mockInsights = [
-    {
-      type: 'success' as const,
-      title: 'Exceptional Margin Performance',
-      message: 'Your 34.2% profit margin exceeds industry benchmarks by 12 percentage points.',
-      impact: 'high' as const,
-      recommendedAction: 'Maintain current operational efficiency while scaling revenue.'
-    },
-    {
-      type: 'opportunity' as const,
-      title: 'Revenue Acceleration Identified',
-      message: 'Client acquisition costs have decreased 15% while retention increased 8%.',
-      impact: 'critical' as const,
-      potentialSavings: 23500,
-      recommendedAction: 'Double investment in current acquisition channels.'
-    },
-    {
-      type: 'optimization' as const,
-      title: 'Expense Optimization Window',
-      message: 'Technology infrastructure costs can be reduced by 18% without impact.',
-      impact: 'medium' as const,
-      potentialSavings: 5200,
-      recommendedAction: 'Audit cloud services and software licenses quarterly.'
-    }
-  ]
-
   useEffect(() => {
-    setMetrics(mockMetrics)
-    setInsights(mockInsights)
-    setLoading(false)
+    fetchDashboardData()
   }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+
+      // Get user email from session or auth
+      const userEmail = 'user@example.com' // TODO: Get from auth
+
+      // Fetch dashboard data
+      const dashboardResponse = await fetch(`/api/profit-pulse/dashboard?userId=${userEmail}`)
+      const dashboardData = await dashboardResponse.json()
+
+      // Fetch marketing spend
+      const marketingResponse = await fetch(`/api/marketing-spend?userId=${userEmail}`)
+      const marketingData = await marketingResponse.json()
+
+      if (dashboardData.success) {
+        const overview = dashboardData.data.overview.keyMetrics
+        const acquisition = dashboardData.data.acquisition
+
+        setMetrics({
+          monthlyRevenue: overview.totalRevenue || 0,
+          monthlyExpenses: (overview.totalRevenue - overview.totalProfit) || 0,
+          grossProfit: overview.totalProfit || 0,
+          netProfit: overview.totalProfit || 0,
+          profitMargin: overview.profitMargin || 0,
+          expenseRatio: overview.totalRevenue > 0
+            ? ((overview.totalRevenue - overview.totalProfit) / overview.totalRevenue) * 100
+            : 0,
+          revenueGrowth: 0,
+          expenseGrowth: 0,
+          profitGrowth: 0,
+          avgTransactionValue: overview.totalRevenue / Math.max(1, overview.clientsTracked),
+          customersCount: overview.clientsTracked || 0,
+          revenuePerCustomer: overview.totalRevenue / Math.max(1, overview.clientsTracked),
+          healthScore: overview.profitMargin || 0,
+          marketingSpend: marketingData.success ? marketingData.data.totalSpend : 0,
+          averageCAC: acquisition?.averageCAC || 0
+        })
+
+        // Convert insights from alerts
+        const convertedInsights: ProfitInsight[] = dashboardData.data.alerts.map((alert: any) => ({
+          type: alert.severity === 'critical' ? 'warning' : 'optimization',
+          title: alert.message,
+          message: alert.impact,
+          impact: alert.severity,
+          recommendedAction: 'Review dashboard for details'
+        }))
+
+        setInsights(convertedInsights)
+      }
+
+      setLoading(false)
+      setLastSync(new Date())
+
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err)
+      setError('Failed to load dashboard data')
+      setLoading(false)
+
+      // Fallback to mock data on error
+      setMetrics({
+        monthlyRevenue: 0,
+        monthlyExpenses: 0,
+        grossProfit: 0,
+        netProfit: 0,
+        profitMargin: 0,
+        expenseRatio: 0,
+        revenueGrowth: 0,
+        expenseGrowth: 0,
+        profitGrowth: 0,
+        avgTransactionValue: 0,
+        customersCount: 0,
+        revenuePerCustomer: 0,
+        healthScore: 0,
+        marketingSpend: 0,
+        averageCAC: 0
+      })
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -111,7 +148,7 @@ export default function ProfitPulsePage() {
               </h1>
               <div className="flex items-center space-x-3">
                 <span className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-bold rounded-full shadow-lg">
-                  {mockMetrics.healthScore}% EXECUTIVE HEALTH
+                  {metrics?.healthScore.toFixed(0)}% EXECUTIVE HEALTH
                 </span>
                 <span className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-bold rounded-full shadow-lg">
                   INTELLIGENCE
@@ -149,9 +186,9 @@ export default function ProfitPulsePage() {
               <div className="ml-6">
                 <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">MONTHLY REVENUE</p>
                 <p className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                  ${mockMetrics.monthlyRevenue.toLocaleString()}
+                  ${metrics?.monthlyRevenue.toLocaleString()}
                 </p>
-                <p className="text-sm text-emerald-600 font-semibold mt-1">+{mockMetrics.revenueGrowth}% Growth</p>
+                <p className="text-sm text-emerald-600 font-semibold mt-1">+{metrics?.revenueGrowth.toFixed(1)}% Growth</p>
               </div>
             </div>
           </div>
@@ -166,7 +203,7 @@ export default function ProfitPulsePage() {
               <div className="ml-6">
                 <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">PROFIT MARGIN</p>
                 <p className="text-3xl font-bold text-emerald-600">
-                  {mockMetrics.profitMargin}%
+                  {metrics?.profitMargin.toFixed(1)}%
                 </p>
                 <p className="text-sm text-slate-600 font-semibold mt-1">Industry Leading</p>
               </div>
@@ -183,9 +220,9 @@ export default function ProfitPulsePage() {
               <div className="ml-6">
                 <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">NET PROFIT</p>
                 <p className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                  ${mockMetrics.netProfit.toLocaleString()}
+                  ${metrics.netProfit.toLocaleString()}
                 </p>
-                <p className="text-sm text-purple-600 font-semibold mt-1">+{mockMetrics.profitGrowth}% Growth</p>
+                <p className="text-sm text-purple-600 font-semibold mt-1">+{metrics.profitGrowth}% Growth</p>
               </div>
             </div>
           </div>
@@ -194,15 +231,17 @@ export default function ProfitPulsePage() {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl">
-                  <span className="text-white font-bold text-2xl">↗</span>
+                  <span className="text-white font-bold text-2xl">$</span>
                 </div>
               </div>
               <div className="ml-6">
-                <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">REVENUE GROWTH</p>
-                <p className="text-3xl font-bold text-emerald-600">
-                  +{mockMetrics.revenueGrowth}%
+                <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">CUSTOMER ACQ. COST</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                  ${metrics?.averageCAC.toFixed(0)}
                 </p>
-                <p className="text-sm text-amber-600 font-semibold mt-1">Accelerating</p>
+                <p className="text-sm text-slate-600 font-semibold mt-1">
+                  Marketing: ${metrics?.marketingSpend.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -218,7 +257,7 @@ export default function ProfitPulsePage() {
               <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">EXECUTIVE INTELLIGENCE</h3>
             </div>
             <div className="space-y-6">
-              {mockInsights.map((insight, index) => (
+              {insights.map((insight, index) => (
                 <div key={index} className={`p-6 rounded-xl border-l-4 ${
                   insight.type === 'success' 
                     ? 'border-emerald-400 bg-gradient-to-r from-emerald-50 to-teal-50' 
@@ -278,11 +317,11 @@ export default function ProfitPulsePage() {
             <div className="mt-10 pt-8 border-t border-slate-200">
               <div className="grid grid-cols-2 gap-6">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-slate-900">${mockMetrics.avgTransactionValue.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-slate-900">${metrics.avgTransactionValue.toLocaleString()}</p>
                   <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide">Avg Transaction</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-slate-900">{mockMetrics.customersCount}</p>
+                  <p className="text-2xl font-bold text-slate-900">{metrics.customersCount}</p>
                   <p className="text-sm text-slate-600 font-semibold uppercase tracking-wide">Active Clients</p>
                 </div>
               </div>
@@ -305,17 +344,17 @@ export default function ProfitPulsePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
                   <div className="text-white font-bold text-lg mb-2">PROFIT MARGIN</div>
-                  <div className="text-emerald-400 text-3xl font-bold mb-1">{mockMetrics.profitMargin}%</div>
+                  <div className="text-emerald-400 text-3xl font-bold mb-1">{metrics.profitMargin}%</div>
                   <div className="text-slate-300">Executive Tier</div>
                 </div>
                 <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
                   <div className="text-white font-bold text-lg mb-2">REVENUE GROWTH</div>
-                  <div className="text-emerald-400 text-3xl font-bold mb-1">+{mockMetrics.revenueGrowth}%</div>
+                  <div className="text-emerald-400 text-3xl font-bold mb-1">+{metrics.revenueGrowth}%</div>
                   <div className="text-slate-300">Strong Trajectory</div>
                 </div>
                 <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm hover:bg-white/20 transition-all duration-300">
                   <div className="text-white font-bold text-lg mb-2">HEALTH SCORE</div>
-                  <div className="text-emerald-400 text-3xl font-bold mb-1">{mockMetrics.healthScore}%</div>
+                  <div className="text-emerald-400 text-3xl font-bold mb-1">{metrics.healthScore}%</div>
                   <div className="text-slate-300">Exceptional</div>
                 </div>
               </div>
